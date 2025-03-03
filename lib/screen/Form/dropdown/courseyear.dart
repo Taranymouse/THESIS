@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
-class Semester extends StatelessWidget {
+class Courseyear extends StatelessWidget {
   final List<String> items;
   final String? selectedValue;
   final ValueChanged<String?> onChanged;
-
-  const Semester({
+  const Courseyear({
     super.key,
     required this.selectedValue,
     required this.onChanged,
-    this.items = const ['ต้น', 'ปลาย', 'ฤดูร้อน'],
+    this.items = const ['2560', '2565'],
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: DropdownButton<String>(
-        hint: Text("ภาคการศึกษา",style: TextStyle(fontSize: 10),),
+      child: DropdownButton(
+        hint: Text("ปีหลักสูตร",style: TextStyle(fontSize: 10),),
         value: selectedValue,
         items:
             items.map((String item) {
-              return DropdownMenuItem<String>(value: item, child: Text(item));
+              return DropdownMenuItem(value: item, child: Text(item));
             }).toList(),
         onChanged: onChanged,
         isExpanded: true,

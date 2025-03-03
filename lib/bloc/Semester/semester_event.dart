@@ -8,9 +8,9 @@ abstract class SemesterEvent extends Equatable {
 }
 
 class SemesterSelected extends SemesterEvent {
-  final String? selectedSemester; // 👈 ต้องรองรับ String?
+  final String? selectedSemester;
   
-  const SemesterSelected(this.selectedSemester);
+  SemesterSelected(this.selectedSemester);
 
   @override
   List<Object?> get props => [selectedSemester];
