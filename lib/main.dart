@@ -8,6 +8,8 @@ import 'package:project/bloc/CourseYear/courseyear_bloc.dart';
 import 'package:project/bloc/Login/login_bloc.dart';
 import 'package:project/bloc/Semester/semester_bloc.dart';
 import 'package:project/bloc/StdYear/stdyear_bloc.dart';
+import 'package:project/bloc/Subject/CS/subject_cs_bloc.dart';
+import 'package:project/bloc/Subject/IT/subject_bloc.dart';
 import 'package:project/screen/Form/checkForm.dart';
 import 'package:project/screen/Form/dropdown/courseyear.dart';
 import 'package:project/screen/home.dart';
@@ -27,6 +29,8 @@ void main() async {
         BlocProvider(
           create: (context) => LoginBloc()..add(CheckSessionEvent()),
         ),
+        BlocProvider(create: (context) => SubjectBloc()..add(LoadSubjects())),
+        BlocProvider(create: (context) => SubjectCsBloc()..add(LoadSubjectsCS())),
         BlocProvider(create: (context) => BottomNavBloc()),
       ],
       child: const MyApp(),
@@ -44,7 +48,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         textTheme: TextTheme(
-          bodyLarge: GoogleFonts.kanit(fontSize: 20 , fontWeight: FontWeight.bold),
+          bodyLarge: GoogleFonts.kanit(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
           bodyMedium: GoogleFonts.kanit(),
           bodySmall: GoogleFonts.kanit(),
         ),

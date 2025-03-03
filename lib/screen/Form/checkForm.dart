@@ -29,34 +29,36 @@ class _CheckformState extends State<Checkform> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("แบบฟอร์ม"), centerTitle: true),
-      body: Container(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            DropDownTopContent(),
-            SizedBox(height: 10),
-            FormContentInput(
-              nameController: widget.nameController,
-              lastnameController: widget.lastnameController,
-              stdidController: widget.stdidController,
-            ),
-            SizedBox(height: 10),
-            BlocBuilder<CourseBloc, CourseState>(
-              builder: (context, state) {
-                String? course =
-                    (state is CourseChanged) ? state.selectedCourse : null;
-                if (course == "IT") {
-                  return ITFormContent();
-                } else if (course == "CS") {
-                  return CSFormContent();
-                } else {
-                  return Container();
-                }
-              },
-            ),
-            SizedBox(height: 10),
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              DropDownTopContent(),
+              SizedBox(height: 10),
+              FormContentInput(
+                nameController: widget.nameController,
+                lastnameController: widget.lastnameController,
+                stdidController: widget.stdidController,
+              ),
+              SizedBox(height: 10),
+              BlocBuilder<CourseBloc, CourseState>(
+                builder: (context, state) {
+                  String? course =
+                      (state is CourseChanged) ? state.selectedCourse : null;
+                  if (course == "IT") {
+                    return ITFormContent();
+                  } else if (course == "CS") {
+                    return CSFormContent();
+                  } else {
+                    return Container();
+                  }
+                },
+              ),
+              SizedBox(height: 10),
+            ],
+          ),
         ),
       ),
     );
