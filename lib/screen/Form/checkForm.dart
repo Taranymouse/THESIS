@@ -5,8 +5,9 @@ import 'package:project/bloc/Course/course_bloc.dart';
 import 'package:project/bloc/CourseYear/courseyear_bloc.dart';
 import 'package:project/bloc/Semester/semester_bloc.dart';
 import 'package:project/bloc/StdYear/stdyear_bloc.dart';
-import 'package:project/screen/Form/Content/CS/checkFormCS.dart';
-import 'package:project/screen/Form/Content/IT/checkFormIT.dart';
+import 'package:project/bloc/Subject/IT/subject_bloc.dart';
+import 'package:project/screen/Form/Content/CS/CSFormContent.dart';
+import 'package:project/screen/Form/Content/IT/ITFormContent.dart';
 import 'package:project/screen/Form/TextFeild/customTextFeild.dart';
 import 'package:project/screen/Form/dropdown/course.dart';
 import 'package:project/screen/Form/dropdown/courseyear.dart';
@@ -44,19 +45,45 @@ class _CheckformState extends State<Checkform> {
               ),
               SizedBox(height: 10),
               BlocBuilder<CourseBloc, CourseState>(
-                builder: (context, state) {
+                builder: (context, courseState) {
                   String? course =
-                      (state is CourseChanged) ? state.selectedCourse : null;
-                  if (course == "IT") {
-                    return ITFormContent();
-                  } else if (course == "CS") {
-                    return CSFormContent();
-                  } else {
-                    return Container();
-                  }
+                      (courseState is CourseChanged)
+                          ? courseState.selectedCourse
+                          : null;
+
+                  return BlocBuilder<CourseyearBloc, CourseyearState>(
+                    builder: (context, yearState) {
+                      String? courseYear =
+                          (yearState is CourseyearChanged)
+                              ? yearState.selectedCourseyear
+                              : null;
+
+                      if (courseYear != null) {
+                        context.read<SubjectBloc>().add(
+                          LoadSubjects(courseYear),
+                        );
+                      }
+
+                      if (course == "IT" && courseYear == "2560") {
+                        return ITFormContent();
+                      } else if (course == "IT" && courseYear == "2565") {
+                        return ITFormContent();
+                      } else if (course == "CS" && courseYear == "2560") {
+                        return CSFormContent();
+                      } else if (course == "CS" && courseYear == "2565") {
+                        return CSFormContent();
+                      } else {
+                        return Center(
+                          child: Text("กรุณาเลือกหลักสูตรและปีหลักสูตร"),
+                        );
+                      }
+                    },
+                  );
                 },
               ),
               SizedBox(height: 10),
+
+              
             ],
           ),
         ),

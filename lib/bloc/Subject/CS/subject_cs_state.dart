@@ -11,9 +11,10 @@ final class SubjectCsInitial extends SubjectCsState {}
 
 class SubjectCsLoaded extends SubjectCsState {
   final List<String> subjects;
+  final Map<String, Map<String, String>> selectedValues;
 
-  SubjectCsLoaded(this.subjects);
+  SubjectCsLoaded(this.subjects,{this.selectedValues = const {}});
 
   @override
-  List<Object?> get props => [subjects];
+  List<Object?> get props => [subjects, selectedValues];
 }

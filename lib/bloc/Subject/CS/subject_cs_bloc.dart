@@ -16,5 +16,28 @@ class SubjectCsBloc extends Bloc<SubjectCsEvent, SubjectCsState> {
       ];
       emit(SubjectCsLoaded(subjects));
     });
+    on<UpdateSubjectSelectionCS>((event, emit){
+      if (state is SubjectCsLoaded) {
+        final currentState = state as SubjectCsLoaded;
+        final newSelectedValues = Map<String, Map<String, String>>.from(
+          currentState.selectedValues,
+        );
+
+        // ถ้ายังไม่มีค่า ให้สร้าง map ใหม่
+        if (!newSelectedValues.containsKey(event.subject)) {
+          newSelectedValues[event.subject] = {};
+        }
+
+        // อัปเดตค่า field ที่เลือก
+        newSelectedValues[event.subject]![event.field] = event.value;
+
+        emit(
+          SubjectCsLoaded(
+            currentState.subjects,
+            selectedValues: newSelectedValues,
+          ),
+        );
+      }
+    });
   }
 }

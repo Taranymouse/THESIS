@@ -29,8 +29,8 @@ void main() async {
         BlocProvider(
           create: (context) => LoginBloc()..add(CheckSessionEvent()),
         ),
-        BlocProvider(create: (context) => SubjectBloc()..add(LoadSubjects())),
-        BlocProvider(create: (context) => SubjectCsBloc()..add(LoadSubjectsCS())),
+        BlocProvider(create: (context) => SubjectBloc()),
+        BlocProvider(create: (context) => SubjectCsBloc()),
         BlocProvider(create: (context) => BottomNavBloc()),
       ],
       child: const MyApp(),
@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Project',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         textTheme: TextTheme(
           bodyLarge: GoogleFonts.kanit(
             fontSize: 20,
