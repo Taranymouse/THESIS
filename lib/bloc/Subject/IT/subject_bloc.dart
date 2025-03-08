@@ -72,7 +72,7 @@ class SubjectBloc extends Bloc<SubjectEvent, SubjectState> {
   }
 }
 
-// ✅ ฟังก์ชันเลือกวิชาตามหลักสูตรปีที่เลือก
+// dummy subjects
 List<String> _getSubjectsForYear(String courseYear) {
   if (courseYear == "2560") {
     return [

@@ -29,7 +29,7 @@ class _CheckformState extends State<Checkform> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("แบบฟอร์ม"), centerTitle: true),
+      appBar: AppBar(title: Text("แบบฟอร์มตรวจคุณสมบัติ"), centerTitle: true),
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(20),
@@ -108,7 +108,7 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("หลักสูตร"),
+              Text("หลักสูตร :"),
               SizedBox(width: 10),
               BlocBuilder<CourseBloc, CourseState>(
                 builder: (context, state) {
@@ -123,7 +123,7 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
                 },
               ),
               SizedBox(width: 20),
-              Text("ปีหลักสูตร"),
+              Text("ปีหลักสูตร :"),
               SizedBox(width: 10),
               BlocBuilder<CourseyearBloc, CourseyearState>(
                 builder: (context, state) {
@@ -148,7 +148,7 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("ภาคการศึกษา"),
+              Text("ภาคการศึกษา :"),
               SizedBox(width: 10),
               BlocBuilder<SemesterBloc, SemesterState>(
                 builder: (context, state) {
@@ -168,7 +168,7 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
               ),
               SizedBox(width: 20),
 
-              Text("ปีการศึกษา"),
+              Text("ปีการศึกษา :"),
               SizedBox(width: 10),
               BlocBuilder<StdyearBloc, StdyearState>(
                 builder: (context, state) {
@@ -190,6 +190,7 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
           Text(
             "หมายเหตุ : กรุณาแนบผลการศึกษาที่พิมพ์จากเว็บระบบบริการการศึกษาของมหาวิทยาลัยด้วย (reg.su.ac.th)",
             style: TextStyle(fontSize: 10, color: Colors.red),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

@@ -27,3 +27,24 @@ class LoginFailure extends LoginState {
   @override
   List<Object?> get props => [message];
 }
+
+class LoginRequireSetPassword extends LoginState {
+  final String email;
+
+  const LoginRequireSetPassword(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+class SetPasswordSuccess extends LoginState {}
+
+class SetPasswordFailure extends LoginState {
+  final String message;
+  const SetPasswordFailure(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+

@@ -20,18 +20,13 @@ class CustomTextField extends StatelessWidget {
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,
+      style: TextStyle(fontSize: 14),
       decoration: InputDecoration(
-        label: Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium, // ใช้ theme ของแอป
-        ),
+        label: Text(label, style: Theme.of(context).textTheme.bodyMedium),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(30.0)),
         ),
-        contentPadding: EdgeInsets.symmetric(
-          vertical: 6.0,
-          horizontal: 20.0,
-        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 6.0, horizontal: 20.0),
       ),
     );
   }

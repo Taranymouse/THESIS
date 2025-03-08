@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Stdyear extends StatelessWidget {
   final List<String> items;
@@ -15,11 +16,11 @@ class Stdyear extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: DropdownButton(
-        hint: Text("ปีการศึกษา",style: TextStyle(fontSize: 10),),
+        hint: Text("ปีการศึกษา", style: GoogleFonts.prompt(fontSize: 10)),
         value: selectedValue,
         items:
             items.map((String item) {
-              return DropdownMenuItem(value: item, child: Text(item));
+              return DropdownMenuItem(value: item, child: Text(item , style: GoogleFonts.prompt(fontSize: 16 , fontWeight: FontWeight.w600)));
             }).toList(),
         onChanged: onChanged,
         isExpanded: true,

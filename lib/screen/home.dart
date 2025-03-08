@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project/Nav/bottom_nav.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/bloc/Login/login_bloc.dart';
+import 'package:project/screen/Settings/setting.dart';
 
 class Homepage extends StatelessWidget {
   const Homepage({super.key});
@@ -12,7 +13,7 @@ class Homepage extends StatelessWidget {
     final List<Widget> pages = [
       Center(child: Text("🔔 แจ้งเตือน", style: TextStyle(fontSize: 24))),
       const HomepageContent(),
-      Center(child: Text("⚙️ ตั้งค่า", style: TextStyle(fontSize: 24))),
+      SettingScreen(),
     ];
 
     return BlocBuilder<BottomNavBloc, BottomNavState>(

@@ -12,6 +12,8 @@ import 'package:project/bloc/Subject/CS/subject_cs_bloc.dart';
 import 'package:project/bloc/Subject/IT/subject_bloc.dart';
 import 'package:project/screen/Form/checkForm.dart';
 import 'package:project/screen/Form/dropdown/courseyear.dart';
+import 'package:project/screen/Settings/setting.dart';
+import 'package:project/screen/SignIn/setpassword.dart';
 import 'package:project/screen/home.dart';
 import 'package:project/screen/SignIn/login.dart';
 
@@ -48,15 +50,33 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         textTheme: TextTheme(
-          bodyLarge: GoogleFonts.kanit(
+          bodyLarge: GoogleFonts.prompt(
+            fontSize: 20,
+            // fontWeight: FontWeight.bold,
+          ),
+          bodyMedium: GoogleFonts.prompt(),
+          bodySmall: GoogleFonts.prompt(),
+        ),
+        appBarTheme: AppBarTheme(
+          titleTextStyle: GoogleFonts.prompt(
             fontSize: 20,
             fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
-          bodyMedium: GoogleFonts.kanit(),
-          bodySmall: GoogleFonts.kanit(),
+          backgroundColor: Colors.white,
+          iconTheme: IconThemeData(color: Colors.black),
         ),
       ),
-      home: Checkform(),
+      // home: SettingScreen(),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => Login(),
+        '/home': (context) => Homepage(), // ✅ เพิ่ม HomeScreen
+        '/set-password':
+            (context) => SetPasswordScreen(
+              email: ModalRoute.of(context)!.settings.arguments as String,
+            ),
+      },
     );
   }
 }

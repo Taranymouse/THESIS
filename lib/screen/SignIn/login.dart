@@ -13,16 +13,17 @@ class Login extends StatelessWidget {
       body: BlocConsumer<LoginBloc, LoginState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text("success")));
             Navigator.pushReplacementNamed(context, '/home');
-            // context.read<LoginBloc>().emit(LoginInitial());
           } else if (state is LoginFailure) {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));
-            // context.read<LoginBloc>().emit(LoginInitial());
+          } else if (state is LoginRequireSetPassword) {
+            Navigator.pushNamed(
+              context,
+              '/set-password',
+              arguments: state.email,
+            );
           }
         },
         builder: (context, state) {
