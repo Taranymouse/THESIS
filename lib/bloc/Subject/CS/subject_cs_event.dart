@@ -14,7 +14,7 @@ class UpdateSubjectSelectionCS extends SubjectCsEvent {
   final String field; // "ภาคการศึกษา", "ปีการศึกษา", หรือ "เกรด"
   final String value;
 
-  UpdateSubjectSelectionCS(this.subject, this.field, this.value);
+  const UpdateSubjectSelectionCS(this.subject, this.field, this.value);
 
   @override
   List<Object?> get props => [subject, field, value];

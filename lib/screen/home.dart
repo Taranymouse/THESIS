@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:project/Nav/bottom_nav.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/bloc/Login/login_bloc.dart';
+import 'package:project/screen/Announcement/announcement_carousel.dart';
+import 'package:project/screen/Menu/menubar.dart';
 import 'package:project/screen/Settings/setting.dart';
 
 class Homepage extends StatelessWidget {
@@ -63,9 +65,9 @@ class HomepageContent extends StatelessWidget {
               }
             },
           ),
-          Text("ประกาศสำคัญ"),
+          AnnouncementCarousel(),
           SizedBox(height: 20),
-          Text("เมนู"),
+          Menu(),
           SizedBox(height: 20),
         ],
       ),

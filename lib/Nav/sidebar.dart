@@ -23,7 +23,7 @@ class SideBar extends StatelessWidget {
                   builder: (context, state) {
                     if (state is LoginSuccess) {
                       return Text(
-                        "${state.displayName}",
+                        state.displayName,
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 18,
@@ -39,7 +39,7 @@ class SideBar extends StatelessWidget {
                   builder: (context, state) {
                     if (state is LoginSuccess) {
                       return Text(
-                        "${state.email}",
+                        state.email,
                         style: const TextStyle(color: Colors.white70),
                       );
                     } else {

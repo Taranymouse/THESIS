@@ -9,7 +9,7 @@ abstract class BottomNavEvent extends Equatable {
 
 class ChangePage extends BottomNavEvent {
   final int index;
-  ChangePage({required this.index});
+  const ChangePage({required this.index});
 
   @override
   List<Object> get props => [index];

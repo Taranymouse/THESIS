@@ -10,7 +10,7 @@ abstract class SemesterEvent extends Equatable {
 class SemesterSelected extends SemesterEvent {
   final String? selectedSemester;
   
-  SemesterSelected(this.selectedSemester);
+  const SemesterSelected(this.selectedSemester);
 
   @override
   List<Object?> get props => [selectedSemester];

@@ -5,7 +5,7 @@ import 'package:project/bloc/Login/login_bloc.dart';
 class SetPasswordScreen extends StatefulWidget {
   final String email; // รับอีเมลจาก state ก่อนหน้านี้
 
-  const SetPasswordScreen({Key? key, required this.email}) : super(key: key);
+  const SetPasswordScreen({super.key, required this.email});
 
   @override
   _SetPasswordScreenState createState() => _SetPasswordScreenState();

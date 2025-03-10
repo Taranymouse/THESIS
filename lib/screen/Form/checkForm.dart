@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:project/ColorPlate/color.dart';
 import 'package:project/bloc/Course/course_bloc.dart';
 import 'package:project/bloc/CourseYear/courseyear_bloc.dart';
 import 'package:project/bloc/Semester/semester_bloc.dart';

@@ -13,5 +13,5 @@ class BottomNavInitial extends BottomNavState {
 }
 
 class CurrentPage extends BottomNavState {
-  const CurrentPage({required int currentIndex}) : super(currentIndex: currentIndex);
+  const CurrentPage({required super.currentIndex});
 }

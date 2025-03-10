@@ -10,7 +10,7 @@ sealed class StdyearEvent extends Equatable {
 class StdyearSelected extends StdyearEvent {
   final String? selectedStdyear;
 
-  StdyearSelected(this.selectedStdyear);
+  const StdyearSelected(this.selectedStdyear);
 
   @override
   List<Object?> get props => [selectedStdyear];

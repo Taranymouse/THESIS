@@ -12,7 +12,7 @@ final class SemesterInitial extends SemesterState {}
 class SemesterChanged extends SemesterState {
   final String? selectedSemester;
 
-  SemesterChanged(this.selectedSemester);
+  const SemesterChanged(this.selectedSemester);
 
   @override
   List<Object?> get props => [selectedSemester];

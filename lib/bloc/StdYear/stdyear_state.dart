@@ -12,7 +12,7 @@ final class StdyearInitial extends StdyearState {}
 class StdyearChanged extends StdyearState {
   final String? selectedStdyear;
 
-  StdyearChanged(this.selectedStdyear);
+  const StdyearChanged(this.selectedStdyear);
   
   @override
   List<Object?> get props => [selectedStdyear];

@@ -4,6 +4,8 @@ import 'package:project/bloc/Login/login_bloc.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 
 class SettingScreen extends StatelessWidget {
+  const SettingScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<LoginBloc, LoginState>(
