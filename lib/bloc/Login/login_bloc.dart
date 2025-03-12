@@ -108,7 +108,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
       // 📌 เรียก API `/login` เพื่อตรวจสอบข้อมูลในฐานข้อมูล
       final response = await http.post(
-        Uri.parse('http://192.168.1.132:8000/login'),
+        Uri.parse('http://192.168.1.117:8000/login'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"token": idToken}),
       );
@@ -141,7 +141,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     emit(LoginLoading());
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.132:8000/set-password'),
+        Uri.parse('http://192.168.1.117:8000/set-password'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": event.email, "password": event.password}),
       );
