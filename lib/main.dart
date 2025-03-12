@@ -6,13 +6,14 @@ import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/bloc/Course/course_bloc.dart';
 import 'package:project/bloc/CourseYear/courseyear_bloc.dart';
 import 'package:project/bloc/Login/login_bloc.dart';
+import 'package:project/bloc/GetSubject/get_subject_bloc.dart';
 import 'package:project/bloc/Semester/semester_bloc.dart';
 import 'package:project/bloc/StdYear/stdyear_bloc.dart';
 import 'package:project/bloc/Subject/CS/subject_cs_bloc.dart';
 import 'package:project/bloc/Subject/IT/subject_bloc.dart';
-import 'package:project/screen/SignIn/setpassword.dart';
-import 'package:project/screen/home.dart';
-import 'package:project/screen/SignIn/login.dart';
+import 'package:project/screen/ManageSubject/createsubject.dart';
+import 'package:project/screen/ManageSubject/fetchallsubject.dart';
+import 'package:project/screen/Form/checkForm.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,7 @@ void main() async {
         BlocProvider(create: (context) => SubjectBloc()),
         BlocProvider(create: (context) => SubjectCsBloc()),
         BlocProvider(create: (context) => BottomNavBloc()),
+        BlocProvider(create: (context) => GetSubjectBloc()),
       ],
       child: const MyApp(),
     ),
@@ -64,16 +66,16 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.black),
         ),
       ),
-      // home: SettingScreen(),
-      initialRoute: '/login',
-      routes: {
-        '/login': (context) => Login(),
-        '/home': (context) => Homepage(), // ✅ เพิ่ม HomeScreen
-        '/set-password':
-            (context) => SetPasswordScreen(
-              email: ModalRoute.of(context)!.settings.arguments as String,
-            ),
-      },
+      home: AllSubjectsPage(),
+      // initialRoute: '/login',
+      // routes: {
+      //   '/login': (context) => Login(),
+      //   '/home': (context) => Homepage(), // ✅ เพิ่ม HomeScreen
+      //   '/set-password':
+      //       (context) => SetPasswordScreen(
+      //         email: ModalRoute.of(context)!.settings.arguments as String,
+      //       ),
+      // },
     );
   }
 }

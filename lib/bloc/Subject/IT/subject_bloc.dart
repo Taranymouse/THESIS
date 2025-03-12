@@ -20,20 +20,16 @@ class SubjectBloc extends Bloc<SubjectEvent, SubjectState> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.1.132:8000/subject/'),
+        Uri.parse('http://192.168.1.117:8000/subjects/'),
       );
 
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
-
+        print("###### !!! API response : ${response.body}");
         // ✅ คัดกรองเฉพาะรายวิชาของปีที่เลือก
-        List<String> subjects =
-            data
-                .where((item) => item['year_course_sub'] == event.courseYear)
-                .map(
+        List<String> subjects = data.where((item) => item['year_course_sub'] == event.courseYear).map(
                   (item) => "${item['course_code']} ${item['name_subjects']}",
-                )
-                .toList();
+                ).toList();
 
         emit(SubjectLoaded(subjects: subjects, selectedValues: {}));
       } else {
