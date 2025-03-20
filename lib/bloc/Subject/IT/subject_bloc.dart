@@ -30,7 +30,7 @@ class SubjectBloc extends Bloc<SubjectEvent, SubjectState> {
         List<String> subjects = data.where((item) => item['year_course_sub'] == event.courseYear).map(
                   (item) => "${item['course_code']} ${item['name_subjects']}",
                 ).toList();
-
+        await Future.delayed(Duration(seconds: 2));
         emit(SubjectLoaded(subjects: subjects, selectedValues: {}));
       } else {
         emit(SubjectError("เกิดข้อผิดพลาด: ${response.statusCode}"));

@@ -14,10 +14,12 @@ class LoginLoading extends LoginState {}
 class LoginSuccess extends LoginState {
   final String email;
   final String displayName;
-  const LoginSuccess(this.email,this.displayName);
+  final String role;
+
+  const LoginSuccess(this.email, this.displayName,this.role);
 
   @override
-  List<Object?> get props => [email,displayName];
+  List<Object?> get props => [email, displayName,role];
 }
 
 class LoginFailure extends LoginState {
@@ -46,5 +48,3 @@ class SetPasswordFailure extends LoginState {
   @override
   List<Object?> get props => [message];
 }
-
-

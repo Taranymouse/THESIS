@@ -166,6 +166,7 @@ class _CreatesubjectState extends State<Createsubject> {
                         if (response.statusCode == 200) {
                           // แสดงผลเมื่อสร้างสำเร็จ
                           print("✅ Subject created successfully!");
+                          Navigator.pop(context,true); // ปิดหน้าจอสร้างรายวิชา
                         } else {
                           // แสดงผลเมื่อเกิดข้อผิดพลาด
                           print(

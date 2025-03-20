@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/modles/session_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
@@ -33,7 +34,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     if (email != null) {
       final User? user = _auth.currentUser;
       final String displayName = user?.displayName ?? "No Name";
-      emit(LoginSuccess(email, displayName)); // 🌟 เพิ่ม Display Name
+      emit(LoginSuccess(email, displayName, '')); // 🌟 เพิ่ม Display Name
     } else {
       emit(LoginInitial());
     }
@@ -59,9 +60,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
       final String displayName = user.displayName ?? "No Name";
 
-      await _sessionService.saveUserSession(user.email!);
+      await _sessionService.saveEmailSession(user.email!);
+
+      await Future.delayed(Duration(seconds: 2));
       emit(
-        LoginSuccess(user.email!, displayName),
+        LoginSuccess(user.email!, displayName, ''),
       ); // 🌟 ส่ง Display Name กลับไป
     } catch (e) {
       emit(LoginFailure(e.toString()));
@@ -103,27 +106,45 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       final String email = user.email!;
       final String? idToken = await user.getIdToken();
 
-      // ✅ Debug ตรวจสอบ idToken
       print("Google ID Token: $idToken");
 
-      // 📌 เรียก API `/login` เพื่อตรวจสอบข้อมูลในฐานข้อมูล
+      // 📌 เรียก API `/login`
       final response = await http.post(
         Uri.parse('http://192.168.1.117:8000/login'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"token": idToken}),
       );
 
+      print("Response Body : ${response.body}");
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final String? token = data["token"]; // ✅ ดึง Token จาก API
+        late String? role = '';
 
-        // 🔍 ถ้ามีข้อมูลในระบบแล้ว ให้เข้าสู่ระบบปกติ
-        if (data.containsKey("display_name")) {
-          await _sessionService.saveUserSession(email);
-          emit(LoginSuccess(email, displayName));
-        }
-        // ❗ ถ้าไม่มีข้อมูล ให้เปลี่ยนไปหน้า "ตั้งรหัสผ่านใหม่"
-        else {
-          emit(LoginRequireSetPassword(email));
+        if (token != null) {
+          final response = await http.get(
+            Uri.parse('http://192.168.1.117:8000/user'),
+            headers: {"Authorization": "$token"},
+          );
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            role = data['role'].toString();
+            print("✅ Can Get Role");
+          } else {
+            print("📌 Error to Get Role");
+          }
+
+          // 📌 บันทึก Token & Role ลง Storage
+          await _sessionService.saveAuthToken(token);
+          print("📌After Get Role : $role");
+          emit(LoginSuccess(email, displayName, role));
+          if (state is LoginSuccess) {
+            await SessionService().saveAuthToken(token);
+          }
+        } else {
+          emit(LoginFailure("Login failed: No token received"));
         }
       } else {
         emit(LoginFailure("Login Failed: ${response.body}"));
@@ -161,8 +182,14 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   // 🚪 ---- 5. Logout ----
   Future<void> _onLogout(LogoutEvent event, Emitter<LoginState> emit) async {
     await _auth.signOut();
+    await _googleSignIn.disconnect();
     await _googleSignIn.signOut();
-    await _sessionService.clearUserSession();
+    await _sessionService.clearSession();
     emit(LoginInitial());
+  }
+
+  Future<void> _onLoginSuccess() async {
+    final sessionService = SessionService();
+    await sessionService.setLoggedIn(true);
   }
 }

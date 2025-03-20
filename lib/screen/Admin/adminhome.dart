@@ -5,20 +5,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/Nav/bottom_nav.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
-import 'package:project/bloc/Login/login_bloc.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Announcement/announcement_carousel.dart';
+import 'package:project/screen/Menu/Admin/adminmenubar.dart';
 import 'package:project/screen/Menu/STD/menubar.dart';
 import 'package:project/screen/Settings/setting.dart';
 
-class Homepage extends StatelessWidget {
-  const Homepage({super.key});
+class AdminHomepage extends StatelessWidget {
+  const AdminHomepage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       Center(child: Text("🔔 แจ้งเตือน", style: TextStyle(fontSize: 24))),
-      const HomepageContent(),
+      const AdminHomepageContent(),
       SettingScreen(),
     ];
 
@@ -29,7 +29,7 @@ class Homepage extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text(
-              'IT/CS Projects',
+              'IT/CS THESIS',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             centerTitle: true,
@@ -43,14 +43,14 @@ class Homepage extends StatelessWidget {
 }
 
 // แยก Widget เพื่อให้ Code อ่านง่าย
-class HomepageContent extends StatefulWidget {
-  const HomepageContent({super.key});
+class AdminHomepageContent extends StatefulWidget {
+  const AdminHomepageContent({super.key});
 
   @override
-  _HomepageContentState createState() => _HomepageContentState();
+  _AdminHomepageContentState createState() => _AdminHomepageContentState();
 }
 
-class _HomepageContentState extends State<HomepageContent> {
+class _AdminHomepageContentState extends State<AdminHomepageContent> {
   final SessionService _sessionService = SessionService();
   String? displayName;
 
@@ -93,12 +93,13 @@ class _HomepageContentState extends State<HomepageContent> {
           SizedBox(height: 20),
           // แสดง Email ที่ล็อกอิน
           Text(
-            "ยินดีต้อนรับ: ${displayName ?? 'none displayname'}",
+            "ยินดีต้อนรับ: ${displayName}",
             style: Theme.of(context).textTheme.bodyLarge,
           ),
+          SizedBox(height: 20),
           AnnouncementCarousel(),
           SizedBox(height: 20),
-          Menu(),
+          AdminMenu(),
           SizedBox(height: 20),
         ],
       ),

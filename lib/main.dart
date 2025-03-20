@@ -11,13 +11,22 @@ import 'package:project/bloc/Semester/semester_bloc.dart';
 import 'package:project/bloc/StdYear/stdyear_bloc.dart';
 import 'package:project/bloc/Subject/CS/subject_cs_bloc.dart';
 import 'package:project/bloc/Subject/IT/subject_bloc.dart';
+import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/ManageSubject/createsubject.dart';
 import 'package:project/screen/ManageSubject/fetchallsubject.dart';
 import 'package:project/screen/Form/checkForm.dart';
+import 'package:project/screen/SignIn/login.dart';
+import 'package:project/screen/SignIn/setpassword.dart';
+import 'package:project/screen/home.dart';
+import 'package:project/modles/session_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // ตรวจสอบสถานะการเข้าสู่ระบบ
+  final sessionService = SessionService();
+  final isLoggedIn = await sessionService.isLoggedIn();
 
   runApp(
     MultiBlocProvider(
@@ -34,13 +43,15 @@ void main() async {
         BlocProvider(create: (context) => BottomNavBloc()),
         BlocProvider(create: (context) => GetSubjectBloc()),
       ],
-      child: const MyApp(),
+      child: MyApp(isLoggedIn: isLoggedIn),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn;
+
+  const MyApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -49,10 +60,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         textTheme: TextTheme(
-          bodyLarge: GoogleFonts.prompt(
-            fontSize: 20,
-            // fontWeight: FontWeight.bold,
-          ),
+          bodyLarge: GoogleFonts.prompt(fontSize: 20),
           bodyMedium: GoogleFonts.prompt(),
           bodySmall: GoogleFonts.prompt(),
         ),
@@ -66,16 +74,18 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.black),
         ),
       ),
-      home: AllSubjectsPage(),
-      // initialRoute: '/login',
-      // routes: {
-      //   '/login': (context) => Login(),
-      //   '/home': (context) => Homepage(), // ✅ เพิ่ม HomeScreen
-      //   '/set-password':
-      //       (context) => SetPasswordScreen(
-      //         email: ModalRoute.of(context)!.settings.arguments as String,
-      //       ),
-      // },
+      // home: Createsubject(),
+      initialRoute: isLoggedIn ? '/home' : '/login',
+      routes: {
+        '/login': (context) => Login(),
+        '/home': (context) => Homepage(),
+        '/admin-home': (context) => AdminHomepage(),
+        '/set-password':
+            (context) => SetPasswordScreen(
+              email: ModalRoute.of(context)!.settings.arguments as String,
+            ),
+        '/createsubject': (context) => Createsubject(),
+      },
     );
   }
 }

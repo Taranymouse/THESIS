@@ -14,7 +14,7 @@ class Courseyear extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    return Flexible(
       child: DropdownButton(
         hint: Text("ปีหลักสูตร", style: GoogleFonts.prompt(fontSize: 10)),
         value: selectedValue,

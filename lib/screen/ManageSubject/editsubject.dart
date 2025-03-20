@@ -59,7 +59,7 @@ class _EditsubjectState extends State<Editsubject> {
       print("Subject updated successfully");
       final Map<String, dynamic> responseData = json.decode(response.body);
       print("Updated subject data: $responseData");
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     } else {
       print("Failed to update subject. Status: ${response.statusCode}");
     }
@@ -73,7 +73,7 @@ class _EditsubjectState extends State<Editsubject> {
 
     if (response.statusCode == 200) {
       print("Subject deleted successfully");
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     } else {
       print("Failed to delete subject. Status: ${response.statusCode}");
     }

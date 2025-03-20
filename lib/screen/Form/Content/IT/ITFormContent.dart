@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:project/ColorPlate/color.dart';
 import 'package:project/bloc/Subject/IT/subject_bloc.dart';
 
@@ -26,7 +27,12 @@ class ITFormContent extends StatelessWidget {
           BlocBuilder<SubjectBloc, SubjectState>(
             builder: (context, state) {
               if (state is SubjectLoading) {
-                return Center(child: CircularProgressIndicator());
+                return Center(
+                  child: LoadingAnimationWidget.waveDots(
+                    color: Colors.deepPurple,
+                    size: 50,
+                  ),
+                );
               } else if (state is SubjectError) {
                 return Center(
                   child: Text(
