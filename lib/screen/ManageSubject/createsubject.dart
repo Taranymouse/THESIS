@@ -92,7 +92,7 @@ class _CreatesubjectState extends State<Createsubject> {
                       child: BlocBuilder<CourseBloc, CourseState>(
                         builder: (context, state) {
                           String? selected =
-                              (state is CourseChanged)
+                              (state is CourseLoaded)
                                   ? state.selectedCourse
                                   : null;
                           return Course(
@@ -115,8 +115,8 @@ class _CreatesubjectState extends State<Createsubject> {
                       child: BlocBuilder<CourseyearBloc, CourseyearState>(
                         builder: (context, state) {
                           String? selected =
-                              (state is CourseyearChanged)
-                                  ? state.selectedCourseyear
+                              (state is CourseyearLoaded)
+                                  ? state.selectedyearCourse
                                   : null;
                           return Courseyear(
                             selectedValue: selected,

@@ -9,11 +9,23 @@ abstract class CourseyearState extends Equatable {
 
 final class CourseyearInitial extends CourseyearState {}
 
-class CourseyearChanged extends CourseyearState {
-  final String? selectedCourseyear;
+class CourseyearLoading extends CourseyearState {}
 
-  const CourseyearChanged(this.selectedCourseyear);
+class CourseyearLoaded extends CourseyearState {
+  final List<Map<String, dynamic>> courses;
+  final String? selectedyearCourse;
+
+  const CourseyearLoaded({required this.courses, this.selectedyearCourse});
 
   @override
-  List<Object?> get props => [selectedCourseyear];
+  List<Object?> get props => [courses, selectedyearCourse];
+}
+
+class CourseyearError extends CourseyearState {
+  final String message;
+
+  const CourseyearError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

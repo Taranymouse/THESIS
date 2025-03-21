@@ -10,6 +10,8 @@ import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Form/BackButton/backbttn.dart';
 import 'package:project/screen/Form/dropdown/course.dart';
 import 'package:project/screen/Form/dropdown/courseyear.dart';
+import 'package:project/screen/Form/dropdown/selectCourse.dart';
+import 'package:project/screen/Form/dropdown/selectCourseYear.dart';
 import 'package:project/screen/Form/dropdown/semester.dart';
 import 'package:project/screen/Form/dropdown/stdyear.dart';
 import 'package:project/screen/ManageSubject/editsubject.dart';
@@ -23,8 +25,14 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
   String? course;
   String? courseYear;
 
+  @override
+  void initState() {
+    super.initState();
+    context.read<CourseBloc>().add(LoadCourses());
+  }
+
   void _fetchSubjects() {
-    if (courseYear != null) {
+    if (course != null && courseYear != null) {
       context.read<GetSubjectBloc>().add(
         FetchAllSubject(courseYear: courseYear!),
       );
@@ -45,7 +53,6 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
             ),
       ),
     );
-    // ถ้ามีการเปลี่ยนแปลงให้โหลดใหม่
     if (result == true) {
       _fetchSubjects();
     }
@@ -85,23 +92,21 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
                 setState(() {
                   course = value;
                 });
+                print("Selected course: $course");
               },
               onCourseYearChanged: (value) {
                 setState(() {
                   courseYear = value;
-                  _fetchSubjects(); // โหลดรายวิชาใหม่เมื่อเลือกปีหลักสูตร
                 });
+                print("Selected course year: $courseYear");
+                _fetchSubjects();
               },
             ),
             const SizedBox(height: 20),
-            if (course == "IT" &&
-                (courseYear == "2560" || courseYear == "2565"))
-              Expanded(child: GetSubjects(onEditSubject: _navigateToEdit))
-            else if (course == "CS" &&
-                (courseYear == "2560" || courseYear == "2565"))
-              const Center(child: Text("Coming Soon.."))
+            if (course == null || courseYear == null)
+              const Center(child: Text("กรุณาเลือกหลักสูตรและปีหลักสูตร"))
             else
-              const Center(child: Text("กรุณาเลือกหลักสูตรและปีหลักสูตร")),
+              Expanded(child: GetSubjects(onEditSubject: _navigateToEdit)),
           ],
         ),
       ),
@@ -133,38 +138,14 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
           children: [
             const Text("หลักสูตร :"),
             const SizedBox(width: 10),
-            BlocBuilder<CourseBloc, CourseState>(
-              builder: (context, state) {
-                String? selected =
-                    (state is CourseChanged) ? state.selectedCourse : null;
-                return Course(
-                  selectedValue: selected,
-                  onChanged: (newValue) {
-                    context.read<CourseBloc>().add(CourseSelected(newValue));
-                    widget.onCourseChanged(newValue); // แจ้ง parent
-                  },
-                );
-              },
+            CourseDropdown(
+              onCourseChanged: widget.onCourseChanged, // ส่งค่ากลับไป
             ),
             const SizedBox(width: 20),
             const Text("ปีหลักสูตร :"),
             const SizedBox(width: 10),
-            BlocBuilder<CourseyearBloc, CourseyearState>(
-              builder: (context, state) {
-                String? selected =
-                    (state is CourseyearChanged)
-                        ? state.selectedCourseyear
-                        : null;
-                return Courseyear(
-                  selectedValue: selected,
-                  onChanged: (newValue) {
-                    context.read<CourseyearBloc>().add(
-                      CourseyearSelected(newValue),
-                    );
-                    widget.onCourseYearChanged(newValue); // แจ้ง parent
-                  },
-                );
-              },
+            CourseYearDropdown(
+              onCourseYearChanged: widget.onCourseYearChanged, // ส่งค่ากลับไป
             ),
           ],
         ),
@@ -186,13 +167,15 @@ class GetSubjects extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         } else if (state is SubjectsLoaded) {
           return ListView.builder(
-            itemCount: state.subjects.length,
+            itemCount: state.subjects.length, // จำนวนวิชาที่จะโชว์
             itemBuilder: (context, index) {
-              final subject = state.subjects[index];
+              final subject =
+                  state.subjects[index]; // วิชาที่เลือกในแต่ละ index
               return ListTile(
-                title: Text(subject.courseCode),
-                subtitle: Text(subject.name),
-                onTap: () => onEditSubject(subject),
+                title: Text(subject.courseCode), // แสดงรหัสวิชา
+                subtitle: Text(subject.name), // แสดงชื่อวิชา
+                onTap:
+                    () => onEditSubject(subject), // เมื่อคลิกจะไปที่หน้าแก้ไข
               );
             },
           );

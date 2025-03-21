@@ -46,15 +46,15 @@ class _CheckformState extends State<Checkform> {
               BlocBuilder<CourseBloc, CourseState>(
                 builder: (context, courseState) {
                   String? course =
-                      (courseState is CourseChanged)
+                      (courseState is CourseLoaded)
                           ? courseState.selectedCourse
                           : null;
 
                   return BlocBuilder<CourseyearBloc, CourseyearState>(
                     builder: (context, yearState) {
                       String? courseYear =
-                          (yearState is CourseyearChanged)
-                              ? yearState.selectedCourseyear
+                          (yearState is CourseyearLoaded)
+                              ? yearState.selectedyearCourse
                               : null;
 
                       if (courseYear != null) {
@@ -112,7 +112,7 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
               BlocBuilder<CourseBloc, CourseState>(
                 builder: (context, state) {
                   String? selected =
-                      (state is CourseChanged) ? state.selectedCourse : null;
+                      (state is CourseLoaded) ? state.selectedCourse : null;
                   return Course(
                     selectedValue: selected,
                     onChanged: (newValue) {
@@ -127,8 +127,8 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
               BlocBuilder<CourseyearBloc, CourseyearState>(
                 builder: (context, state) {
                   String? selected =
-                      (state is CourseyearChanged)
-                          ? state.selectedCourseyear
+                      (state is CourseyearLoaded)
+                          ? state.selectedyearCourse
                           : null;
                   return Courseyear(
                     selectedValue: selected,
