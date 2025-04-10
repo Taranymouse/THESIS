@@ -7,7 +7,11 @@ part 'subject_event.dart';
 part 'subject_state.dart';
 
 class SubjectBloc extends Bloc<SubjectEvent, SubjectState> {
+  final String baseIP = "192.168.1.179"; // ✅ เปลี่ยน IP ได้ที่นี่
+  late final String baseUrl;
+
   SubjectBloc() : super(SubjectInitial()) {
+    baseUrl = "http://$baseIP:8000"; // ✅ ใช้ baseIP ตั้งต้น
     on<LoadSubjects>(_onLoadSubjects);
     on<UpdateSubjectSelection>(_onUpdateSubjectSelection);
   }
@@ -20,16 +24,19 @@ class SubjectBloc extends Bloc<SubjectEvent, SubjectState> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.1.117:8000/subjects/'),
+        Uri.parse('$baseUrl/subjects/'), // ✅ ใช้ baseUrl แทน IP
       );
 
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         print("###### !!! API response : ${response.body}");
+
         // ✅ คัดกรองเฉพาะรายวิชาของปีที่เลือก
-        List<String> subjects = data.where((item) => item['year_course_sub'] == event.courseYear).map(
-                  (item) => "${item['course_code']} ${item['name_subjects']}",
-                ).toList();
+        List<String> subjects = data
+            .where((item) => item['year_course_sub'] == event.courseYear)
+            .map((item) => "${item['course_code']} ${item['name_subjects']}")
+            .toList();
+
         await Future.delayed(Duration(seconds: 2));
         emit(SubjectLoaded(subjects: subjects, selectedValues: {}));
       } else {

@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:project/screen/Form/TextFeild/customTextFeild.dart';
+import 'package:project/screen/Form/Form_Options/TextFeild/customTextFeild.dart';
+import 'package:project/API/api_config.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart'; // ✅ เพิ่มบรรทัดนี้
 
 class Editsubject extends StatefulWidget {
   final int subjectId;
@@ -36,9 +39,9 @@ class _EditsubjectState extends State<Editsubject> {
     super.initState();
     _courseCodeController = TextEditingController(text: widget.courseCode);
     _courseNameController = TextEditingController(text: widget.courseName);
-    selectedCourseYear = widget.curriculumYear;
-    selectedDepartment = widget.department;
-    _loadBranches();
+    selectedCourseYear = widget.curriculumYear; // ตั้งค่าเริ่มต้นปีหลักสูตร
+    selectedDepartment = widget.department; // ตั้งค่าเริ่มต้นหลักสูตร
+    _loadBranches(); // โหลดข้อมูลหลักสูตร
   }
 
   Future<void> _updateSubject() async {
@@ -50,7 +53,7 @@ class _EditsubjectState extends State<Editsubject> {
     };
 
     final response = await http.put(
-      Uri.parse("http://192.168.1.117:8000/subjects/${widget.subjectId}"),
+      Uri.parse("$baseUrl/subjects/${widget.subjectId}"), // ✅ แก้ URL
       headers: {'Content-Type': 'application/json'},
       body: json.encode(updatedData),
     );
@@ -67,7 +70,7 @@ class _EditsubjectState extends State<Editsubject> {
 
   Future<void> _deleteSubject() async {
     final response = await http.delete(
-      Uri.parse("http://192.168.1.117:8000/subjects/${widget.subjectId}"),
+      Uri.parse("$baseUrl/subjects/${widget.subjectId}"), // ✅ แก้ URL
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -80,15 +83,14 @@ class _EditsubjectState extends State<Editsubject> {
   }
 
   Future<void> _loadBranches() async {
-    final response = await http.get(
-      Uri.parse("http://192.168.1.117:8000/branches"),
-    );
+    final response = await http.get(Uri.parse("$baseUrl/branches"));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       setState(() {
         branchMap = {
-          for (var item in data) item['name_branch']: item['id_branch'],
+          for (var item in data)
+            item['id_branch'].toString(): item['name_branch'],
         };
       });
     } else {
@@ -125,7 +127,6 @@ class _EditsubjectState extends State<Editsubject> {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          // mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             CustomTextField(
@@ -148,43 +149,34 @@ class _EditsubjectState extends State<Editsubject> {
                           : null,
             ),
             SizedBox(height: 20),
-
-            // Dropdown สำหรับเลือกปีหลักสูตร
-            DropdownButtonFormField<String>(
-              value: selectedCourseYear,
-              decoration: InputDecoration(labelText: "ปีหลักสูตร"),
-              items:
-                  courseYears.map((year) {
-                    return DropdownMenuItem<String>(
-                      value: year,
-                      child: Text(year),
-                    );
-                  }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  selectedCourseYear = newValue;
-                });
-              },
+            Row(
+              children: [
+                Text("หลักสูตร :"),
+                SizedBox(width: 10),
+                // ใช้ CourseDropdown
+                CourseDropdown(
+                  onCourseChanged: (newBranch) {
+                    setState(() {
+                      selectedDepartment = int.tryParse(newBranch ?? '0');
+                    });
+                  },
+                  value: selectedDepartment?.toString(), // ใช้ค่าเริ่มต้น
+                ),
+                Text("ปีหลักสูตร :"),
+                SizedBox(width: 10),
+                // ใช้ CourseYearDropdown
+                CourseYearDropdown(
+                  onCourseYearChanged: (newYear) {
+                    setState(() {
+                      selectedCourseYear = newYear;
+                    });
+                  },
+                  value: selectedCourseYear, // ใช้ค่าเริ่มต้น
+                ),
+                SizedBox(height: 20),
+              ],
             ),
-            SizedBox(height: 20),
 
-            // Dropdown สำหรับเลือกหลักสูตร
-            DropdownButtonFormField<int>(
-              value: selectedDepartment,
-              decoration: InputDecoration(labelText: "หลักสูตร"),
-              items:
-                  branchMap.entries.map((entry) {
-                    return DropdownMenuItem<int>(
-                      value: entry.value,
-                      child: Text(entry.key),
-                    );
-                  }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  selectedDepartment = newValue;
-                });
-              },
-            ),
             SizedBox(height: 20),
             Center(
               child: Row(

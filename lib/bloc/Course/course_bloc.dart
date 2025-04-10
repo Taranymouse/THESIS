@@ -7,7 +7,11 @@ part 'course_event.dart';
 part 'course_state.dart';
 
 class CourseBloc extends Bloc<CourseEvent, CourseState> {
+  final String baseIP = "192.168.1.179";
+  late final String baseUrl;
+
   CourseBloc() : super(CourseInitial()) {
+    baseUrl = "http://$baseIP:8000"; // ✅ กำหนด baseUrl จาก baseIP
     on<LoadCourses>(_onLoadCourses);
     on<CourseSelected>(_onCourseSelected);
   }
@@ -15,7 +19,7 @@ class CourseBloc extends Bloc<CourseEvent, CourseState> {
   Future<void> _onLoadCourses(LoadCourses event, Emitter<CourseState> emit) async {
     emit(CourseLoading());
     try {
-      final response = await http.get(Uri.parse("http://192.168.1.117:8000/branches"));
+      final response = await http.get(Uri.parse("$baseUrl/branches")); // ✅ ใช้ baseUrl
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);

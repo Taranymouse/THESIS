@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:project/ColorPlate/color.dart';
+import 'package:project/screen/Form/CheckPerForm/checkPerForm.dart';
 import 'package:project/screen/Form/checkForm.dart';
+import 'package:project/screen/Loading/loading_screen.dart';
 
 class Menu extends StatelessWidget {
   const Menu({super.key});
@@ -40,10 +42,16 @@ class Menu extends StatelessWidget {
                   ),
                   label: "จัดการเอกสาร",
                   color: Colors.blueAccent,
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    await LoadingScreen.showWithNavigation(
                       context,
-                      MaterialPageRoute(builder: (context) => Checkform()),
+                      () async {
+                        // จำลองการโหลดข้อมูล
+                        await Future.delayed(
+                          const Duration(seconds: 2),
+                        ); // เปลี่ยนระยะเวลาตามความเหมาะสม
+                      },
+                      CheckPerform(), // หน้าใหม่ที่จะไป
                     );
                   },
                 ),

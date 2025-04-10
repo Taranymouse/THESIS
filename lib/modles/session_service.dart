@@ -10,12 +10,14 @@ class SessionService {
   }
 
   Future<void> saveDisplayName(String displayName) async {
-  await _storage.write(key: 'displayName', value: displayName);
-}
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('display_name', displayName);
+  }
 
-Future<String?> getDisplayName() async {
-  return await _storage.read(key: 'displayName');
-}
+  Future<String?> getDisplayName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('display_name');
+  }
 
   Future<void> saveAuthToken(String token) async {
     await _storage.write(key: 'authToken', value: token);
@@ -53,6 +55,6 @@ Future<String?> getDisplayName() async {
 
     // ลบใน SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_isLoggedInKey);
+    await prefs.clear(); // ลบข้อมูลทั้งหมดเมื่อ Logout
   }
 }

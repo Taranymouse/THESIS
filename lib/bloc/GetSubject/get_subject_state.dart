@@ -7,7 +7,7 @@ sealed class GetSubjectState extends Equatable {
   List<Object?> get props => [];
 }
 
-final class ManageSubjectInitial extends GetSubjectState {}
+final class GetSubjectInitial extends GetSubjectState {}
 
 class SubjectLoading extends GetSubjectState {}
 

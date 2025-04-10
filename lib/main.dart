@@ -12,6 +12,7 @@ import 'package:project/bloc/StdYear/stdyear_bloc.dart';
 import 'package:project/bloc/Subject/CS/subject_cs_bloc.dart';
 import 'package:project/bloc/Subject/IT/subject_bloc.dart';
 import 'package:project/screen/Admin/adminhome.dart';
+import 'package:project/screen/Form/CheckPerForm/checkPerForm.dart';
 import 'package:project/screen/ManageSubject/createsubject.dart';
 import 'package:project/screen/ManageSubject/fetchallsubject.dart';
 import 'package:project/screen/Form/checkForm.dart';
@@ -74,7 +75,7 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.black),
         ),
       ),
-      // home: Createsubject(),
+      // home: AllSubjectsPage(),
       initialRoute: isLoggedIn ? '/home' : '/login',
       routes: {
         '/login': (context) => Login(),

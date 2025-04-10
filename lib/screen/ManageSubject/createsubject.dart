@@ -5,9 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/bloc/Course/course_bloc.dart';
 import 'package:project/bloc/CourseYear/courseyear_bloc.dart';
-import 'package:project/screen/Form/TextFeild/customTextFeild.dart';
-import 'package:project/screen/Form/dropdown/course.dart';
-import 'package:project/screen/Form/dropdown/courseyear.dart';
+import 'package:project/screen/Form/Form_Options/TextFeild/customTextFeild.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/course.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/courseyear.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart';
 
 class Createsubject extends StatefulWidget {
   Createsubject({super.key});
@@ -19,9 +21,11 @@ class Createsubject extends StatefulWidget {
 class _CreatesubjectState extends State<Createsubject> {
   final courseCode = TextEditingController();
   final courseName = TextEditingController();
-  String? courseYear;
-  String? idBranch;
+  String? selectedCourse; // เก็บค่าหลักสูตรที่เลือก
+  String? selectedCourseYear; // เก็บค่าปีหลักสูตรที่เลือก
   Map<String, int> branchMap = {}; // แผนที่เก็บชื่อสาขากับ id_branch
+  final String baseIP = "192.168.1.179"; // ✅ เปลี่ยน IP ได้ง่าย
+  late final String baseUrl = "http://$baseIP:8000";
 
   final _formKey = GlobalKey<FormState>();
 
@@ -32,18 +36,15 @@ class _CreatesubjectState extends State<Createsubject> {
   }
 
   Future<void> _loadBranches() async {
-    final response = await http.get(
-      Uri.parse("http://192.168.1.117:8000/branches"),
-    );
+    final response = await http.get(Uri.parse("$baseUrl/branches"));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       setState(() {
-        // สร้างแผนที่ของชื่อสาขา (name_branch) และ id_branch
         branchMap = {
-          for (var item in data) item['name_branch']: item['id_branch'],
+          for (var item in data)
+            item['id_branch'].toString(): item['id_branch'],
         };
-        // print("Branches loaded: $branchMap");
       });
     } else {
       print("Failed to load branches. Status: ${response.statusCode}");
@@ -81,54 +82,30 @@ class _CreatesubjectState extends State<Createsubject> {
                               : null,
                 ),
                 const SizedBox(height: 10),
-
-                const SizedBox(height: 10),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text("หลักสูตร :"),
                     SizedBox(width: 10),
                     Expanded(
-                      child: BlocBuilder<CourseBloc, CourseState>(
-                        builder: (context, state) {
-                          String? selected =
-                              (state is CourseLoaded)
-                                  ? state.selectedCourse
-                                  : null;
-                          return Course(
-                            selectedValue: selected,
-                            onChanged: (newValue) {
-                              setState(() {
-                                idBranch = newValue;
-                              });
-                              context.read<CourseBloc>().add(
-                                CourseSelected(newValue),
-                              );
-                            },
-                          );
+                      child: CourseDropdown(
+                        onCourseChanged: (newValue) {
+                          setState(() {
+                            selectedCourse =
+                                newValue; // เก็บค่าหลักสูตรที่เลือก
+                          });
                         },
                       ),
                     ),
                     SizedBox(width: 10),
                     Text("ปีหลักสูตร :"),
                     Expanded(
-                      child: BlocBuilder<CourseyearBloc, CourseyearState>(
-                        builder: (context, state) {
-                          String? selected =
-                              (state is CourseyearLoaded)
-                                  ? state.selectedyearCourse
-                                  : null;
-                          return Courseyear(
-                            selectedValue: selected,
-                            onChanged: (newValue) {
-                              setState(() {
-                                courseYear = newValue; // เก็บปีหลักสูตร
-                              });
-                              context.read<CourseyearBloc>().add(
-                                CourseyearSelected(newValue),
-                              );
-                            },
-                          );
+                      child: CourseYearDropdown(
+                        onCourseYearChanged: (newValue) {
+                          setState(() {
+                            selectedCourseYear =
+                                newValue; // เก็บค่าปีหลักสูตรที่เลือก
+                          });
                         },
                       ),
                     ),
@@ -137,44 +114,40 @@ class _CreatesubjectState extends State<Createsubject> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      // ตรวจสอบว่า idBranch ไม่เป็น null
-                      if (idBranch != null &&
-                          courseYear != null &&
-                          branchMap.containsKey(idBranch)) {
-                        // หา id_branch จาก name_branch
-                        int departmentId = branchMap[idBranch!]!;
+                    print("Selected Course: $selectedCourse");
+                    print("Selected Course Year: $selectedCourseYear");
+                    print("Branch Map: $branchMap");
 
-                        // สร้าง payload สำหรับส่งไปที่ API
+                    if (_formKey.currentState!.validate()) {
+                      if (selectedCourse != null &&
+                          selectedCourseYear != null &&
+                          branchMap.containsKey(selectedCourse)) {
+                        int departmentId = branchMap[selectedCourse!]!;
                         var payload = {
-                          'courseCode': courseCode.text, // course_code
-                          'courseName': courseName.text, // course_name
-                          'curriculumYear': courseYear, // curriculum_year
-                          'department':
-                              departmentId, // ใช้ id_branch ที่แปลงแล้ว
+                          'courseCode': courseCode.text,
+                          'courseName': courseName.text,
+                          'curriculumYear': selectedCourseYear,
+                          'department': departmentId,
                         };
 
                         print("📡 Payload: $payload");
 
-                        // ตัวอย่างการเรียก API
                         final response = await http.post(
-                          Uri.parse('http://192.168.1.117:8000/subjects'),
+                          Uri.parse("$baseUrl/subjects"),
                           headers: {'Content-Type': 'application/json'},
                           body: jsonEncode(payload),
                         );
 
                         if (response.statusCode == 200) {
-                          // แสดงผลเมื่อสร้างสำเร็จ
                           print("✅ Subject created successfully!");
-                          Navigator.pop(context,true); // ปิดหน้าจอสร้างรายวิชา
+                          Navigator.pop(context, true);
                         } else {
-                          // แสดงผลเมื่อเกิดข้อผิดพลาด
                           print(
                             "❌ Failed to create subject. Status: ${response.statusCode}",
                           );
                         }
                       } else {
-                        print("❌ Invalid branch selected.");
+                        print("❌ Invalid branch or year selected.");
                       }
                     }
                   },

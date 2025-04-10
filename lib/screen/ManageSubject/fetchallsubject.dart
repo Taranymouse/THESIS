@@ -2,18 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:project/bloc/Course/course_bloc.dart';
-import 'package:project/bloc/CourseYear/courseyear_bloc.dart';
+
 import 'package:project/bloc/GetSubject/get_subject_bloc.dart';
-import 'package:project/bloc/Semester/semester_bloc.dart';
-import 'package:project/bloc/StdYear/stdyear_bloc.dart';
+
 import 'package:project/screen/Admin/adminhome.dart';
-import 'package:project/screen/Form/BackButton/backbttn.dart';
-import 'package:project/screen/Form/dropdown/course.dart';
-import 'package:project/screen/Form/dropdown/courseyear.dart';
-import 'package:project/screen/Form/dropdown/selectCourse.dart';
-import 'package:project/screen/Form/dropdown/selectCourseYear.dart';
-import 'package:project/screen/Form/dropdown/semester.dart';
-import 'package:project/screen/Form/dropdown/stdyear.dart';
+import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
+
+import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart';
+
 import 'package:project/screen/ManageSubject/editsubject.dart';
 
 class AllSubjectsPage extends StatefulWidget {

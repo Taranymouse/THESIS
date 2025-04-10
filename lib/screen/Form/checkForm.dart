@@ -7,11 +7,11 @@ import 'package:project/bloc/StdYear/stdyear_bloc.dart';
 import 'package:project/bloc/Subject/IT/subject_bloc.dart';
 import 'package:project/screen/Form/Content/CS/CSFormContent.dart';
 import 'package:project/screen/Form/Content/IT/ITFormContent.dart';
-import 'package:project/screen/Form/TextFeild/customTextFeild.dart';
-import 'package:project/screen/Form/dropdown/course.dart';
-import 'package:project/screen/Form/dropdown/courseyear.dart';
-import 'package:project/screen/Form/dropdown/semester.dart';
-import 'package:project/screen/Form/dropdown/stdyear.dart';
+import 'package:project/screen/Form/Form_Options/TextFeild/customTextFeild.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/course.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/courseyear.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/stdyear.dart';
 
 class Checkform extends StatefulWidget {
   Checkform({super.key});

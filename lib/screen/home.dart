@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:project/API/api_config.dart';
 import 'package:project/Nav/bottom_nav.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/bloc/Login/login_bloc.dart';
@@ -57,7 +58,19 @@ class _HomepageContentState extends State<HomepageContent> {
   @override
   void initState() {
     super.initState();
-    _onCheckUser();
+    _loadDisplayName();
+  }
+
+  Future<void> _loadDisplayName() async {
+    String? cachedDisplayName = await _sessionService.getDisplayName();
+    if (cachedDisplayName != null) {
+      setState(() {
+        displayName = cachedDisplayName;
+      });
+    } else {
+      // ถ้าไม่มีใน SessionService ให้โหลดจาก API
+      _onCheckUser();
+    }
   }
 
   Future<void> _onCheckUser() async {
@@ -66,15 +79,18 @@ class _HomepageContentState extends State<HomepageContent> {
     print("Token : $token");
     if (token != null) {
       final response = await http.get(
-        Uri.parse('http://192.168.1.117:8000/user'),
+        Uri.parse('$baseUrl/user'),
         headers: {"Authorization": "$token"},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        String fetchedDisplayName = data["display_name"];
         setState(() {
-          displayName = data["display_name"];
+          displayName = fetchedDisplayName;
         });
+        // บันทึก displayName ลงใน SessionService
+        await _sessionService.saveDisplayName(fetchedDisplayName);
       } else {
         print("❌ Failed to fetch user data: ${response.body}");
       }
@@ -93,7 +109,9 @@ class _HomepageContentState extends State<HomepageContent> {
           SizedBox(height: 20),
           // แสดง Email ที่ล็อกอิน
           Text(
-            "ยินดีต้อนรับ: ${displayName ?? 'none displayname'}",
+            displayName != null
+                ? "ยินดีต้อนรับ: $displayName"
+                : "กำลังโหลดข้อมูลผู้ใช้...",
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           AnnouncementCarousel(),
