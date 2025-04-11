@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:project/bloc/GetSubject/get_subject_bloc.dart';
 import 'package:project/bloc/Semester/semester_bloc.dart';
 import 'package:project/bloc/StdYear/stdyear_bloc.dart';
@@ -28,6 +29,9 @@ class _CheckPerformState extends State<CheckPerform> {
   String? selectedCourseYear;
   String? selectedSemester;
   String? selectedStdYear;
+  int passedSubjectsCount = 0;
+  int failedSubjectsCount = 0;
+  bool isTableValid = false;
 
   void _fetchSubjects() {
     if (selectedCourse != null && selectedCourseYear != null) {
@@ -86,8 +90,87 @@ class _CheckPerformState extends State<CheckPerform> {
               if (selectedCourse == null || selectedCourseYear == null)
                 const Center(child: Text("กรุณาเลือกหลักสูตรและปีหลักสูตร"))
               else
-                SubjectTable(),
+                BlocBuilder<GetSubjectBloc, GetSubjectState>(
+                  builder: (context, state) {
+                    if (state is SubjectLoading) {
+                      return Center(
+                        child: LoadingAnimationWidget.staggeredDotsWave(
+                          color: Colors.deepPurple,
+                          size: 50,
+                        ),
+                      );
+                    }
+                    if (state is SubjectsLoaded) {
+                      return SubjectTable(
+                        subjects: state.subjects,
+                        onPassedSubjectsChanged: (count) {
+                          setState(() {
+                            passedSubjectsCount = count;
+                          });
+                        },
+                        onFailedSubjectsChanged: (count) {
+                          setState(() {
+                            failedSubjectsCount = count;
+                          });
+                        },
+                        onValidationChanged: (isValid) {
+                          setState(() {
+                            isTableValid = isValid;
+                          });
+                        },
+                      );
+                    } else if (state is SubjectError) {
+                      return Center(child: Text("Error: ${state.message}"));
+                    } else {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                  },
+                ),
               SizedBox(height: 10),
+              Row(
+                children: [
+                  Text("จำนวนรายวิชาที่ผ่าน : $passedSubjectsCount"),
+                  SizedBox(width: 10),
+                ],
+              ),
+              Row(
+                children: [
+                  Text(
+                    "จำนวนรายวิชาที่ไม่ผ่าน / ยังไม่ลงทะเบียน : $failedSubjectsCount",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  SizedBox(width: 10),
+                ],
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  if (!isTableValid) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("กรุณากรอกข้อมูลในตารางให้ครบถ้วน"),
+                      ),
+                    );
+                    return;
+                  }
+
+                  if (widget.nameController.text.isEmpty ||
+                      widget.lastnameController.text.isEmpty ||
+                      widget.stdidController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("กรุณากรอกข้อมูลให้ครบถ้วน")),
+                    );
+                  } else {
+                    // Handle form submission
+                    print("Form submitted with values:");
+                    print("Name: ${widget.nameController.text}");
+                    print("Lastname: ${widget.lastnameController.text}");
+                    print("Student ID: ${widget.stdidController.text}");
+                  }
+                },
+                child: Text("Submit"),
+              ),
+              SizedBox(height: 20),
             ],
           ),
         ),
