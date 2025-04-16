@@ -7,7 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/modles/session_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
@@ -16,7 +15,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final SessionService _sessionService = SessionService();
-  final String baseIP = "192.168.1.179";
+
   late final String baseUrl;
 
   LoginBloc() : super(LoginInitial()) {
@@ -25,7 +24,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<CheckSessionEvent>(_onCheckSession);
     on<LogoutEvent>(_onLogout);
     on<SetNewPasswordEvent>(_onSetNewPassword);
-    baseUrl = "http://$baseIP:8000";
+
   }
 
   // ✅ ---- 1. เช็ก Session เมื่อเปิดแอป ----
@@ -113,7 +112,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
       // 📌 เรียก API `/login`
       final response = await http.post(
-        Uri.parse('$baseUrl/login'),
+        Uri.parse('http://192.168.1.108:8000/api/auth/login'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"token": idToken}),
       );
@@ -127,7 +126,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
         if (token != null) {
           final response = await http.get(
-            Uri.parse('$baseUrl/user'),
+            Uri.parse('http://192.168.1.108:8000/api/auth/user'),
             headers: {"Authorization": "$token"},
           );
 
@@ -165,7 +164,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     emit(LoginLoading());
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/set-password'),
+        Uri.parse('http://192.168.1.108:8000/api/users/set-password'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": event.email, "password": event.password}),
       );

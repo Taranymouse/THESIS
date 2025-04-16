@@ -170,7 +170,7 @@ class GetSubjects extends StatelessWidget {
                   state.subjects[index]; // วิชาที่เลือกในแต่ละ index
               return ListTile(
                 title: Text(subject.courseCode), // แสดงรหัสวิชา
-                subtitle: Text(subject.name), // แสดงชื่อวิชา
+                subtitle: Text(subject.nameSubjects), // แสดงชื่อวิชา
                 onTap:
                     () => onEditSubject(subject), // เมื่อคลิกจะไปที่หน้าแก้ไข
               );

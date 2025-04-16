@@ -9,6 +9,8 @@ class SubjectTable extends StatefulWidget {
   final Function(int) onPassedSubjectsChanged;
   final Function(int) onFailedSubjectsChanged;
   final Function(bool) onValidationChanged;
+  final Function(List<Map<String, dynamic>>)
+  onSubjectsDataChanged; // เพิ่ม callback
 
   const SubjectTable({
     Key? key,
@@ -16,6 +18,7 @@ class SubjectTable extends StatefulWidget {
     required this.onPassedSubjectsChanged,
     required this.onFailedSubjectsChanged,
     required this.onValidationChanged,
+    required this.onSubjectsDataChanged, // เพิ่ม callback
   }) : super(key: key);
 
   @override
@@ -46,6 +49,27 @@ class _SubjectTableState extends State<SubjectTable> {
         !selectedSemesters.values.contains(null) &&
         !selectedYears.values.contains(null) &&
         !selectedGrades.values.contains(null);
+  }
+
+  void _updateSubjectsData() {
+    List<Map<String, dynamic>> subjectsData =
+        widget.subjects.asMap().entries.map((entry) {
+          int index = entry.key;
+          Subject subject = entry.value;
+
+          return {
+            "subject_code": subject.courseCode,
+            "subject_name": subject.nameSubjects,
+            "subject_semester":
+                int.tryParse(selectedSemesters[index] ?? "0") ?? 0,
+            "subject_year": int.tryParse(selectedYears[index] ?? "0") ?? 0,
+            "subject_grade": selectedGrades[index] ?? "",
+          };
+        }).toList();
+
+    widget.onSubjectsDataChanged(
+      subjectsData,
+    ); // ส่งข้อมูลกลับไปยัง parent widget
   }
 
   @override
@@ -102,7 +126,7 @@ class _SubjectTableState extends State<SubjectTable> {
                   cells: [
                     DataCell(
                       Text(
-                        "${subject.courseCode} - ${subject.name}",
+                        "${subject.courseCode} - ${subject.nameSubjects}",
                         style: GoogleFonts.prompt(fontSize: 8),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 2,
@@ -125,6 +149,7 @@ class _SubjectTableState extends State<SubjectTable> {
                           setState(() {
                             selectedSemesters[index] = value!;
                           });
+                          _updateSubjectsData(); // อัปเดตข้อมูลเมื่อมีการเปลี่ยนแปลง
                           widget.onValidationChanged(isAllDataFilled());
                         },
                       ),
@@ -146,6 +171,7 @@ class _SubjectTableState extends State<SubjectTable> {
                           setState(() {
                             selectedYears[index] = value!;
                           });
+                          _updateSubjectsData();
                           widget.onValidationChanged(isAllDataFilled());
                         },
                       ),
@@ -178,6 +204,7 @@ class _SubjectTableState extends State<SubjectTable> {
                           setState(() {
                             selectedGrades[index] = value!;
                           });
+                          _updateSubjectsData();
                           widget.onPassedSubjectsChanged(countPassedSubjects());
                           widget.onFailedSubjectsChanged(countFailedSubjects());
                           widget.onValidationChanged(isAllDataFilled());

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:project/bloc/GetSubject/get_subject_bloc.dart';
 import 'package:project/bloc/Semester/semester_bloc.dart';
 import 'package:project/bloc/StdYear/stdyear_bloc.dart';
-import 'package:project/screen/Form/CheckPerForm/Content.dart';
+import 'package:project/modles/subject_model.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Form/Form_Options/TextFeild/customTextFeild.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
@@ -32,6 +33,7 @@ class _CheckPerformState extends State<CheckPerform> {
   int passedSubjectsCount = 0;
   int failedSubjectsCount = 0;
   bool isTableValid = false;
+  List<Map<String, dynamic>> subjectsData = []; // ตัวแปรเก็บข้อมูล subjects
 
   void _fetchSubjects() {
     if (selectedCourse != null && selectedCourseYear != null) {
@@ -39,6 +41,75 @@ class _CheckPerformState extends State<CheckPerform> {
         FetchAllSubject(courseYear: selectedCourseYear!),
       );
     }
+  }
+
+  Map<String, dynamic> formatData({
+    required String course,
+    required String semester,
+    required String year,
+    required String prefix,
+    required String fname,
+    required String lname,
+    required String sId,
+    required List<Map<String, dynamic>> subjects,
+    required String overallGrade,
+    required int branchId,
+    required String branchName,
+  }) {
+    return {
+      "course": int.tryParse(course) ?? 0,
+      "semester": int.tryParse(semester) ?? 0,
+      "year": int.tryParse(year) ?? 0,
+      "student": [
+        {
+          "prefix": prefix,
+          "fname": fname,
+          "lname": lname,
+          "s_id": sId,
+          "subject": subjects,
+          "overall_grade": overallGrade,
+          "branch": {"id_branch": branchId, "name_branch": branchName},
+        },
+      ],
+    };
+  }
+
+  void _submitForm() {
+    if (!isTableValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("กรุณากรอกข้อมูลในตารางให้ครบถ้วน")),
+      );
+      return;
+    }
+
+    if (widget.nameController.text.isEmpty ||
+        widget.lastnameController.text.isEmpty ||
+        widget.stdidController.text.isEmpty ||
+        selectedCourse == null ||
+        selectedCourseYear == null ||
+        selectedSemester == null ||
+        selectedStdYear == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("กรุณากรอกข้อมูลให้ครบถ้วน")));
+      return;
+    }
+
+    Map<String, dynamic> formattedData = formatData(
+      course: selectedCourse!,
+      semester: selectedSemester!,
+      year: selectedCourseYear!,
+      prefix: "Mr./Ms.", // หรือเพิ่ม dropdown สำหรับเลือก prefix
+      fname: widget.nameController.text,
+      lname: widget.lastnameController.text,
+      sId: widget.stdidController.text,
+      subjects: subjectsData, // ใช้ข้อมูลจาก SubjectTable
+      overallGrade: "A", // คำนวณเกรดรวมถ้าจำเป็น
+      branchId: 101, // ตัวอย่าง branchId
+      branchName: "Computer Science", // ตัวอย่าง branchName
+    );
+
+    print(formattedData);
   }
 
   @override
@@ -118,6 +189,11 @@ class _CheckPerformState extends State<CheckPerform> {
                             isTableValid = isValid;
                           });
                         },
+                        onSubjectsDataChanged: (data) {
+                          setState(() {
+                            subjectsData = data; // เก็บข้อมูล subjects
+                          });
+                        },
                       );
                     } else if (state is SubjectError) {
                       return Center(child: Text("Error: ${state.message}"));
@@ -166,6 +242,7 @@ class _CheckPerformState extends State<CheckPerform> {
                     print("Name: ${widget.nameController.text}");
                     print("Lastname: ${widget.lastnameController.text}");
                     print("Student ID: ${widget.stdidController.text}");
+                    _submitForm();
                   }
                 },
                 child: Text("Submit"),
@@ -300,6 +377,222 @@ class FormContentInput extends StatelessWidget {
                       : null,
         ),
       ],
+    );
+  }
+}
+
+class SubjectTable extends StatefulWidget {
+  final List<Subject> subjects;
+  final Function(int) onPassedSubjectsChanged;
+  final Function(int) onFailedSubjectsChanged;
+  final Function(bool) onValidationChanged;
+  final Function(List<Map<String, dynamic>>)
+  onSubjectsDataChanged; // เพิ่ม callback
+
+  const SubjectTable({
+    Key? key,
+    required this.subjects,
+    required this.onPassedSubjectsChanged,
+    required this.onFailedSubjectsChanged,
+    required this.onValidationChanged,
+    required this.onSubjectsDataChanged, // เพิ่ม callback
+  }) : super(key: key);
+
+  @override
+  _SubjectTableState createState() => _SubjectTableState();
+}
+
+class _SubjectTableState extends State<SubjectTable> {
+  Map<int, String> selectedSemesters = {};
+  Map<int, String> selectedYears = {};
+  Map<int, String> selectedGrades = {};
+
+  int countPassedSubjects() {
+    return selectedGrades.values.where((grade) {
+      return grade != null && grade != 'F' && grade != 'W' && grade != 'I';
+    }).length;
+  }
+
+  int countFailedSubjects() {
+    return selectedGrades.values.where((grade) {
+      return grade == 'F' || grade == 'I' || grade == 'W';
+    }).length;
+  }
+
+  bool isAllDataFilled() {
+    return selectedSemesters.length == widget.subjects.length &&
+        selectedYears.length == widget.subjects.length &&
+        selectedGrades.length == widget.subjects.length &&
+        !selectedSemesters.values.contains(null) &&
+        !selectedYears.values.contains(null) &&
+        !selectedGrades.values.contains(null);
+  }
+
+  void _updateSubjectsData() {
+    List<Map<String, dynamic>> subjectsData =
+        widget.subjects.asMap().entries.map((entry) {
+          int index = entry.key;
+          Subject subject = entry.value;
+
+          return {
+            "subject_code": subject.courseCode,
+            "subject_name": subject.nameSubjects,
+            "subject_semester":
+                int.tryParse(selectedSemesters[index] ?? "0") ?? 0,
+            "subject_year": int.tryParse(selectedYears[index] ?? "0") ?? 0,
+            "subject_grade": selectedGrades[index] ?? "",
+          };
+        }).toList();
+
+    widget.onSubjectsDataChanged(
+      subjectsData,
+    ); // ส่งข้อมูลกลับไปยัง parent widget
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 400,
+      child: SingleChildScrollView(
+        child: DataTable(
+          columnSpacing: 30,
+          columns: [
+            DataColumn(
+              label: Text(
+                'รหัสวิชา - ชื่อวิชา',
+                style: GoogleFonts.prompt(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'ภาคการศึกษา',
+                style: GoogleFonts.prompt(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'ปีการศึกษา',
+                style: GoogleFonts.prompt(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'เกรด',
+                style: GoogleFonts.prompt(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+          rows:
+              widget.subjects.asMap().entries.map((entry) {
+                int index = entry.key;
+                Subject subject = entry.value;
+
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      Text(
+                        "${subject.courseCode} - ${subject.nameSubjects}",
+                        style: GoogleFonts.prompt(fontSize: 8),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                      ),
+                    ),
+                    DataCell(
+                      DropdownButton<String>(
+                        value: selectedSemesters[index],
+                        items:
+                            ['ต้น', 'ปลาย', 'ฤดูร้อน'].map((semester) {
+                              return DropdownMenuItem<String>(
+                                value: semester,
+                                child: Text(
+                                  semester,
+                                  style: GoogleFonts.prompt(fontSize: 8),
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedSemesters[index] = value!;
+                          });
+                          _updateSubjectsData(); // อัปเดตข้อมูลเมื่อมีการเปลี่ยนแปลง
+                          widget.onValidationChanged(isAllDataFilled());
+                        },
+                      ),
+                    ),
+                    DataCell(
+                      DropdownButton<String>(
+                        value: selectedYears[index],
+                        items:
+                            ['2567', '2568', '2569'].map((year) {
+                              return DropdownMenuItem<String>(
+                                value: year,
+                                child: Text(
+                                  year,
+                                  style: GoogleFonts.prompt(fontSize: 8),
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedYears[index] = value!;
+                          });
+                          _updateSubjectsData();
+                          widget.onValidationChanged(isAllDataFilled());
+                        },
+                      ),
+                    ),
+                    DataCell(
+                      DropdownButton<String>(
+                        value: selectedGrades[index],
+                        items:
+                            [
+                              'A',
+                              'B+',
+                              'B',
+                              'C+',
+                              'C',
+                              'D+',
+                              'D',
+                              'F',
+                              'I',
+                              'W',
+                            ].map((grade) {
+                              return DropdownMenuItem<String>(
+                                value: grade,
+                                child: Text(
+                                  grade,
+                                  style: GoogleFonts.prompt(fontSize: 8),
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedGrades[index] = value!;
+                          });
+                          _updateSubjectsData();
+                          widget.onPassedSubjectsChanged(countPassedSubjects());
+                          widget.onFailedSubjectsChanged(countFailedSubjects());
+                          widget.onValidationChanged(isAllDataFilled());
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+        ),
+      ),
     );
   }
 }

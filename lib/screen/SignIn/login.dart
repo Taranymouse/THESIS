@@ -24,6 +24,8 @@ class Login extends StatelessWidget {
             // ตรวจสอบ role และไปยังหน้าแตกต่างกันตาม role
             if (state.role == "1") {
               Navigator.pushReplacementNamed(context, '/home');
+            } else if (state.role == "2") {
+              Navigator.pushReplacementNamed(context, '/prof-home');
             } else if (state.role == "4") {
               Navigator.pushReplacementNamed(context, '/admin-home');
             } else {
@@ -33,16 +35,18 @@ class Login extends StatelessWidget {
                 context,
               ).showSnackBar(SnackBar(content: Text("หา role ไม่เจอ")));
             }
-          } else if (state is LoginFailure) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
           } else if (state is LoginRequireSetPassword) {
-            Navigator.pushNamed(
+            Navigator.pushReplacementNamed(
               context,
               '/set-password',
               arguments: state.email,
             );
+          } else if (state is LoginFailure) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
+            // พิมพ์ Error ลงใน Terminal
+            print("Login Error: ${state.message}");
           }
         },
         builder: (context, state) {

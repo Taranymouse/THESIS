@@ -53,7 +53,7 @@ class _EditsubjectState extends State<Editsubject> {
     };
 
     final response = await http.put(
-      Uri.parse("$baseUrl/subjects/${widget.subjectId}"), // ✅ แก้ URL
+      Uri.parse("$baseUrl/api/subjects/${widget.subjectId}"), // ✅ แก้ URL
       headers: {'Content-Type': 'application/json'},
       body: json.encode(updatedData),
     );
@@ -70,7 +70,7 @@ class _EditsubjectState extends State<Editsubject> {
 
   Future<void> _deleteSubject() async {
     final response = await http.delete(
-      Uri.parse("$baseUrl/subjects/${widget.subjectId}"), // ✅ แก้ URL
+      Uri.parse("$baseUrl/api/subjects/${widget.subjectId}"), // ✅ แก้ URL
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -83,7 +83,7 @@ class _EditsubjectState extends State<Editsubject> {
   }
 
   Future<void> _loadBranches() async {
-    final response = await http.get(Uri.parse("$baseUrl/branches"));
+    final response = await http.get(Uri.parse("$baseUrl/api/branches"));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);

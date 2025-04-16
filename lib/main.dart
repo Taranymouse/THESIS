@@ -16,6 +16,7 @@ import 'package:project/screen/Form/CheckPerForm/checkPerForm.dart';
 import 'package:project/screen/ManageSubject/createsubject.dart';
 import 'package:project/screen/ManageSubject/fetchallsubject.dart';
 import 'package:project/screen/Form/checkForm.dart';
+import 'package:project/screen/Profeser/ProfHome.dart';
 import 'package:project/screen/SignIn/login.dart';
 import 'package:project/screen/SignIn/setpassword.dart';
 import 'package:project/screen/home.dart';
@@ -75,12 +76,13 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.black),
         ),
       ),
-      // home: AllSubjectsPage(),
+      // home: ProfHomepage(),
       initialRoute: isLoggedIn ? '/home' : '/login',
       routes: {
         '/login': (context) => Login(),
         '/home': (context) => Homepage(),
         '/admin-home': (context) => AdminHomepage(),
+        '/prof-home': (context) => ProfHomepage(),
         '/set-password':
             (context) => SetPasswordScreen(
               email: ModalRoute.of(context)!.settings.arguments as String,

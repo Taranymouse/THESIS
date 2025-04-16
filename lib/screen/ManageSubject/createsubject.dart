@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:project/API/api_config.dart';
 import 'package:project/bloc/Course/course_bloc.dart';
 import 'package:project/bloc/CourseYear/courseyear_bloc.dart';
 import 'package:project/screen/Form/Form_Options/TextFeild/customTextFeild.dart';
@@ -24,8 +25,7 @@ class _CreatesubjectState extends State<Createsubject> {
   String? selectedCourse; // เก็บค่าหลักสูตรที่เลือก
   String? selectedCourseYear; // เก็บค่าปีหลักสูตรที่เลือก
   Map<String, int> branchMap = {}; // แผนที่เก็บชื่อสาขากับ id_branch
-  final String baseIP = "192.168.1.179"; // ✅ เปลี่ยน IP ได้ง่าย
-  late final String baseUrl = "http://$baseIP:8000";
+
 
   final _formKey = GlobalKey<FormState>();
 
@@ -36,7 +36,7 @@ class _CreatesubjectState extends State<Createsubject> {
   }
 
   Future<void> _loadBranches() async {
-    final response = await http.get(Uri.parse("$baseUrl/branches"));
+    final response = await http.get(Uri.parse("$baseUrl/api/branches"));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
@@ -133,7 +133,7 @@ class _CreatesubjectState extends State<Createsubject> {
                         print("📡 Payload: $payload");
 
                         final response = await http.post(
-                          Uri.parse("$baseUrl/subjects"),
+                          Uri.parse("$baseUrl/api/subjects"),
                           headers: {'Content-Type': 'application/json'},
                           body: jsonEncode(payload),
                         );

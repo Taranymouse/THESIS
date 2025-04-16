@@ -2,17 +2,14 @@ import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:http/http.dart' as http;
+import 'package:project/API/api_config.dart';
 import 'package:project/modles/subject_model.dart';
 
 part 'get_subject_event.dart';
 part 'get_subject_state.dart';
 
 class GetSubjectBloc extends Bloc<GetSubjectEvent, GetSubjectState> {
-  final String baseIP = "192.168.1.179";
-  late final String baseUrl;
-
   GetSubjectBloc() : super(GetSubjectInitial()) {
-    baseUrl = "http://$baseIP:8000";
     on<FetchAllSubject>(_onFetchAllSubject);
   }
 
@@ -24,20 +21,30 @@ class GetSubjectBloc extends Bloc<GetSubjectEvent, GetSubjectState> {
     try {
       print(" (From GetSubject BLoC) ");
       print("📡Fetching all subjects...");
-      
-      final response = await http.get(Uri.parse('$baseUrl/subjects'));
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/subjects?offset=0&limit=30'),
+      );
 
       print("✅ Response Status: ${response.statusCode}");
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
-        final List data = json.decode(response.body);
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
-        List<Subject> subjects = data
-            .where((item) => item['year_course_sub'] == event.courseYear)
-            .map((item) => Subject.fromJson(item))
-            .toList();
+        print("📄 Full Response: $jsonResponse"); // เพิ่มการพิมพ์ข้อมูลทั้งหมด
 
-        emit(SubjectsLoaded(subjects: subjects, selectedValues: {}));
+        if (jsonResponse.containsKey("data") && jsonResponse["data"] is List) {
+          final List<dynamic> subjectsData = jsonResponse["data"];
+
+          print("📄 Subjects Data: $subjectsData"); // พิมพ์ข้อมูลในฟิลด์ "data"
+
+          List<Subject> subjects =
+              subjectsData.map((item) => Subject.fromJson(item)).toList();
+
+          emit(SubjectsLoaded(subjects: subjects, selectedValues: {}));
+        } else {
+          emit(SubjectError("Invalid response format: 'data' field not found"));
+        }
       } else {
         emit(SubjectError("Failed to load all subjects"));
       }

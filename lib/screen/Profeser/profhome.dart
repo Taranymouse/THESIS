@@ -8,17 +8,17 @@ import 'package:project/Nav/bottom_nav.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Announcement/announcement_carousel.dart';
-import 'package:project/screen/Menu/Admin/adminmenubar.dart';
+import 'package:project/screen/Menu/Prof/profmenubar.dart';
 import 'package:project/screen/Settings/setting.dart';
 
-class AdminHomepage extends StatelessWidget {
-  const AdminHomepage({super.key});
+class ProfHomepage extends StatelessWidget {
+  const ProfHomepage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       Center(child: Text("🔔 แจ้งเตือน", style: TextStyle(fontSize: 24))),
-      const AdminHomepageContent(),
+      const ProfHomepageContent(),
       SettingScreen(),
     ];
 
@@ -42,14 +42,14 @@ class AdminHomepage extends StatelessWidget {
   }
 }
 
-class AdminHomepageContent extends StatefulWidget {
-  const AdminHomepageContent({super.key});
+class ProfHomepageContent extends StatefulWidget {
+  const ProfHomepageContent({super.key});
 
   @override
-  _AdminHomepageContentState createState() => _AdminHomepageContentState();
+  _ProfHomepageContentState createState() => _ProfHomepageContentState();
 }
 
-class _AdminHomepageContentState extends State<AdminHomepageContent> {
+class _ProfHomepageContentState extends State<ProfHomepageContent> {
   final SessionService _sessionService = SessionService();
   String? displayName;
 
@@ -78,7 +78,7 @@ class _AdminHomepageContentState extends State<AdminHomepageContent> {
     String? token = await _sessionService.getAuthToken();
     if (token != null) {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/auth/user'),
+        Uri.parse('$baseUrl/user'),
         headers: {"Authorization": "$token"},
       );
 
@@ -113,7 +113,7 @@ class _AdminHomepageContentState extends State<AdminHomepageContent> {
           SizedBox(height: 20),
           AnnouncementCarousel(),
           SizedBox(height: 20),
-          AdminMenu(),
+          ProfMenu(),
           SizedBox(height: 20),
         ],
       ),

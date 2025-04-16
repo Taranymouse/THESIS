@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:project/API/api_config.dart';
 
 class CourseDropdown extends StatefulWidget {
   final Function(String?) onCourseChanged;
@@ -20,9 +21,6 @@ class _CourseDropdownState extends State<CourseDropdown> {
   List<Map<String, dynamic>> courses = [];
   bool isLoading = true;
 
-  final String baseIP = "192.168.1.179"; // ✅ IP เปลี่ยนตรงนี้ทีเดียว
-  late final String baseUrl =
-      "http://$baseIP:8000"; // ✅ สร้าง baseUrl ไว้ใช้เรียก API
 
   @override
   void initState() {
@@ -33,7 +31,7 @@ class _CourseDropdownState extends State<CourseDropdown> {
 
   Future<void> _fetchCourses() async {
     final response = await http.get(
-      Uri.parse("$baseUrl/branches"),
+      Uri.parse("$baseUrl/api/branches"),
     ); // ✅ ใช้ baseUrl
 
     if (response.statusCode == 200) {

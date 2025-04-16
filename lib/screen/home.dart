@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/Nav/bottom_nav.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
-import 'package:project/bloc/Login/login_bloc.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Announcement/announcement_carousel.dart';
 import 'package:project/screen/Menu/STD/menubar.dart';
@@ -79,7 +78,7 @@ class _HomepageContentState extends State<HomepageContent> {
     print("Token : $token");
     if (token != null) {
       final response = await http.get(
-        Uri.parse('$baseUrl/user'),
+        Uri.parse('$baseUrl/api/auth/user'),
         headers: {"Authorization": "$token"},
       );
 
