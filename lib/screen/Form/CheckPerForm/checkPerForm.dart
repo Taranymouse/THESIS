@@ -436,7 +436,7 @@ class _SubjectTableState extends State<SubjectTable> {
 
           return {
             "subject_code": subject.courseCode,
-            "subject_name": subject.nameSubjects,
+            "subject_name": subject.name_subjects,
             "subject_semester":
                 int.tryParse(selectedSemesters[index] ?? "0") ?? 0,
             "subject_year": int.tryParse(selectedYears[index] ?? "0") ?? 0,
@@ -503,7 +503,7 @@ class _SubjectTableState extends State<SubjectTable> {
                   cells: [
                     DataCell(
                       Text(
-                        "${subject.courseCode} - ${subject.nameSubjects}",
+                        "${subject.courseCode} - ${subject.name_subjects}",
                         style: GoogleFonts.prompt(fontSize: 8),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 2,

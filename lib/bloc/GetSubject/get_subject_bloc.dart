@@ -23,25 +23,24 @@ class GetSubjectBloc extends Bloc<GetSubjectEvent, GetSubjectState> {
       print("📡Fetching all subjects...");
 
       final response = await http.get(
-        Uri.parse('$baseUrl/api/subjects?offset=0&limit=30'),
+        Uri.parse('$baseUrl/api/subjects?offset=0&limit=-1'),
       );
-
-      print("✅ Response Status: ${response.statusCode}");
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
-        print("📄 Full Response: $jsonResponse"); // เพิ่มการพิมพ์ข้อมูลทั้งหมด
-
         if (jsonResponse.containsKey("data") && jsonResponse["data"] is List) {
           final List<dynamic> subjectsData = jsonResponse["data"];
+          print("📡Fetched ${subjectsData.length} subjects");
+           print("📄 Subjects Data: $subjectsData");
+          // กรองข้อมูลตามปีหลักสูตรที่เลือก
+          List<Subject> filteredSubjects =
+              subjectsData
+                  .map((item) => Subject.fromJson(item))
+                  .where((subject) => subject.year == event.courseYear)
+                  .toList();
 
-          print("📄 Subjects Data: $subjectsData"); // พิมพ์ข้อมูลในฟิลด์ "data"
-
-          List<Subject> subjects =
-              subjectsData.map((item) => Subject.fromJson(item)).toList();
-
-          emit(SubjectsLoaded(subjects: subjects, selectedValues: {}));
+          emit(SubjectsLoaded(subjects: filteredSubjects, selectedValues: {}));
         } else {
           emit(SubjectError("Invalid response format: 'data' field not found"));
         }

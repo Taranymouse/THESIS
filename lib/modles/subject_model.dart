@@ -1,27 +1,27 @@
 class Subject {
-  final int idSubject;
+  final int id_subject;
   final String courseCode;
-  final String nameSubjects;
-  final String yearCourseSub;
-  final int idBranch;
+  final String name_subjects;
+  final String year;
+  final int branchId;
   final String branchName;
 
   Subject({
-    required this.idSubject,
+    required this.id_subject,
     required this.courseCode,
-    required this.nameSubjects,
-    required this.yearCourseSub,
-    required this.idBranch,
+    required this.name_subjects,
+    required this.year,
+    required this.branchId,
     required this.branchName,
   });
 
   factory Subject.fromJson(Map<String, dynamic> json) {
     return Subject(
-      idSubject: json['id_subject'] ?? 0,
+      id_subject: json['id_subject'] ?? 0,
       courseCode: json['course_code'] ?? 'N/A', // กำหนดค่าเริ่มต้นหากเป็น null
-      nameSubjects: json['name_subjects'] ?? 'Unknown Subject',
-      yearCourseSub: json['year_course_sub'] ?? 'Unknown Year',
-      idBranch: json['id_branch'] ?? 0,
+      name_subjects: json['name_subjects'] ?? 'Unknown Subject',
+      year: json['year_course_sub'] ?? 'Unknown Year',
+      branchId: json['id_branch'] ?? 0,
       branchName: json['branch']?['name_branch'] ?? 'Unknown Branch',
     );
   }

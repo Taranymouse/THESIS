@@ -7,17 +7,17 @@ import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart'; // ✅ เพิ่มบรรทัดนี้
 
 class Editsubject extends StatefulWidget {
-  final int subjectId;
+  final int id_subject;
   final String courseCode;
-  final String courseName;
+  final String name_subjects;
   final String curriculumYear;
   final int department;
 
   const Editsubject({
     Key? key,
-    required this.subjectId,
+    required this.id_subject,
     required this.courseCode,
-    required this.courseName,
+    required this.name_subjects,
     required this.curriculumYear,
     required this.department,
   }) : super(key: key);
@@ -38,7 +38,7 @@ class _EditsubjectState extends State<Editsubject> {
   void initState() {
     super.initState();
     _courseCodeController = TextEditingController(text: widget.courseCode);
-    _courseNameController = TextEditingController(text: widget.courseName);
+    _courseNameController = TextEditingController(text: widget.name_subjects);
     selectedCourseYear = widget.curriculumYear; // ตั้งค่าเริ่มต้นปีหลักสูตร
     selectedDepartment = widget.department; // ตั้งค่าเริ่มต้นหลักสูตร
     _loadBranches(); // โหลดข้อมูลหลักสูตร
@@ -46,14 +46,15 @@ class _EditsubjectState extends State<Editsubject> {
 
   Future<void> _updateSubject() async {
     final Map<String, dynamic> updatedData = {
-      'courseCode': _courseCodeController.text,
-      'curriculumYear': selectedCourseYear,
-      'department': selectedDepartment,
-      'courseName': _courseNameController.text,
+      'id_subject': widget.id_subject, // สำคัญมาก ต้องส่งไปด้วย
+      'course_code': _courseCodeController.text,
+      'name_subjects': _courseNameController.text,
+      'year_course_sub': selectedCourseYear,
+      'id_branch': selectedDepartment,
     };
 
     final response = await http.put(
-      Uri.parse("$baseUrl/api/subjects/${widget.subjectId}"), // ✅ แก้ URL
+      Uri.parse("$baseUrl/api/subjects/${widget.id_subject}"), // ✅ แก้ URL
       headers: {'Content-Type': 'application/json'},
       body: json.encode(updatedData),
     );
@@ -70,7 +71,7 @@ class _EditsubjectState extends State<Editsubject> {
 
   Future<void> _deleteSubject() async {
     final response = await http.delete(
-      Uri.parse("$baseUrl/api/subjects/${widget.subjectId}"), // ✅ แก้ URL
+      Uri.parse("$baseUrl/api/subjects/${widget.id_subject}"),
       headers: {'Content-Type': 'application/json'},
     );
 

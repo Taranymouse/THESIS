@@ -26,7 +26,6 @@ class _CreatesubjectState extends State<Createsubject> {
   String? selectedCourseYear; // เก็บค่าปีหลักสูตรที่เลือก
   Map<String, int> branchMap = {}; // แผนที่เก็บชื่อสาขากับ id_branch
 
-
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -124,10 +123,10 @@ class _CreatesubjectState extends State<Createsubject> {
                           branchMap.containsKey(selectedCourse)) {
                         int departmentId = branchMap[selectedCourse!]!;
                         var payload = {
-                          'courseCode': courseCode.text,
-                          'courseName': courseName.text,
-                          'curriculumYear': selectedCourseYear,
-                          'department': departmentId,
+                          'course_code': courseCode.text,
+                          'name_subjects': courseName.text,
+                          'year_course_sub': selectedCourseYear,
+                          'id_branch': departmentId,
                         };
 
                         print("📡 Payload: $payload");

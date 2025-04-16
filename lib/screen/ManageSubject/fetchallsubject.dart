@@ -42,9 +42,9 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
       MaterialPageRoute(
         builder:
             (context) => Editsubject(
-              subjectId: subject.id,
+              id_subject: subject.id_subject,
               courseCode: subject.courseCode,
-              courseName: subject.name,
+              name_subjects: subject.name_subjects,
               curriculumYear: subject.year,
               department: subject.branchId,
             ),
@@ -170,7 +170,7 @@ class GetSubjects extends StatelessWidget {
                   state.subjects[index]; // วิชาที่เลือกในแต่ละ index
               return ListTile(
                 title: Text(subject.courseCode), // แสดงรหัสวิชา
-                subtitle: Text(subject.nameSubjects), // แสดงชื่อวิชา
+                subtitle: Text(subject.name_subjects), // แสดงชื่อวิชา
                 onTap:
                     () => onEditSubject(subject), // เมื่อคลิกจะไปที่หน้าแก้ไข
               );
