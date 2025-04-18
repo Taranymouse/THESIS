@@ -11,16 +11,15 @@ import 'package:project/bloc/Semester/semester_bloc.dart';
 import 'package:project/bloc/StdYear/stdyear_bloc.dart';
 import 'package:project/bloc/Subject/CS/subject_cs_bloc.dart';
 import 'package:project/bloc/Subject/IT/subject_bloc.dart';
+import 'package:project/bloc/Subject/IT/subject_repository.dart';
+import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Admin/adminhome.dart';
-import 'package:project/screen/Form/CheckPerForm/checkPerForm.dart';
+import 'package:project/screen/Form/CheckPerForm/Content.dart';
 import 'package:project/screen/ManageSubject/createsubject.dart';
-import 'package:project/screen/ManageSubject/fetchallsubject.dart';
-import 'package:project/screen/Form/checkForm.dart';
-import 'package:project/screen/Profeser/ProfHome.dart';
+import 'package:project/screen/Profeser/profhome.dart';
 import 'package:project/screen/SignIn/login.dart';
 import 'package:project/screen/SignIn/setpassword.dart';
 import 'package:project/screen/home.dart';
-import 'package:project/modles/session_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +39,9 @@ void main() async {
         BlocProvider(
           create: (context) => LoginBloc()..add(CheckSessionEvent()),
         ),
-        BlocProvider(create: (context) => SubjectBloc()),
+        BlocProvider(
+          create: (context) => SubjectBloc(SubjectRepository()),
+        ), // ส่ง repo ไปที่ SubjectBloc
         BlocProvider(create: (context) => SubjectCsBloc()),
         BlocProvider(create: (context) => BottomNavBloc()),
         BlocProvider(create: (context) => GetSubjectBloc()),
@@ -58,6 +59,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Project',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
@@ -76,17 +78,20 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.black),
         ),
       ),
-      // home: ProfHomepage(),
       initialRoute: isLoggedIn ? '/home' : '/login',
       routes: {
         '/login': (context) => Login(),
         '/home': (context) => Homepage(),
         '/admin-home': (context) => AdminHomepage(),
         '/prof-home': (context) => ProfHomepage(),
-        '/set-password':
-            (context) => SetPasswordScreen(
-              email: ModalRoute.of(context)!.settings.arguments as String,
-            ),
+        '/set-password': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is String) {
+            return SetPasswordScreen(email: args);
+          } else {
+            return Scaffold(body: Center(child: Text("ไม่พบอีเมลที่ส่งมา")));
+          }
+        },
         '/createsubject': (context) => Createsubject(),
       },
     );

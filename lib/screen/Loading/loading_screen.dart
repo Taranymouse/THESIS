@@ -6,15 +6,16 @@ class LoadingScreen {
     showDialog(
       context: context,
       barrierDismissible: false, // กดนอกกล่องไม่ได้
-      builder: (_) => Center(
-        child: FittedBox(
-          fit: BoxFit.contain, // ทำให้ widget พอดีกับพื้นที่
-          child: LoadingAnimationWidget.stretchedDots(
-            color: Colors.white,
-            size: 100, // ปรับขนาดได้ตามต้องการ
+      builder:
+          (_) => Center(
+            child: FittedBox(
+              fit: BoxFit.contain, // ทำให้ widget พอดีกับพื้นที่
+              child: LoadingAnimationWidget.stretchedDots(
+                color: Colors.white,
+                size: 100, // ปรับขนาดได้ตามต้องการ
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 
@@ -24,28 +25,26 @@ class LoadingScreen {
 
   static Future<void> showWithNavigation(
     BuildContext context,
-    Future<void> Function() action, // ฟังก์ชันที่จะรอการทำงาน
-    Widget page, // หน้าใหม่ที่ต้องการจะเปลี่ยนไป
+    Future<void> Function() action,
+    Widget page,
   ) async {
-    show(context); // แสดง loading
+    show(context);
 
     try {
-      await action(); // รอการทำงานของฟังก์ชัน
-      hide(context); // ซ่อน loading
+      await action();
+      hide(context);
       await Future.delayed(Duration(milliseconds: 300));
-      print("Navigating to ${page.runtimeType}"); // Debug log
+      print("Navigating to ${page.runtimeType}");
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => page, // ไปที่หน้าใหม่
-        ),
+        MaterialPageRoute(builder: (context) => page),
       );
     } catch (e, stackTrace) {
-      hide(context); // ซ่อน loading เมื่อเกิดข้อผิดพลาด
-      print("Error: $e\n$stackTrace"); // Log error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("เกิดข้อผิดพลาด: $e")),
-      );
+      hide(context);
+      print("Error: $e\n$stackTrace");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("เกิดข้อผิดพลาด: $e")));
     }
   }
 }

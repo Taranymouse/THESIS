@@ -1,126 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:project/bloc/GetSubject/get_subject_bloc.dart';
 import 'package:project/bloc/Semester/semester_bloc.dart';
 import 'package:project/bloc/StdYear/stdyear_bloc.dart';
+import 'package:project/bloc/Subject/IT/subject_bloc.dart';
 import 'package:project/modles/subject_model.dart';
 import 'package:project/screen/Form/CheckPerForm/Content.dart';
-import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Form/Form_Options/TextFeild/customTextFeild.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/stdyear.dart';
-import 'package:project/screen/home.dart';
 
-class CheckPerform extends StatefulWidget {
-  CheckPerform({super.key});
+class TestCheckPerform extends StatefulWidget {
+  TestCheckPerform({super.key});
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController lastnameController = TextEditingController();
   final TextEditingController stdidController = TextEditingController();
 
   @override
-  State<CheckPerform> createState() => _CheckPerformState();
+  State<TestCheckPerform> createState() => _TestCheckPerformformState();
 }
 
-class _CheckPerformState extends State<CheckPerform> {
+class _TestCheckPerformformState extends State<TestCheckPerform> {
   String? selectedCourse;
   String? selectedCourseYear;
-  String? selectedSemester;
-  String? selectedStdYear;
   int passedSubjectsCount = 0;
-  int failedSubjectsCount = 0;
   bool isTableValid = false;
   List<Map<String, dynamic>> subjectsData = [];
 
+  int currentOffset = 0;
+  final int limit = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSubjects();
+  }
+
   void _fetchSubjects() {
     if (selectedCourse != null && selectedCourseYear != null) {
-      context.read<GetSubjectBloc>().add(
-        FetchAllSubject(courseYear: selectedCourseYear!),
+      context.read<SubjectBloc>().add(
+        LoadSubjectsEvent(offset: currentOffset, limit: limit),
       );
     }
   }
 
-  Map<String, dynamic> formatData({
-    required String course,
-    required String semester,
-    required String year,
-    required String prefix,
-    required String fname,
-    required String lname,
-    required String sId,
-    required List<Map<String, dynamic>> subjects,
-    required String overallGrade,
-    required int branchId,
-    required String branchName,
-  }) {
-    return {
-      "course": int.tryParse(course) ?? 0,
-      "semester": int.tryParse(semester) ?? 0,
-      "year": int.tryParse(year) ?? 0,
-      "student": [
-        {
-          "prefix": prefix,
-          "fname": fname,
-          "lname": lname,
-          "s_id": sId,
-          "subject": subjects,
-          "overall_grade": overallGrade,
-          "branch": {"id_branch": branchId, "name_branch": branchName},
-        },
-      ],
-    };
+  void loadNextPage() {
+    setState(() {
+      currentOffset += limit;
+    });
+    _fetchSubjects();
   }
 
-  void _submitForm() {
-    if (!isTableValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("กรุณากรอกข้อมูลในตารางให้ครบถ้วน")),
-      );
-      return;
+  void loadPreviousPage() {
+    if (currentOffset >= limit) {
+      setState(() {
+        currentOffset -= limit;
+      });
+      _fetchSubjects();
     }
-
-    if (widget.nameController.text.isEmpty ||
-        widget.lastnameController.text.isEmpty ||
-        widget.stdidController.text.isEmpty ||
-        selectedCourse == null ||
-        selectedCourseYear == null ||
-        selectedSemester == null ||
-        selectedStdYear == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("กรุณากรอกข้อมูลให้ครบถ้วน")));
-      return;
-    }
-
-    Map<String, dynamic> formattedData = formatData(
-      course: selectedCourse!,
-      semester: selectedSemester!,
-      year: selectedCourseYear!,
-      prefix: "Mr./Ms.", // หรือเพิ่ม dropdown สำหรับเลือก prefix
-      fname: widget.nameController.text,
-      lname: widget.lastnameController.text,
-      sId: widget.stdidController.text,
-      subjects: subjectsData, // ใช้ข้อมูลจาก SubjectTable
-      overallGrade: "A", // คำนวณเกรดรวมถ้าจำเป็น
-      branchId: 101, // ตัวอย่าง branchId
-      branchName: "Computer Science", // ตัวอย่าง branchName
-    );
-
-    print(formattedData);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("แบบฟอร์มตรวจคุณสมบัติ"),
-        centerTitle: true,
-        leading: BackButtonWidget(targetPage: Homepage()),
-      ),
+      appBar: AppBar(title: Text("แบบฟอร์มตรวจคุณสมบัติ"), centerTitle: true),
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(20),
@@ -132,24 +78,19 @@ class _CheckPerformState extends State<CheckPerform> {
                   setState(() {
                     selectedCourse = value;
                   });
-                  print("Selected course: $selectedCourse");
+                  _fetchSubjects();
                 },
                 onCourseYearChanged: (value) {
                   setState(() {
                     selectedCourseYear = value;
                   });
-                  print("Selected course year: $selectedCourseYear");
                   _fetchSubjects();
                 },
                 onSemesterChanged: (value) {
-                  setState(() {
-                    selectedSemester = value;
-                  });
+                  // Handle semester change if necessary
                 },
                 onStdYearChanged: (value) {
-                  setState(() {
-                    selectedStdYear = value;
-                  });
+                  // Handle student year change if necessary
                 },
               ),
               SizedBox(height: 10),
@@ -162,7 +103,7 @@ class _CheckPerformState extends State<CheckPerform> {
               if (selectedCourse == null || selectedCourseYear == null)
                 const Center(child: Text("กรุณาเลือกหลักสูตรและปีหลักสูตร"))
               else
-                BlocBuilder<GetSubjectBloc, GetSubjectState>(
+                BlocBuilder<SubjectBloc, SubjectState>(
                   builder: (context, state) {
                     if (state is SubjectLoading) {
                       return Center(
@@ -171,8 +112,7 @@ class _CheckPerformState extends State<CheckPerform> {
                           size: 50,
                         ),
                       );
-                    }
-                    if (state is SubjectsLoaded) {
+                    } else if (state is SubjectLoaded) {
                       return Column(
                         children: [
                           SubjectTable(
@@ -183,9 +123,8 @@ class _CheckPerformState extends State<CheckPerform> {
                               });
                             },
                             onFailedSubjectsChanged: (count) {
-                              setState(() {
-                                failedSubjectsCount = count;
-                              });
+                              // คุณสามารถจัดการค่าที่ตกไม่ผ่านได้ตรงนี้ เช่น พิมพ์หรือเก็บไว้ในตัวแปร
+                              print("จำนวนวิชาที่ตก: $count");
                             },
                             onValidationChanged: (isValid) {
                               setState(() {
@@ -198,46 +137,23 @@ class _CheckPerformState extends State<CheckPerform> {
                               });
                             },
                           ),
+
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               ElevatedButton(
-                                onPressed:
-                                    state.offset > 0
-                                        ? () {
-                                          context.read<GetSubjectBloc>().add(
-                                            FetchAllSubject(
-                                              offset:
-                                                  state.offset - state.limit,
-                                              limit: state.limit,
-                                              courseYear: selectedCourseYear,
-                                            ),
-                                          );
-                                        }
-                                        : null,
+                                onPressed: loadPreviousPage,
                                 child: const Text("ก่อนหน้า"),
                               ),
                               const SizedBox(width: 20),
                               Text(
-                                "หน้า ${(state.offset / state.limit).floor() + 1} จาก ${(state.total / state.limit).ceil()}",
-                                style: GoogleFonts.prompt(fontSize: 12),
+                                "หน้า ${(currentOffset / limit).floor() + 1}",
+                                style: TextStyle(fontSize: 12),
                               ),
                               const SizedBox(width: 20),
                               ElevatedButton(
-                                onPressed:
-                                    (state.offset + state.limit) < state.total
-                                        ? () {
-                                          context.read<GetSubjectBloc>().add(
-                                            FetchAllSubject(
-                                              offset:
-                                                  state.offset + state.limit,
-                                              limit: state.limit,
-                                              courseYear: selectedCourseYear,
-                                            ),
-                                          );
-                                        }
-                                        : null,
+                                onPressed: loadNextPage,
                                 child: const Text("ถัดไป"),
                               ),
                             ],
@@ -246,24 +162,14 @@ class _CheckPerformState extends State<CheckPerform> {
                       );
                     } else if (state is SubjectError) {
                       return Center(child: Text("Error: ${state.message}"));
-                    } else {
-                      return Center(child: CircularProgressIndicator());
                     }
+                    return Center(child: CircularProgressIndicator());
                   },
                 ),
               SizedBox(height: 10),
               Row(
                 children: [
                   Text("จำนวนรายวิชาที่ผ่าน : $passedSubjectsCount"),
-                  SizedBox(width: 10),
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    "จำนวนรายวิชาที่ไม่ผ่าน / ยังไม่ลงทะเบียน : $failedSubjectsCount",
-                    style: TextStyle(color: Colors.red),
-                  ),
                   SizedBox(width: 10),
                 ],
               ),
@@ -291,16 +197,61 @@ class _CheckPerformState extends State<CheckPerform> {
                     print("Name: ${widget.nameController.text}");
                     print("Lastname: ${widget.lastnameController.text}");
                     print("Student ID: ${widget.stdidController.text}");
-                    _submitForm();
+                    // Call the submission function
                   }
                 },
                 child: Text("Submit"),
               ),
-              SizedBox(height: 20),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class FormContentInput extends StatelessWidget {
+  final TextEditingController nameController;
+  final TextEditingController lastnameController;
+  final TextEditingController stdidController;
+
+  const FormContentInput({
+    super.key,
+    required this.nameController,
+    required this.lastnameController,
+    required this.stdidController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        CustomTextField(
+          label: "ชื่อจริง",
+          controller: nameController,
+          validator:
+              (value) =>
+                  value == null || value.isEmpty ? "กรุณากรอกชื่อจริง" : null,
+        ),
+        SizedBox(height: 10),
+        CustomTextField(
+          label: "นามสกุล",
+          controller: lastnameController,
+          validator:
+              (value) =>
+                  value == null || value.isEmpty ? "กรุณากรอกนามสกุล" : null,
+        ),
+        SizedBox(height: 10),
+        CustomTextField(
+          label: "รหัสนักศึกษา",
+          controller: stdidController,
+          validator:
+              (value) =>
+                  value == null || value.isEmpty
+                      ? "กรุณากรอกรหัสนักศึกษา"
+                      : null,
+        ),
+      ],
     );
   }
 }
@@ -378,52 +329,6 @@ class DropDownTopContent extends StatelessWidget {
           "หมายเหตุ : กรุณาแนบผลการศึกษาที่พิมพ์จากเว็บระบบบริการการศึกษาของมหาวิทยาลัยด้วย (reg.su.ac.th)",
           style: TextStyle(fontSize: 10, color: Colors.red),
           textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
-class FormContentInput extends StatelessWidget {
-  final TextEditingController nameController;
-  final TextEditingController lastnameController;
-  final TextEditingController stdidController;
-
-  const FormContentInput({
-    super.key,
-    required this.nameController,
-    required this.lastnameController,
-    required this.stdidController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CustomTextField(
-          label: "ชื่อจริง",
-          controller: nameController,
-          validator:
-              (value) =>
-                  value == null || value.isEmpty ? "กรุณากรอกชื่อจริง" : null,
-        ),
-        SizedBox(height: 10),
-        CustomTextField(
-          label: "นามสกุล",
-          controller: lastnameController,
-          validator:
-              (value) =>
-                  value == null || value.isEmpty ? "กรุณากรอกนามสกุล" : null,
-        ),
-        SizedBox(height: 10),
-        CustomTextField(
-          label: "รหัสนักศึกษา",
-          controller: stdidController,
-          validator:
-              (value) =>
-                  value == null || value.isEmpty
-                      ? "กรุณากรอกรหัสนักศึกษา"
-                      : null,
         ),
       ],
     );

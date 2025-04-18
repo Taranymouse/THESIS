@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:project/bloc/GetSubject/get_subject_bloc.dart';
-import 'package:project/modles/subject_model.dart';
+import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:project/modles/subject_model.dart';
 
 class SubjectTable extends StatefulWidget {
   final List<Subject> subjects;
   final Function(int) onPassedSubjectsChanged;
   final Function(int) onFailedSubjectsChanged;
   final Function(bool) onValidationChanged;
-  final Function(List<Map<String, dynamic>>)
-  onSubjectsDataChanged; // เพิ่ม callback
+  final Function(List<Map<String, dynamic>>) onSubjectsDataChanged;
 
   const SubjectTable({
     Key? key,
@@ -18,7 +16,7 @@ class SubjectTable extends StatefulWidget {
     required this.onPassedSubjectsChanged,
     required this.onFailedSubjectsChanged,
     required this.onValidationChanged,
-    required this.onSubjectsDataChanged, // เพิ่ม callback
+    required this.onSubjectsDataChanged,
   }) : super(key: key);
 
   @override
@@ -32,7 +30,7 @@ class _SubjectTableState extends State<SubjectTable> {
 
   int countPassedSubjects() {
     return selectedGrades.values.where((grade) {
-      return grade != null && grade != 'F' && grade != 'W' && grade != 'I';
+      return grade != 'F' && grade != 'W' && grade != 'I';
     }).length;
   }
 
@@ -54,166 +52,120 @@ class _SubjectTableState extends State<SubjectTable> {
   void _updateSubjectsData() {
     List<Map<String, dynamic>> subjectsData =
         widget.subjects.asMap().entries.map((entry) {
-          int index = entry.key;
-          Subject subject = entry.value;
+      int index = entry.key;
+      Subject subject = entry.value;
 
-          return {
-            "subject_code": subject.courseCode,
-            "subject_name": subject.name_subjects,
-            "subject_semester":
-                int.tryParse(selectedSemesters[index] ?? "0") ?? 0,
-            "subject_year": int.tryParse(selectedYears[index] ?? "0") ?? 0,
-            "subject_grade": selectedGrades[index] ?? "",
-          };
-        }).toList();
+      return {
+        "subject_code": subject.courseCode,
+        "subject_name": subject.name_subjects,
+        "subject_semester": int.tryParse(selectedSemesters[index] ?? "0") ?? 0,
+        "subject_year": int.tryParse(selectedYears[index] ?? "0") ?? 0,
+        "subject_grade": selectedGrades[index] ?? "",
+      };
+    }).toList();
 
-    widget.onSubjectsDataChanged(
-      subjectsData,
-    ); // ส่งข้อมูลกลับไปยัง parent widget
+    widget.onSubjectsDataChanged(subjectsData);
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 400,
+      height: 500,
       child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
         child: DataTable(
           columnSpacing: 30,
           columns: [
             DataColumn(
-              label: Text(
-                'รหัสวิชา - ชื่อวิชา',
-                style: GoogleFonts.prompt(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              label: Text('รหัสวิชา - ชื่อวิชา',
+                  style: GoogleFonts.prompt(fontSize: 10, fontWeight: FontWeight.bold)),
             ),
             DataColumn(
-              label: Text(
-                'ภาคการศึกษา',
-                style: GoogleFonts.prompt(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              label: Text('ภาคการศึกษา',
+                  style: GoogleFonts.prompt(fontSize: 10, fontWeight: FontWeight.bold)),
             ),
             DataColumn(
-              label: Text(
-                'ปีการศึกษา',
-                style: GoogleFonts.prompt(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              label: Text('ปีการศึกษา',
+                  style: GoogleFonts.prompt(fontSize: 10, fontWeight: FontWeight.bold)),
             ),
             DataColumn(
-              label: Text(
-                'เกรด',
-                style: GoogleFonts.prompt(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              label: Text('เกรด',
+                  style: GoogleFonts.prompt(fontSize: 10, fontWeight: FontWeight.bold)),
             ),
           ],
-          rows:
-              widget.subjects.asMap().entries.map((entry) {
-                int index = entry.key;
-                Subject subject = entry.value;
+          rows: widget.subjects.asMap().entries.map((entry) {
+            int index = entry.key;
+            Subject subject = entry.value;
 
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      Text(
-                        "${subject.courseCode} - ${subject.name_subjects}",
-                        style: GoogleFonts.prompt(fontSize: 8),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                      ),
-                    ),
-                    DataCell(
-                      DropdownButton<String>(
-                        value: selectedSemesters[index],
-                        items:
-                            ['ต้น', 'ปลาย', 'ฤดูร้อน'].map((semester) {
-                              return DropdownMenuItem<String>(
-                                value: semester,
-                                child: Text(
-                                  semester,
-                                  style: GoogleFonts.prompt(fontSize: 8),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedSemesters[index] = value!;
-                          });
-                          _updateSubjectsData(); // อัปเดตข้อมูลเมื่อมีการเปลี่ยนแปลง
-                          widget.onValidationChanged(isAllDataFilled());
-                        },
-                      ),
-                    ),
-                    DataCell(
-                      DropdownButton<String>(
-                        value: selectedYears[index],
-                        items:
-                            ['2567', '2568', '2569'].map((year) {
-                              return DropdownMenuItem<String>(
-                                value: year,
-                                child: Text(
-                                  year,
-                                  style: GoogleFonts.prompt(fontSize: 8),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedYears[index] = value!;
-                          });
-                          _updateSubjectsData();
-                          widget.onValidationChanged(isAllDataFilled());
-                        },
-                      ),
-                    ),
-                    DataCell(
-                      DropdownButton<String>(
-                        value: selectedGrades[index],
-                        items:
-                            [
-                              'A',
-                              'B+',
-                              'B',
-                              'C+',
-                              'C',
-                              'D+',
-                              'D',
-                              'F',
-                              'I',
-                              'W',
-                            ].map((grade) {
-                              return DropdownMenuItem<String>(
-                                value: grade,
-                                child: Text(
-                                  grade,
-                                  style: GoogleFonts.prompt(fontSize: 8),
-                                ),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedGrades[index] = value!;
-                          });
-                          _updateSubjectsData();
-                          widget.onPassedSubjectsChanged(countPassedSubjects());
-                          widget.onFailedSubjectsChanged(countFailedSubjects());
-                          widget.onValidationChanged(isAllDataFilled());
-                        },
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
+            return DataRow(cells: [
+              DataCell(
+                Text(
+                  "${subject.courseCode} - ${subject.name_subjects}",
+                  style: GoogleFonts.prompt(fontSize: 8),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                ),
+              ),
+              DataCell(
+                DropdownButton<String>(
+                  value: selectedSemesters[index],
+                  items: ['ต้น', 'ปลาย', 'ฤดูร้อน'].map((semester) {
+                    return DropdownMenuItem<String>(
+                      value: semester,
+                      child: Text(semester, style: GoogleFonts.prompt(fontSize: 8)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedSemesters[index] = value!;
+                    });
+                    _updateSubjectsData();
+                    widget.onValidationChanged(isAllDataFilled());
+                  },
+                ),
+              ),
+              DataCell(
+                DropdownButton<String>(
+                  value: selectedYears[index],
+                  items: ['2567', '2568', '2569'].map((year) {
+                    return DropdownMenuItem<String>(
+                      value: year,
+                      child: Text(year, style: GoogleFonts.prompt(fontSize: 8)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedYears[index] = value!;
+                    });
+                    _updateSubjectsData();
+                    widget.onValidationChanged(isAllDataFilled());
+                  },
+                ),
+              ),
+              DataCell(
+                DropdownButton<String>(
+                  value: selectedGrades[index],
+                  items: [
+                    'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F', 'I', 'W'
+                  ].map((grade) {
+                    return DropdownMenuItem<String>(
+                      value: grade,
+                      child: Text(grade, style: GoogleFonts.prompt(fontSize: 8)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedGrades[index] = value!;
+                    });
+                    _updateSubjectsData();
+                    widget.onPassedSubjectsChanged(countPassedSubjects());
+                    widget.onFailedSubjectsChanged(countFailedSubjects());
+                    widget.onValidationChanged(isAllDataFilled());
+                  },
+                ),
+              ),
+            ]);
+          }).toList(),
         ),
       ),
     );

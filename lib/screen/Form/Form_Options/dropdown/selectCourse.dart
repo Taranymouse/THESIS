@@ -7,7 +7,7 @@ import 'package:project/API/api_config.dart';
 
 class CourseDropdown extends StatefulWidget {
   final Function(String?) onCourseChanged;
-  final String? value; // เพิ่มพารามิเตอร์สำหรับค่าเริ่มต้น
+  final String? value;
 
   const CourseDropdown({Key? key, required this.onCourseChanged, this.value})
     : super(key: key);
@@ -21,6 +21,15 @@ class _CourseDropdownState extends State<CourseDropdown> {
   List<Map<String, dynamic>> courses = [];
   bool isLoading = true;
 
+  @override
+  void didUpdateWidget(covariant CourseDropdown oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      setState(() {
+        selectedCourse = widget.value;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -71,10 +80,10 @@ class _CourseDropdownState extends State<CourseDropdown> {
           else
             DropdownButton<String>(
               hint: Text(
-                "เลือกหลักสูตร",
+                "- เลือก -",
                 style: GoogleFonts.prompt(fontSize: 10),
               ),
-              value: selectedCourse, // ใช้ค่าเริ่มต้น
+              value: widget.value, // ใช้ค่าเริ่มต้น
               isExpanded: true,
               items:
                   courses.map((course) {

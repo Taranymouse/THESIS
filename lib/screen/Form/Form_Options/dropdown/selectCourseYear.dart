@@ -18,6 +18,16 @@ class CourseYearDropdown extends StatefulWidget {
 class _CourseYearDropdownState extends State<CourseYearDropdown> {
   String? selectedCourseYear;
 
+    @override
+  void didUpdateWidget(covariant CourseYearDropdown oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      setState(() {
+        selectedCourseYear = widget.value;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +45,7 @@ class _CourseYearDropdownState extends State<CourseYearDropdown> {
         children: [
           DropdownButton<String>(
             hint: Text(
-              "เลือกปีหลักสูตร",
+              "- เลือก -",
               style: GoogleFonts.prompt(fontSize: 10),
             ),
             value: selectedCourseYear,

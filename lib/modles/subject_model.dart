@@ -18,11 +18,14 @@ class Subject {
   factory Subject.fromJson(Map<String, dynamic> json) {
     return Subject(
       id_subject: json['id_subject'] ?? 0,
-      courseCode: json['course_code'] ?? 'N/A', // กำหนดค่าเริ่มต้นหากเป็น null
+      courseCode: json['course_code'] ?? 'N/A',
       name_subjects: json['name_subjects'] ?? 'Unknown Subject',
       year: json['year_course_sub'] ?? 'Unknown Year',
       branchId: json['id_branch'] ?? 0,
-      branchName: json['branch']?['name_branch'] ?? 'Unknown Branch',
+      branchName:
+          json['branch'] != null && json['branch']['name_branch'] != null
+              ? json['branch']['name_branch']
+              : 'Unknown Branch',
     );
   }
 }

@@ -23,16 +23,16 @@ class SessionService {
     await _storage.write(key: 'authToken', value: token);
   }
 
+  Future<String?> getAuthToken() async {
+    return await _storage.read(key: 'authToken');
+  }
+
   Future<void> saveUserRole(String role) async {
     await _storage.write(key: 'role', value: role);
   }
 
   Future<String?> getUserSession() async {
     return await _storage.read(key: 'userEmail');
-  }
-
-  Future<String?> getAuthToken() async {
-    return await _storage.read(key: 'authToken');
   }
 
   Future<String?> getUserRoleSession() async {

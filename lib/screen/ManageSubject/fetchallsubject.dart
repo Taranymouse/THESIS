@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:project/bloc/Course/course_bloc.dart';
-
 import 'package:project/bloc/GetSubject/get_subject_bloc.dart';
-
+import 'package:project/modles/subject_model.dart';
 import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
-
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart';
-
 import 'package:project/screen/ManageSubject/editsubject.dart';
 
 class AllSubjectsPage extends StatefulWidget {
@@ -21,17 +18,33 @@ class AllSubjectsPage extends StatefulWidget {
 class _AllSubjectsPageState extends State<AllSubjectsPage> {
   String? course;
   String? courseYear;
+  int currentPage = 0;
 
   @override
   void initState() {
     super.initState();
     context.read<CourseBloc>().add(LoadCourses());
+    _fetchSubjects(); // ดึงข้อมูลทั้งหมดตั้งแต่เริ่มต้น
   }
 
-  void _fetchSubjects() {
-    if (course != null && courseYear != null) {
-      context.read<GetSubjectBloc>().add(
-        FetchAllSubject(courseYear: courseYear!),
+  void _fetchSubjects({bool resetPage = true}) {
+    final subjectBloc = context.read<GetSubjectBloc>();
+    final currentState = subjectBloc.state;
+
+    if (currentState is! SubjectLoading) {
+      if (resetPage) {
+        setState(() {
+          currentPage = 0;
+        });
+      }
+
+      subjectBloc.add(
+        FetchAllSubject(
+          courseYear: courseYear,
+          branchId: course,
+          offset: resetPage ? 0 : currentPage * 10,
+          limit: 10,
+        ),
       );
     }
   }
@@ -51,7 +64,7 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
       ),
     );
     if (result == true) {
-      _fetchSubjects();
+      _fetchSubjects(); // รีเฟรชข้อมูลหลังจากแก้ไข
     }
   }
 
@@ -63,7 +76,7 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
         centerTitle: true,
         leading: BackButtonWidget(targetPage: AdminHomepage()),
       ),
-      body: Container(
+      body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
@@ -75,7 +88,7 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
                     '/createsubject',
                   );
                   if (result == true) {
-                    _fetchSubjects(); // โหลดข้อมูลใหม่ถ้ามีการเพิ่มรายวิชา
+                    _fetchSubjects(); // รีเฟรชข้อมูลหลังจากเพิ่มรายวิชา
                   }
                 },
                 child: Text(
@@ -89,21 +102,30 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
                 setState(() {
                   course = value;
                 });
-                print("Selected course: $course");
+                _fetchSubjects(resetPage: true); // ✅ รีเซ็ตหน้า
               },
               onCourseYearChanged: (value) {
                 setState(() {
                   courseYear = value;
                 });
-                print("Selected course year: $courseYear");
-                _fetchSubjects();
+                _fetchSubjects(resetPage: true); // ✅ รีเซ็ตหน้า
               },
             ),
             const SizedBox(height: 20),
-            if (course == null || courseYear == null)
-              const Center(child: Text("กรุณาเลือกหลักสูตรและปีหลักสูตร"))
-            else
-              Expanded(child: GetSubjects(onEditSubject: _navigateToEdit)),
+            Expanded(
+              child: GetSubjects(
+                onEditSubject: _navigateToEdit,
+                course: course, // ส่งค่าตัวแปร course
+                courseYear: courseYear, // ส่งค่าตัวแปร courseYear
+                currentPage: currentPage, // ส่ง currentPage ที่อัพเดต
+                onPageChange: (newPage) {
+                  setState(() {
+                    currentPage = newPage;
+                  });
+                  _fetchSubjects(resetPage: false); // ✅ ไม่รีเซ็ต
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -151,36 +173,180 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
   }
 }
 
-class GetSubjects extends StatelessWidget {
+class GetSubjects extends StatefulWidget {
   final Function(dynamic) onEditSubject;
+  final String? course;
+  final String? courseYear;
+  final int currentPage; // Add currentPage
+  final Function(int) onPageChange; // Add onPageChange
 
-  const GetSubjects({Key? key, required this.onEditSubject}) : super(key: key);
+  const GetSubjects({
+    Key? key,
+    required this.onEditSubject,
+    this.course,
+    this.courseYear,
+    required this.currentPage, // Add currentPage to constructor
+    required this.onPageChange, // Add onPageChange to constructor
+  }) : super(key: key);
+
+  @override
+  State<GetSubjects> createState() => _GetSubjectsState();
+}
+
+class _GetSubjectsState extends State<GetSubjects> {
+  List<Subject> subjects = [];
+  bool _isLoading = false;
+  bool _hasNextPage = true;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void fetchSubjects() {
+    setState(() => _isLoading = true);
+    int offset = widget.currentPage * 10; // Use _currentPage for offset
+
+    context.read<GetSubjectBloc>().add(
+      FetchAllSubject(
+        offset: offset,
+        limit: 10,
+        courseYear: widget.courseYear,
+        branchId: widget.course, // Send this parameter as needed
+      ),
+    );
+  }
+
+  // void checkAndLoadNextPage() async {
+  //   int nextPage = widget.currentPage + 1;
+  //   int nextOffset = nextPage * 10;
+
+  //   final subjectBloc = context.read<GetSubjectBloc>();
+
+  //   subjectBloc.add(
+  //     FetchAllSubject(
+  //       offset: nextOffset,
+  //       limit: 10,
+  //       courseYear: widget.courseYear,
+  //       branchId: widget.course,
+  //     ),
+  //   );
+
+  //   final state = await subjectBloc.stream.firstWhere(
+  //     (state) => state is! SubjectLoading,
+  //   );
+
+  //   if (state is SubjectsLoaded) {
+  //     if (state.subjects.isNotEmpty) {
+  //       widget.onPageChange(nextPage); // ✅ มีข้อมูล -> เปลี่ยนหน้า
+  //     } else {
+  //       setState(() {
+  //         _hasNextPage = false; // ✅ ไม่มีข้อมูล -> ปิดปุ่ม
+  //       });
+
+  //       ScaffoldMessenger.of(
+  //         context,
+  //       ).showSnackBar(const SnackBar(content: Text("ไม่มีข้อมูลหน้าถัดไป")));
+  //     }
+  //   }
+  // }
+
+  void loadPreviousPage() {
+    if (widget.currentPage > 0) {
+      widget.onPageChange(widget.currentPage - 1);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<GetSubjectBloc, GetSubjectState>(
-      builder: (context, state) {
-        if (state is SubjectLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is SubjectsLoaded) {
-          return ListView.builder(
-            itemCount: state.subjects.length, // จำนวนวิชาที่จะโชว์
-            itemBuilder: (context, index) {
-              final subject =
-                  state.subjects[index]; // วิชาที่เลือกในแต่ละ index
-              return ListTile(
-                title: Text(subject.courseCode), // แสดงรหัสวิชา
-                subtitle: Text(subject.name_subjects), // แสดงชื่อวิชา
-                onTap:
-                    () => onEditSubject(subject), // เมื่อคลิกจะไปที่หน้าแก้ไข
-              );
-            },
-          );
+    return BlocListener<GetSubjectBloc, GetSubjectState>(
+      listener: (context, state) {
+        if (state is SubjectsLoaded) {
+          setState(() {
+            subjects = state.subjects;
+            // ✅ คำนวณว่าเหลือหน้าต่อไปมั้ย
+            int total = state.total;
+            int maxPages = (total / state.limit).ceil();
+            _hasNextPage = widget.currentPage + 1 < maxPages;
+            _isLoading = false;
+          });
         } else if (state is SubjectError) {
-          return Center(child: Text("Error: ${state.message}"));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("เกิดข้อผิดพลาด: ${state.message}")),
+          );
+          setState(() => _isLoading = false);
         }
-        return const Center(child: Text("No data"));
       },
+      child: BlocBuilder<GetSubjectBloc, GetSubjectState>(
+        builder: (context, state) {
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.separated(
+                  itemCount: subjects.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final subject = subjects[index];
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 3,
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.book,
+                          color: Colors.blueAccent,
+                        ),
+                        title: Text(
+                          "${subject.courseCode} - ${subject.name_subjects}",
+                          style: GoogleFonts.prompt(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "ปีหลักสูตร: ${subject.year}",
+                          style: GoogleFonts.prompt(),
+                        ),
+                        trailing: ElevatedButton.icon(
+                          onPressed: () => widget.onEditSubject(subject),
+                          icon: const Icon(Icons.edit, size: 18),
+                          label: const Text("แก้ไข"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orangeAccent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: widget.currentPage > 0 ? loadPreviousPage : null,
+                    child: const Text("ก่อนหน้า"),
+                  ),
+                  Text("หน้าที่ ${widget.currentPage + 1}"),
+                  ElevatedButton(
+                    onPressed:
+                        _hasNextPage
+                            ? () => widget.onPageChange(widget.currentPage + 1)
+                            : null,
+                    child: const Text("ถัดไป"),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

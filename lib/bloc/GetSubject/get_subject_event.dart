@@ -7,12 +7,24 @@ sealed class GetSubjectEvent extends Equatable {
 }
 
 class FetchAllSubject extends GetSubjectEvent {
-  final String courseYear;
-  FetchAllSubject({required this.courseYear});
+  final String? courseYear;
+  final int? offset;
+  final int? limit;
+  final String? searchQuery;
+  final String? branchId;
+
+  FetchAllSubject({
+    this.courseYear,
+    this.offset,
+    this.limit,
+    this.searchQuery,
+    this.branchId,
+  });
 
   @override
-  List<Object?> get props => [courseYear];
+  List<Object?> get props => [courseYear, offset, limit, searchQuery, branchId];
 }
+
 
 // ✅ เพิ่ม event สำหรับอัปเดตค่าที่เลือก
 class UpdateSubjectSelection extends GetSubjectEvent {

@@ -124,6 +124,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         final String? token = data["token"]; // ✅ ดึง Token จาก API
         late String? role = '';
 
+        await _sessionService.saveAuthToken(token!);
+
         if (token != null) {
           final response = await http.get(
             Uri.parse('http://192.168.1.108:8000/api/auth/user'),
@@ -132,7 +134,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
           if (response.statusCode == 200) {
             final data = jsonDecode(response.body);
-            role = data['role'].toString();
+            role = data['id_role'].toString();
             print("✅ Can Get Role");
           } else {
             print("📌 Error to Get Role");

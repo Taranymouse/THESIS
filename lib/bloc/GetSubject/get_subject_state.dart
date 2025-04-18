@@ -13,17 +13,20 @@ class SubjectLoading extends GetSubjectState {}
 
 class SubjectsLoaded extends GetSubjectState {
   final List<Subject> subjects;
-  final Map<String, Map<String, String>> selectedValues;
+  final int offset;
+  final int limit;
+  final int total;
 
-  SubjectsLoaded({
+  const SubjectsLoaded({
     required this.subjects,
-    Map<String, Map<String, String>>? selectedValues,
-  }) : selectedValues = selectedValues ?? {};
+    required this.offset,
+    required this.limit,
+    required this.total,
+  });
 
   @override
-  List<Object?> get props => [subjects, selectedValues];
+  List<Object?> get props => [subjects, offset, limit, total];
 }
-
 
 
 class SubjectError extends GetSubjectState {

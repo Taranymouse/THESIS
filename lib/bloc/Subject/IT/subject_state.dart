@@ -1,33 +1,21 @@
 part of 'subject_bloc.dart';
 
-abstract class SubjectState extends Equatable {
-  const SubjectState();
 
-  @override
-  List<Object?> get props => [];
-}
+
+abstract class SubjectState {}
 
 class SubjectInitial extends SubjectState {}
 
-class SubjectLoading extends SubjectState {} // ✅ สถานะโหลดข้อมูล
+class SubjectLoading extends SubjectState {}
 
 class SubjectLoaded extends SubjectState {
-  final List<String> subjects;
-  final Map<String, Map<String, String>> selectedValues;
+  final List<Subject> subjects;
+  final int offset;
 
-  SubjectLoaded({
-    required this.subjects,
-    Map<String, Map<String, String>>? selectedValues,
-  }) : selectedValues = selectedValues ?? {};
-
-  @override
-  List<Object?> get props => [subjects, selectedValues];
+  SubjectLoaded(this.subjects, this.offset);
 }
 
-class SubjectError extends SubjectState { // ✅ สถานะเมื่อเกิดข้อผิดพลาด
+class SubjectError extends SubjectState {
   final String message;
-  const SubjectError(this.message);
-
-  @override
-  List<Object?> get props => [message];
+  SubjectError(this.message);
 }

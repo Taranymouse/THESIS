@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
+import 'package:project/modles/session_service.dart';
 import 'package:project/modles/subject_model.dart';
 
 part 'get_subject_event.dart';
@@ -18,37 +19,61 @@ class GetSubjectBloc extends Bloc<GetSubjectEvent, GetSubjectState> {
     Emitter<GetSubjectState> emit,
   ) async {
     emit(SubjectLoading());
-    try {
-      print(" (From GetSubject BLoC) ");
-      print("📡Fetching all subjects...");
 
+    final offset = event.offset ?? 0;
+    final limit = event.limit ?? 10;
+    final token = await SessionService().getAuthToken();
+
+    // ✅ ชื่อ param ต้องตรงกับ backend
+    final queryParams = {
+      'offset': offset.toString(),
+      'limit': limit.toString(),
+      if (event.courseYear != null) 'course_year': event.courseYear!,
+      if (event.branchId != null) 'id_branch': event.branchId!,
+    };
+
+    final uri = Uri.parse(
+      '$baseUrl/api/subjects',
+    ).replace(queryParameters: queryParams);
+
+    try {
+      print("📡 Fetching subjects from: $uri");
+
+      if (token == null) {
+        emit(SubjectError("Token is null"));
+        return;
+      }
+      
       final response = await http.get(
-        Uri.parse('$baseUrl/api/subjects?offset=0&limit=-1'),
+        uri,
+        headers: {"Authorization": "$token"},
       );
 
-      if (response.statusCode == 200 && response.body.isNotEmpty) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      print("📡 Response Body: ${response.body}");
 
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        final jsonResponse = json.decode(response.body);
         if (jsonResponse.containsKey("data") && jsonResponse["data"] is List) {
           final List<dynamic> subjectsData = jsonResponse["data"];
-          print("📡Fetched ${subjectsData.length} subjects");
-           print("📄 Subjects Data: $subjectsData");
-          // กรองข้อมูลตามปีหลักสูตรที่เลือก
-          List<Subject> filteredSubjects =
-              subjectsData
-                  .map((item) => Subject.fromJson(item))
-                  .where((subject) => subject.year == event.courseYear)
-                  .toList();
+          List<Subject> subjects =
+              subjectsData.map((item) => Subject.fromJson(item)).toList();
 
-          emit(SubjectsLoaded(subjects: filteredSubjects, selectedValues: {}));
+          emit(
+            SubjectsLoaded(
+              subjects: subjects,
+              offset: offset,
+              limit: limit,
+              total: jsonResponse['pagination']['total'],
+            ),
+          );
         } else {
-          emit(SubjectError("Invalid response format: 'data' field not found"));
+          emit(SubjectError("Invalid response format"));
         }
       } else {
-        emit(SubjectError("Failed to load all subjects"));
+        emit(SubjectError("Failed to load subjects"));
       }
     } catch (e) {
-      print("❌ Error fetching all subjects: $e");
+      print("❌ Error fetching subjects: $e");
       emit(SubjectError("Error: $e"));
     }
   }
