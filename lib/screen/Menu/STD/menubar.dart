@@ -5,6 +5,7 @@ import 'package:project/screen/Form/CheckPerForm/checkPerForm.dart';
 import 'package:project/screen/Form/CheckPerForm/checkPerFormTest.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/Student/academic_performance.dart';
+import 'package:project/screen/Student/document_router.dart';
 
 class Menu extends StatelessWidget {
   const Menu({super.key});
@@ -47,9 +48,10 @@ class Menu extends StatelessWidget {
                     await LoadingScreen.showWithNavigation(
                       context,
                       () async {
-                        await Future.delayed(Duration(seconds: 2));
+                        await Future.delayed(Duration(seconds: 1));
                       },
-                      PerformanceForm()
+                      // PerformanceForm()
+                      DocumentRouter(),
                     );
                   },
                 ),

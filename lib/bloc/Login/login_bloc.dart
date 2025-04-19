@@ -119,22 +119,24 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
       print("Response Body : ${response.body}");
 
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        // final data = jsonDecode(response.body);
         final String? token = data["token"]; // ✅ ดึง Token จาก API
         late String? role = '';
 
         await _sessionService.saveAuthToken(token!);
 
         if (token != null) {
-          final response = await http.get(
+          final responseUser = await http.get(
             Uri.parse('http://192.168.1.108:8000/api/auth/user'),
             headers: {"Authorization": "$token"},
           );
 
           if (response.statusCode == 200) {
-            final data = jsonDecode(response.body);
-            role = data['id_role'].toString();
+            final dataUser = jsonDecode(utf8.decode(responseUser.bodyBytes));
+            role = dataUser['id_role'].toString();
             print("✅ Can Get Role");
           } else {
             print("📌 Error to Get Role");

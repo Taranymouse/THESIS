@@ -11,7 +11,10 @@ import 'package:project/modles/subject_model.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart';
-import 'package:project/screen/home.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/selectPrefix.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/stdyear.dart';
+import 'package:project/screen/Student/document_router.dart';
 
 class PerformanceForm extends StatefulWidget {
   const PerformanceForm({super.key});
@@ -23,6 +26,9 @@ class PerformanceForm extends StatefulWidget {
 class _PerformanceFormState extends State<PerformanceForm> {
   String? selectedCourse;
   String? selectedCourseYear;
+  String? selectedPrefix;
+  String? selectedSemester;
+  String? selectedYear;
   late TextEditingController firstNameController;
   late TextEditingController lastNameController;
   late TextEditingController studentIdController;
@@ -55,7 +61,7 @@ class _PerformanceFormState extends State<PerformanceForm> {
           ),
         ),
         centerTitle: true,
-        leading: BackButtonWidget(targetPage: Homepage()),
+        leading: BackButtonWidget(targetPage: DocumentRouter()),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -93,6 +99,26 @@ class _PerformanceFormState extends State<PerformanceForm> {
                 firstNameController: firstNameController,
                 lastNameController: lastNameController,
                 studentIdController: studentIdController,
+                selectedPrefix: selectedPrefix,
+                onPrefixChanged: (value) {
+                  setState(() {
+                    selectedPrefix = value;
+                  });
+                },
+                selectedSemester: selectedSemester,
+                onSemesterChanged: (value) {
+                  print("เลือกภาคการศึกษา: $value");
+                  setState(() {
+                    selectedSemester = value;
+                  });
+                },
+                selectedYear: selectedYear,
+                onYearChanged: (value) {
+                  print("เลือกปีการศึกษา: $value");
+                  setState(() {
+                    selectedYear = value;
+                  });
+                },
               ),
               Divider(
                 color: Colors.grey,
@@ -116,6 +142,9 @@ class _PerformanceFormState extends State<PerformanceForm> {
                 firstNameController: firstNameController,
                 lastNameController: lastNameController,
                 studentIdController: studentIdController,
+                selectedPrefix: selectedPrefix,
+                selectedSemester: selectedSemester,
+                selectedYear: selectedYear,
               ),
             ],
           ),
@@ -131,6 +160,7 @@ class DropDownContent extends StatefulWidget {
   final ValueChanged<String?> onCourseChanged;
   final ValueChanged<String?> onCourseYearChanged;
   final VoidCallback onResetFilters; // เพิ่มฟังก์ชันสำหรับรีเซ็ต
+
   const DropDownContent({
     super.key,
     required this.selectedCourse,
@@ -220,23 +250,50 @@ class TextFeildContent extends StatelessWidget {
   final TextEditingController firstNameController;
   final TextEditingController lastNameController;
   final TextEditingController studentIdController;
+  final String? selectedPrefix;
+  final String? selectedSemester;
+  final String? selectedYear;
+  final ValueChanged<String?> onPrefixChanged;
+  final ValueChanged<String?> onSemesterChanged;
+  final ValueChanged<String?> onYearChanged;
 
   const TextFeildContent({
     super.key,
     required this.firstNameController,
     required this.lastNameController,
     required this.studentIdController,
+    required this.selectedPrefix,
+    required this.selectedSemester,
+    required this.selectedYear,
+    required this.onPrefixChanged,
+    required this.onSemesterChanged,
+    required this.onYearChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // เพิ่มการจัดแนวให้สวยขึ้น
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
           "รายละเอียดนักศึกษา",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ), // เปลี่ยนขนาดตัวอักษรหัวข้อ
+        ),
+        Row(
+          children: [
+            Text("คำนำหน้า :"),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 100,
+              height: 50,
+              child: PrefixDropdown(
+                // Use the PrefixDropdown here
+                onPrefixChanged: onPrefixChanged,
+                value: selectedPrefix,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 10),
         TextFieldContainer(label: "ชื่อ", controller: firstNameController),
         const SizedBox(height: 10),
@@ -247,6 +304,31 @@ class TextFeildContent extends StatelessWidget {
           controller: studentIdController,
         ),
         const SizedBox(height: 10),
+        Row(
+          children: [
+            Text("ภาคการศึกษา :"),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 80,
+              height: 50,
+              child: Semester(
+                selectedValue: selectedSemester,
+                onChanged: onSemesterChanged,
+              ),
+            ),
+            SizedBox(width: 10),
+            Text("ปีการศึกษา :"),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 80,
+              height: 50,
+              child: Stdyear(
+                selectedValue: selectedYear,
+                onChanged: onYearChanged,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -267,7 +349,7 @@ class TextFieldContainer extends StatelessWidget {
     return SizedBox(
       width:
           MediaQuery.of(context).size.width *
-          0.75, // ปรับความกว้างให้พอดีกับหน้าจอ
+          0.9, // ปรับความกว้างให้พอดีกับหน้าจอ
       child: TextField(
         controller: controller,
         style: const TextStyle(fontSize: 14), // ลดขนาดตัวอักษรให้พอดี
@@ -290,13 +372,20 @@ class TextFieldContainer extends StatelessWidget {
 class SubjectsTable extends StatefulWidget {
   final String? selectedCourse;
   final String? selectedCourseYear;
+  final String? selectedPrefix;
+  final String? selectedSemester;
+  final String? selectedYear;
   final TextEditingController firstNameController;
   final TextEditingController lastNameController;
   final TextEditingController studentIdController;
+
   const SubjectsTable({
     super.key,
     required this.selectedCourse,
     required this.selectedCourseYear,
+    required this.selectedPrefix,
+    required this.selectedSemester,
+    required this.selectedYear,
     required this.firstNameController,
     required this.lastNameController,
     required this.studentIdController,
@@ -311,22 +400,50 @@ class _SubjectsTableState extends State<SubjectsTable> {
   bool isLoading = true;
   int currentOffset = 0;
   int totalItems = 0;
-
   Map<String, Map<String, dynamic>> savedSubjectDetails = {};
   final TextEditingController gpaController = TextEditingController();
   bool isSubmitEnabled = false;
+  List<AcademicTerm> academicTerms = []; // เพิ่มรายการภาคการศึกษา
+  String? selectedCourse;
+  String? selectedCourseYear;
+  String? selectedPrefix;
+  String? selectedSemester;
+  String? selectedYear;
+  TextEditingController firstNameController = TextEditingController();
+  TextEditingController lastNameController = TextEditingController();
+  TextEditingController studentIdController = TextEditingController();
 
-  Future<void> fetchSubjects(int offset) async {
+  @override
+  void initState() {
+    super.initState();
+    fetchSubjects(currentOffset);
+    fetchAcademicTerms(); // โหลดข้อมูลภาคการศึกษาเมื่อ initState
+  }
+
+  Future<void> fetchAcademicTerms() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/academic_terms'));
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = jsonDecode(
+        utf8.decode(response.bodyBytes),
+      );
+      setState(() {
+        academicTerms = jsonList.map((e) => AcademicTerm.fromJson(e)).toList();
+      });
+    } else {
+      throw Exception('Failed to load academic terms');
+    }
+  }
+
+  Future<List<Subject>> fetchSubjects(int offset) async {
     if (widget.selectedCourse == null || widget.selectedCourseYear == null) {
       setState(() {
         subjects = [];
         isLoading = false;
       });
-      return;
+      return [];
     }
 
     final token = await SessionService().getAuthToken();
-
     final response = await http.get(
       Uri.parse(
         '$baseUrl/api/subjects?offset=$offset&limit=10&course=${widget.selectedCourse}&course_year=${widget.selectedCourseYear}',
@@ -336,19 +453,23 @@ class _SubjectsTableState extends State<SubjectsTable> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final List subjectData = data['data'];
+      final List<dynamic> subjectData = data['data'];
       final pagination = data['pagination'];
       List<Subject> fetchedSubjects =
           subjectData.map((item) => Subject.fromJson(item)).toList();
+
       setState(() {
         subjects = fetchedSubjects;
         totalItems = pagination['total'];
         isLoading = false;
       });
+
+      return fetchedSubjects;
     } else {
       setState(() {
         isLoading = false;
       });
+      throw Exception('Failed to load subjects');
     }
   }
 
@@ -366,12 +487,6 @@ class _SubjectsTableState extends State<SubjectsTable> {
       isLoading = true;
       fetchSubjects(currentOffset);
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchSubjects(currentOffset);
   }
 
   void _updateSubjectDetail(String idSubject, String field, dynamic value) {
@@ -392,6 +507,21 @@ class _SubjectsTableState extends State<SubjectsTable> {
 
   bool _validateAllFields() {
     if (gpaController.text.isEmpty) return false;
+
+    // if (selectedCourse == null ||
+    //     selectedCourseYear == null ||
+    //     selectedSemester == null ||
+    //     selectedYear == null) {
+    //   return false;
+    // }
+
+    // if (firstNameController.text.isEmpty ||
+    //     lastNameController.text.isEmpty ||
+    //     studentIdController.text.isEmpty) {
+    //   return false;
+    // }
+
+    // เช็ครายละเอียดวิชา
     for (var detail in savedSubjectDetails.values) {
       if (detail['semester'] == null ||
           detail['year'] == null ||
@@ -399,6 +529,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
         return false;
       }
     }
+
     return true;
   }
 
@@ -440,6 +571,10 @@ class _SubjectsTableState extends State<SubjectsTable> {
   @override
   void dispose() {
     gpaController.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
+    studentIdController.dispose();
+
     super.dispose();
   }
 
@@ -476,12 +611,20 @@ class _SubjectsTableState extends State<SubjectsTable> {
                   ),
                 ),
                 DataColumn(
-                  label: Text('ภาคการศึกษา', style: GoogleFonts.prompt(fontSize: 10),),
+                  label: Text(
+                    'ภาคการศึกษา',
+                    style: GoogleFonts.prompt(fontSize: 10),
+                  ),
                 ),
                 DataColumn(
-                  label: Text('ปีการศึกษา', style: GoogleFonts.prompt(fontSize: 10),),
+                  label: Text(
+                    'ปีการศึกษา',
+                    style: GoogleFonts.prompt(fontSize: 10),
+                  ),
                 ),
-                DataColumn(label: Text('เกรด', style: GoogleFonts.prompt(fontSize: 10),)),
+                DataColumn(
+                  label: Text('เกรด', style: GoogleFonts.prompt(fontSize: 10)),
+                ),
               ],
               rows:
                   subjects.map((subject) {
@@ -489,14 +632,11 @@ class _SubjectsTableState extends State<SubjectsTable> {
                     final detail =
                         savedSubjectDetails[id] ??
                         {'semester': null, 'year': null, 'grade': null};
-
                     final isRowFilled =
                         detail['semester'] != null &&
                         detail['year'] != null &&
                         detail['grade'] != null;
-
                     final grade = detail['grade']?.toString() ?? '';
-
                     Color? rowColor;
                     if (isRowFilled) {
                       if (grade == 'F' || grade == 'I' || grade == 'W') {
@@ -505,7 +645,6 @@ class _SubjectsTableState extends State<SubjectsTable> {
                         rowColor = Colors.green[100];
                       }
                     }
-
                     return DataRow(
                       color:
                           rowColor != null
@@ -531,11 +670,11 @@ class _SubjectsTableState extends State<SubjectsTable> {
                               style: TextStyle(fontSize: 10),
                             ),
                             items:
-                                ['ต้น', 'ปลาย', 'ฤดูร้อน'].map((semester) {
-                                  return DropdownMenuItem(
-                                    value: semester,
+                                academicTerms.map((term) {
+                                  return DropdownMenuItem<String>(
+                                    value: term.nameTerm,
                                     child: Text(
-                                      semester,
+                                      term.nameTerm,
                                       style: GoogleFonts.prompt(fontSize: 10),
                                     ),
                                   );
@@ -546,7 +685,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
                           ),
                         ),
                         DataCell(
-                          DropdownButton<String>(
+                          DropdownButton(
                             value: detail['year'],
                             hint: Text(
                               "-เลือก-",
@@ -568,7 +707,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
                           ),
                         ),
                         DataCell(
-                          DropdownButton<String>(
+                          DropdownButton(
                             value: detail['grade'],
                             hint: Text(
                               "-เลือก-",
@@ -668,10 +807,10 @@ class _SubjectsTableState extends State<SubjectsTable> {
                   ),
                 ),
                 SizedBox(height: 20),
-                Text("จำนวนวิชาที่ผ่าน : ${countPassedSubjects()}"),
+                Text("จำนวนวิชาที่ผ่าน: ${countPassedSubjects()}"),
+                SizedBox(height: 10),
                 Text(
-                  "จำนวนวิชาที่ไม่ผ่านผ่าน / ยังไม่ลงทะเบียน : ${countFailedOrNotRegisteredSubjects()}",
-                  style: TextStyle(color: Colors.red[400]),
+                  "จำนวนวิชาที่ไม่ผ่าน/ยังไม่ลงทะเบียน: ${countFailedOrNotRegisteredSubjects()}",
                 ),
               ],
             ),
@@ -716,9 +855,11 @@ class _SubjectsTableState extends State<SubjectsTable> {
                   // ✅ ส่งข้อมูลได้แล้ว
                   print("ส่งข้อมูลแล้วจ้า 🎉");
                   print("Submit pressed!");
-                  print("ชื่อ : ${firstName}");
-                  print("นามสกุล : ${lastName}");
-                  print("รหัสนักศึกษา : ${studentId}");
+                  print(
+                    "ข้อมูลนักศึกษา: ${widget.selectedPrefix}, ${widget.firstNameController.text} ${widget.lastNameController.text}, ${widget.studentIdController.text}",
+                  );
+                  print("ภาคการศึกษา: ${widget.selectedSemester}");
+                  print("ปีการศึกษา: ${widget.selectedYear}");
                   print("เกรดเฉลี่ยรวม : ${gpaController.text}");
                   print("รายละเอียดวิชา: $savedSubjectDetails");
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -740,5 +881,16 @@ class _SubjectsTableState extends State<SubjectsTable> {
         ),
       ),
     );
+  }
+}
+
+class AcademicTerm {
+  final int idTerm;
+  final String nameTerm;
+
+  AcademicTerm({required this.idTerm, required this.nameTerm});
+
+  factory AcademicTerm.fromJson(Map<String, dynamic> json) {
+    return AcademicTerm(idTerm: json['id_term'], nameTerm: json['name_term']);
   }
 }

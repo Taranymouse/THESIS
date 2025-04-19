@@ -13,6 +13,7 @@ import 'package:project/bloc/Subject/CS/subject_cs_bloc.dart';
 import 'package:project/bloc/Subject/IT/subject_bloc.dart';
 import 'package:project/bloc/Subject/IT/subject_repository.dart';
 import 'package:project/modles/session_service.dart';
+import 'package:project/screen/Admin/admin_check_performance.dart';
 import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Form/CheckPerForm/Content.dart';
 import 'package:project/screen/ManageSubject/createsubject.dart';
@@ -78,6 +79,7 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.black),
         ),
       ),
+      // home: StudentListPage(),
       initialRoute: isLoggedIn ? '/home' : '/login',
       routes: {
         '/login': (context) => Login(),
