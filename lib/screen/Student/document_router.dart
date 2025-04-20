@@ -19,8 +19,8 @@ class DocumentRouter extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            Text("Project I", style: TextStyle(fontSize: 18)),
-            SizedBox(height: 10),
+            const Text("Project I", style: TextStyle(fontSize: 18)),
+            const SizedBox(height: 10),
             DocumentCard(
               title: 'แบบขอตรวจคุณสมบัติในการมีสิทธิขอจัดทำโครงงานปริญญานิพนธ์',
               subtitle: '(IT00G / CS00G)',
@@ -67,9 +67,9 @@ class DocumentRouter extends StatelessWidget {
                 );
               },
             ),
-            SizedBox(height: 20),
-            Text("Project II", style: TextStyle(fontSize: 18)),
-            SizedBox(height: 10),
+            const SizedBox(height: 20),
+            const Text("Project II", style: TextStyle(fontSize: 18)),
+            const SizedBox(height: 10),
             DocumentCard(
               title: 'แบบคำร้องขอสอบติดตามความก้าวหน้าโครงงานปริญญานิพนธ์',
               subtitle: '(IT03S / CS03S)',
