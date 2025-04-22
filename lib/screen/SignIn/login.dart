@@ -4,6 +4,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/bloc/Login/login_bloc.dart';
 import 'package:project/modles/session_service.dart';
+import 'package:project/screen/SignIn/set_password_screen.dart';
 
 class Login extends StatelessWidget {
   final _emailController = TextEditingController();
@@ -35,6 +36,15 @@ class Login extends StatelessWidget {
                 context,
               ).showSnackBar(SnackBar(content: Text("หา role ไม่เจอ")));
             }
+          } else if (state is RequireSetPasswordState) {
+            Navigator.pushReplacementNamed(
+              context,
+              '/set-password',
+              arguments: {
+                'email': state.email,
+                'displayName': state.displayName,
+              },
+            );
           } else if (state is LoginRequireSetPassword) {
             Navigator.pushReplacementNamed(
               context,

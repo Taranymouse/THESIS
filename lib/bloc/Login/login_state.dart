@@ -39,12 +39,13 @@ class LoginRequireSetPassword extends LoginState {
   List<Object?> get props => [email];
 }
 
-class SetPasswordSuccess extends LoginState {}
+class RequireSetPasswordState extends LoginState {
+  final String email;
+  final String displayName;
+  final String role;
 
-class SetPasswordFailure extends LoginState {
-  final String message;
-  const SetPasswordFailure(this.message);
+  RequireSetPasswordState(this.email, this.displayName, this.role);
 
   @override
-  List<Object?> get props => [message];
+  List<Object> get props => [email, displayName, role];
 }

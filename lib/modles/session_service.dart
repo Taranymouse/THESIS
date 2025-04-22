@@ -5,50 +5,82 @@ class SessionService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   static const String _isLoggedInKey = 'isLoggedIn';
 
+  // ฟังก์ชันเก็บข้อมูลid_student
+  Future<void> setIdStudent(int id_student ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('id_student', id_student);
+  }
+  // ฟังก์ชันดึงข้อมูลid_student
+  Future<int?> getIdStudent() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id_student');
+  }
+
+  // ฟังก์ชันเก็บข้อมูลอีเมล
   Future<void> saveEmailSession(String email) async {
     await _storage.write(key: 'userEmail', value: email);
   }
 
+  // ฟังก์ชันเก็บชื่อผู้ใช้
   Future<void> saveDisplayName(String displayName) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('display_name', displayName);
   }
 
+  // ฟังก์ชันดึงชื่อผู้ใช้
   Future<String?> getDisplayName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('display_name');
   }
 
+  // ฟังก์ชันเก็บ token
   Future<void> saveAuthToken(String token) async {
     await _storage.write(key: 'authToken', value: token);
   }
 
+  // ฟังก์ชันดึง token
   Future<String?> getAuthToken() async {
     return await _storage.read(key: 'authToken');
   }
 
+  // ฟังก์ชันเก็บ role
   Future<void> saveUserRole(String role) async {
     await _storage.write(key: 'role', value: role);
   }
 
+  // ฟังก์ชันดึงอีเมลของผู้ใช้
   Future<String?> getUserSession() async {
     return await _storage.read(key: 'userEmail');
   }
 
+  // ฟังก์ชันดึง role
   Future<String?> getUserRoleSession() async {
     return await _storage.read(key: 'role');
   }
 
+  // ฟังก์ชันดึง uid
+  Future<void> saveUserUid(String uid) async {
+    await _storage.write(key: 'uid', value: uid);
+  }
+
+  // ฟังก์ชันดึง uid
+  Future<String?> getUserUid() async {
+    return await _storage.read(key: 'uid');
+  }
+
+  // ฟังก์ชันตรวจสอบว่า login แล้วหรือไม่
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_isLoggedInKey) ?? false;
   }
 
+  // ฟังก์ชันตั้งค่า login status
   Future<void> setLoggedIn(bool isLoggedIn) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_isLoggedInKey, isLoggedIn);
   }
 
+  // ฟังก์ชันลบข้อมูล session
   Future<void> clearSession() async {
     // ลบใน Secure Storage
     await _storage.deleteAll();
@@ -58,3 +90,4 @@ class SessionService {
     await prefs.clear(); // ลบข้อมูลทั้งหมดเมื่อ Logout
   }
 }
+

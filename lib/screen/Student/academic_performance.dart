@@ -73,12 +73,9 @@ class _PerformanceFormState extends State<PerformanceForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const FittedBox(
-          fit: BoxFit.scaleDown,
-          child: const Text(
-            "แบบตรวจสอบคุณสมบัติในการมีสิทธิ์ขอจัดทำโครงงานปริญญานิพนธ์",
-            maxLines: 1,
-          ),
+        title: const Text(
+          "แบบตรวจสอบคุณสมบัติในการมีสิทธิ์ขอจัดทำโครงงานปริญญานิพนธ์",
+          maxLines: 1,
         ),
         centerTitle: true,
         leading: BackButtonWidget(targetPage: DocumentRouter()),

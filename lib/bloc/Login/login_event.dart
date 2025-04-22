@@ -18,12 +18,3 @@ class LogoutEvent extends LoginEvent {}
 
 class CheckSessionEvent extends LoginEvent {}
 
-class SetNewPasswordEvent extends LoginEvent {
-  final String email;
-  final String password;
-
-  const SetNewPasswordEvent(this.email, this.password);
-
-  @override
-  List<Object?> get props => [email, password];
-}

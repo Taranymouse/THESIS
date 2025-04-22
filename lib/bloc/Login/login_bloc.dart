@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
 
 part 'login_event.dart';
@@ -16,15 +17,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final SessionService _sessionService = SessionService();
 
-  late final String baseUrl;
-
   LoginBloc() : super(LoginInitial()) {
     on<LoginWithEmailPassword>(_onLoginWithEmailPassword);
     on<LoginWithGoogle>(_onLoginWithGoogle);
     on<CheckSessionEvent>(_onCheckSession);
     on<LogoutEvent>(_onLogout);
-    on<SetNewPasswordEvent>(_onSetNewPassword);
-
   }
 
   // ✅ ---- 1. เช็ก Session เมื่อเปิดแอป ----
@@ -49,27 +46,61 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   ) async {
     emit(LoginLoading());
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
-      );
+      final token = await _sessionService.getAuthToken();
+      final uid = await _sessionService.getUserUid();
 
-      final User? user = userCredential.user;
-      if (user == null || user.email == null) {
-        emit(const LoginFailure("Failed to retrieve user data."));
+      if (token == null || uid == null) {
+        emit(const LoginFailure("Missing token or uid"));
         return;
       }
 
-      final String displayName = user.displayName ?? "No Name";
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/login'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": event.email,
+          "password": event.password,
+          "uid": uid,
+          "token": token,
+        }),
+      );
 
-      await _sessionService.saveEmailSession(user.email!);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        final String? token = data["token"];
 
-      await Future.delayed(Duration(seconds: 2));
-      emit(
-        LoginSuccess(user.email!, displayName, ''),
-      ); // 🌟 ส่ง Display Name กลับไป
+        if (token == null) {
+          emit(const LoginFailure("Login failed: No token received"));
+          return;
+        }
+
+        await _sessionService.saveAuthToken(token);
+
+        // ดึงข้อมูลผู้ใช้
+        final responseUser = await http.get(
+          Uri.parse('$baseUrl/api/auth/user'),
+          headers: {"Authorization": "Bearer $token"},
+        );
+
+        if (responseUser.statusCode == 200) {
+          final dataUser = jsonDecode(utf8.decode(responseUser.bodyBytes));
+          final String displayName = dataUser['display_name'] ?? 'No Name';
+          final String email = dataUser['email'] ?? event.email;
+
+          final String? role = dataUser['id_role']?.toString();
+          final dynamic password = dataUser['password'];
+
+          if (password == null) {
+            emit(RequireSetPasswordState(email, displayName, role ?? ''));
+          } else {
+            emit(LoginSuccess(email, displayName, role ?? ''));
+          }
+        }
+      } else {
+        emit(LoginFailure("Login Failed: ${response.body}"));
+      }
     } catch (e) {
-      emit(LoginFailure(e.toString()));
+      emit(LoginFailure("Login Failed: ${e.toString()}"));
     }
   }
 
@@ -107,50 +138,54 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       final String displayName = user.displayName ?? "No Name";
       final String email = user.email!;
       final String? idToken = await user.getIdToken();
+      final String uid = user.uid;
 
       print("Google ID Token: $idToken");
 
       // 📌 เรียก API `/login`
       final response = await http.post(
-        Uri.parse('http://192.168.1.108:8000/api/auth/login'),
+        Uri.parse('$baseUrl/api/auth/login'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"token": idToken}),
       );
 
       print("Response Body : ${response.body}");
 
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-
       if (response.statusCode == 200) {
-        // final data = jsonDecode(response.body);
-        final String? token = data["token"]; // ✅ ดึง Token จาก API
-        late String? role = '';
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        final String? token = data["token"];
 
-        await _sessionService.saveAuthToken(token!);
+        if (token == null) {
+          emit(const LoginFailure("Login failed: No token received"));
+          return;
+        }
 
-        if (token != null) {
-          final responseUser = await http.get(
-            Uri.parse('http://192.168.1.108:8000/api/auth/user'),
-            headers: {"Authorization": "$token"},
-          );
+        // 📌 บันทึกข้อมูลลงใน SessionService
+        await _sessionService.saveAuthToken(token);
+        await _sessionService.saveEmailSession(email);
+        await _sessionService.saveDisplayName(displayName);
+        await _sessionService.saveUserUid(uid);
 
-          if (response.statusCode == 200) {
-            final dataUser = jsonDecode(utf8.decode(responseUser.bodyBytes));
-            role = dataUser['id_role'].toString();
-            print("✅ Can Get Role");
+        // 📌 เรียก API `/auth/user` เพื่อดึงข้อมูลผู้ใช้
+        final responseUser = await http.get(
+          Uri.parse('$baseUrl/api/auth/user'),
+          headers: {"Authorization": "$token"},
+        );
+
+        if (responseUser.statusCode == 200) {
+          final dataUser = jsonDecode(utf8.decode(responseUser.bodyBytes));
+          final String? role = dataUser['id_role']?.toString();
+          final dynamic password = dataUser['password'];
+
+          // 📌 บันทึก role ลงใน SessionService
+          await _sessionService.saveUserRole(role ?? '');
+
+          if (password == null) {
+            // 🌟 ถ้า password ยังไม่เคยตั้ง
+            emit(RequireSetPasswordState(email, displayName, role ?? ''));
           } else {
-            print("📌 Error to Get Role");
+            emit(LoginSuccess(email, displayName, role ?? ''));
           }
-
-          // 📌 บันทึก Token & Role ลง Storage
-          await _sessionService.saveAuthToken(token);
-          print("📌After Get Role : $role");
-          emit(LoginSuccess(email, displayName, role));
-          if (state is LoginSuccess) {
-            await SessionService().saveAuthToken(token);
-          }
-        } else {
-          emit(LoginFailure("Login failed: No token received"));
         }
       } else {
         emit(LoginFailure("Login Failed: ${response.body}"));
@@ -160,32 +195,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     }
   }
 
-  // 🛠 ---- 4. Set New Password ----
-  Future<void> _onSetNewPassword(
-    SetNewPasswordEvent event,
-    Emitter<LoginState> emit,
-  ) async {
-    emit(LoginLoading());
-    try {
-      final response = await http.post(
-        Uri.parse('http://192.168.1.108:8000/api/users/set-password'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": event.email, "password": event.password}),
-      );
-
-      if (response.statusCode == 200) {
-        emit(SetPasswordSuccess());
-      } else {
-        emit(
-          SetPasswordFailure("Failed to set new password: ${response.body}"),
-        );
-      }
-    } catch (e) {
-      emit(SetPasswordFailure("Error: ${e.toString()}"));
-    }
-  }
-
-  // 🚪 ---- 5. Logout ----
+  // 🚪 ---- 4. Logout ----
   Future<void> _onLogout(LogoutEvent event, Emitter<LoginState> emit) async {
     await _auth.signOut();
     await _googleSignIn.disconnect();

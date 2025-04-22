@@ -12,6 +12,7 @@ import 'package:project/modles/session_service.dart';
 import 'package:project/modles/subject_model.dart';
 import 'package:project/screen/Form/Form_Options/File/fileupload.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
+import 'package:project/screen/Student/document_router.dart';
 
 class SubjectsTable extends StatefulWidget {
   final String? selectedCourse;
@@ -145,6 +146,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
 
   Future<void> fetchGrades() async {
     final response = await http.get(Uri.parse('$baseUrl/api/grades'));
+
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(
         utf8.decode(response.bodyBytes),
@@ -520,7 +522,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
                       ),
                     ),
                     DataCell(
-                      DropdownButton(
+                      DropdownButton<String>(
                         value: detail['grade'],
                         hint: Text("-เลือก-", style: TextStyle(fontSize: 10)),
                         items:
@@ -712,7 +714,10 @@ class _SubjectsTableState extends State<SubjectsTable> {
                 titleTextStyle: GoogleFonts.prompt(),
                 desc: 'ส่งข้อมูลเรียบร้อยแล้ว',
                 btnOkOnPress: () {
-                  // ถ้าต้องการให้ทำอะไรหลังกด OK ให้ใส่ที่นี่
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => DocumentRouter()),
+                  );
                 },
                 btnOkText: 'ตกลง',
                 btnOkColor: Colors.green,

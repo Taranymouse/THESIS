@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/Student/academic_performance.dart';
+import 'package:project/screen/Student/request_group.dart';
 import 'package:project/screen/home.dart';
 
 class DocumentRouter extends StatelessWidget {
@@ -34,13 +35,10 @@ class DocumentRouter extends StatelessWidget {
               title:
                   'แบบคำร้องขอเข้ารับการจัดสรรกลุ่มสำหรับการจัดทำโครงงานปริญญานิพนธ์',
               subtitle: '(CP00R)',
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text("ยังไม่เปิดให้บริการ"),
-                    duration: const Duration(seconds: 1),
-                  ),
-                );
+              onTap: () async {
+                await LoadingScreen.showWithNavigation(context, () async {
+                  await Future.delayed(Duration(seconds: 2));
+                }, RequestGroup(studentIds: [1, 3]));
               },
             ),
             DocumentCard(

@@ -18,8 +18,9 @@ import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Form/CheckPerForm/Content.dart';
 import 'package:project/screen/ManageSubject/createsubject.dart';
 import 'package:project/screen/Profeser/profhome.dart';
+import 'package:project/screen/SignIn/create_student.dart';
 import 'package:project/screen/SignIn/login.dart';
-import 'package:project/screen/SignIn/setpassword.dart';
+import 'package:project/screen/SignIn/set_password_screen.dart';
 import 'package:project/screen/home.dart';
 
 void main() async {
@@ -86,14 +87,8 @@ class MyApp extends StatelessWidget {
         '/home': (context) => Homepage(),
         '/admin-home': (context) => AdminHomepage(),
         '/prof-home': (context) => ProfHomepage(),
-        '/set-password': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is String) {
-            return SetPasswordScreen(email: args);
-          } else {
-            return Scaffold(body: Center(child: Text("ไม่พบอีเมลที่ส่งมา")));
-          }
-        },
+        '/set-password': (context) => SetPasswordScreen(),
+        '/create-student': (context) => CreateStudentScreen(),
         '/createsubject': (context) => Createsubject(),
       },
     );

@@ -53,11 +53,14 @@ class HomepageContent extends StatefulWidget {
 class _HomepageContentState extends State<HomepageContent> {
   final SessionService _sessionService = SessionService();
   String? displayName;
+  String? email;
+  int? id_user;
 
   @override
   void initState() {
     super.initState();
     _loadDisplayName();
+    _onCheckUser();
   }
 
   Future<void> _loadDisplayName() async {
@@ -68,13 +71,12 @@ class _HomepageContentState extends State<HomepageContent> {
       });
     } else {
       // ถ้าไม่มีใน SessionService ให้โหลดจาก API
-      _onCheckUser();
+      _onDisplayNameAPI();
     }
   }
 
-  Future<void> _onCheckUser() async {
+  Future<void> _onDisplayNameAPI() async {
     String? token = await _sessionService.getAuthToken();
-    String? role = await _sessionService.getUserRoleSession();
     print("Token : $token");
     if (token != null) {
       final response = await http.get(
@@ -90,6 +92,35 @@ class _HomepageContentState extends State<HomepageContent> {
         });
         // บันทึก displayName ลงใน SessionService
         await _sessionService.saveDisplayName(fetchedDisplayName);
+      } else {
+        print("❌ Failed to fetch user data: ${response.body}");
+      }
+    }
+  }
+
+  Future<void> _onCheckUser() async {
+    String? token = await _sessionService.getAuthToken();
+    String? email = await _sessionService.getUserSession();
+    print("Token : $token");
+    if (token != null) {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/auth/user'),
+        headers: {"Authorization": "$token"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        String fetchedEmail = data["email"];
+        if (fetchedEmail == email) {
+          print("!!##  Email is $fetchedEmail");
+          print("!!## id_user : ${data['id_user']}");
+          setState(() {
+            email = fetchedEmail;
+            id_user = data['id_user'];
+          });
+        } else {
+          print("Email is not in use.");
+        }
       } else {
         print("❌ Failed to fetch user data: ${response.body}");
       }

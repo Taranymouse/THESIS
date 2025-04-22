@@ -1,7 +1,7 @@
 class Grade {
   final int id;
   final String code;
-  final String point;
+  final double point;
 
   Grade({
     required this.id,
@@ -11,9 +11,9 @@ class Grade {
 
   factory Grade.fromJson(Map<String, dynamic> json) {
     return Grade(
-      id: json['id_grade'],
-      code: json['grade_code'],
-      point: json['grade_point'],
+      id: json['id_grade'] ?? 0,
+      code: json['grade_code'] ?? '',
+      point: (json['grade_point'] as num).toDouble(),
     );
   }
 }
