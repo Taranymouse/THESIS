@@ -249,7 +249,7 @@ class _PerformanceFormState extends State<PerformanceForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("ฟอร์มหลายสมาชิก (สูงสุด 3 คน)"),
+        title: const Text("แบบขอตรวจคุณสมบัติในการมีสิทธิขอจัดทำโครงงานปริญญานิพนธ์"),
         centerTitle: true,
         leading: BackButtonWidget(targetPage: DocumentRouter()),
       ),
