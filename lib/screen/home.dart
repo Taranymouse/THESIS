@@ -143,9 +143,18 @@ class _HomepageContentState extends State<HomepageContent> {
       Uri.parse('$baseUrl/api/student/get/active_user/${id_user.toString()}'),
     );
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+
       print("!!## id_student : ${data['data']['id_student']}");
       await _sessionService.setIdStudent(data['data']['id_student']);
+      await _sessionService.saveStudentId(data['data']['code_student']);
+      await _sessionService.saveUserName(data['data']['first_name']);
+      await _sessionService.saveUserLastName(data['data']['last_name']);
+      await _sessionService.savePrefix(data['data']['id_prefix']);
+      print("!!## first_name : ${data['data']['first_name']}");
+      print("!!## last_name : ${data['data']['last_name']}");
+      print("!!## student_id : ${data['data']['code_student']}");
+      print("!!## id_prefix : ${data['data']['id_prefix']}");
       final test_id_student = await _sessionService.getIdStudent();
       print("!!## test_id_student : $test_id_student");
     } else {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:project/modles/session_service.dart';
+import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/Student/academic_performance.dart';
 import 'package:project/screen/Student/request_group.dart';
-import 'package:project/screen/home.dart';
 
 class AdminDocumentRouter extends StatelessWidget {
   AdminDocumentRouter({super.key});
@@ -16,7 +16,7 @@ class AdminDocumentRouter extends StatelessWidget {
       appBar: AppBar(
         title: const Text("จัดการเอกสาร"),
         centerTitle: true,
-        leading: BackButtonWidget(targetPage: Homepage()),
+        leading: BackButtonWidget(targetPage: AdminHomepage()),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

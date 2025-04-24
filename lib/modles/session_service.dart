@@ -117,13 +117,20 @@ class SessionService {
   }
 
   // ฟังก์ชันบันทึกชื่อเลือกคำนำหน้า
-  Future<void> savePrefixName(String prefixName) async {
-    await _storage.write(key: 'prefixName', value: prefixName);
+  /// บันทึกคำนำหน้า (prefix) เป็น String
+  Future<void> savePrefix(int prefix) async {
+    await _storage.write(
+      key: 'prefix',
+      value: prefix.toString(), // แปลง int -> String
+    );
   }
 
-  // ฟังก์ชันดึงชื่อเลือกคำนำหน้า
-  Future<String?> getPrefixName() async {
-    return await _storage.read(key: 'prefixName');
+  /// อ่านคำนำหน้า กลับมาเป็น int?
+  Future<int?> getPrefix() async {
+    final str = await _storage.read(key: 'prefix');
+    if (str == null) return null;
+    // แปลง String -> int ถ้าแปลงไม่ได้คืน null
+    return int.tryParse(str);
   }
 
   // ฟังก์ชันตรวจสอบว่า login แล้วหรือไม่

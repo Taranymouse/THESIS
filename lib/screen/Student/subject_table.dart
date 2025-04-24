@@ -335,7 +335,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
           textAlign: TextAlign.center,
         ),
         DataTable(
-          columnSpacing: 30,
+          columnSpacing: 25,
           dataRowMinHeight: 40,
           dataRowMaxHeight: 60,
           columns: [

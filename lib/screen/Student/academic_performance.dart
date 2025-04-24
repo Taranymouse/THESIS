@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
+import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart';
@@ -28,10 +29,32 @@ class _PerformanceFormState extends State<PerformanceForm> {
   @override
   void initState() {
     super.initState();
+    // กำหนดข้อมูลนักศึกษาคนแรกจาก SessionService
+    _initializeFirstMember();
+    // ฟังการเปลี่ยนแปลงของสมาชิกแต่ละคน
     for (var m in members) {
       m.ready.addListener(_onReadyChanged);
     }
-    // _updateCanSubmitAll();
+  }
+
+  Future<void> _initializeFirstMember() async {
+    final SessionService sessionService = SessionService();
+    final firstMember = members.first;
+
+    // ใช้ await เพื่อรอผลลัพธ์จาก Future
+    final userName = await sessionService.getUserName();
+    final userLastName = await sessionService.getUserLastName();
+    final studentId = await sessionService.getStudentId();
+    print("First: $userName");
+    print("Lastname: $userLastName");
+    print("studentId: $studentId");
+
+    // ตั้งค่าข้อมูลใน TextEditingController
+    setState(() {
+      firstMember.firstNameController.text = userName ?? '';
+      firstMember.lastNameController.text = userLastName ?? '';
+      firstMember.studentIdController.text = studentId ?? '';
+    });
   }
 
   void _updateCanSubmitAll() {
@@ -151,11 +174,38 @@ class _PerformanceFormState extends State<PerformanceForm> {
             };
           }).toList(),
     };
-    await http.put(
+
+    final updateResponse = await http.put(
       Uri.parse('$baseUrl/api/student/update'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(updateBody),
     );
+
+    if (updateResponse.statusCode != 200) {
+      final failedIds = members
+          .map((m) => m.studentIdController.text)
+          .join(', ');
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.error,
+        animType: AnimType.topSlide,
+        title: 'ไม่พบข้อมูล',
+        titleTextStyle: GoogleFonts.prompt(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.red,
+        ),
+        desc: 'ไม่พบข้อมูล รหัสนักศึกษา: $failedIds',
+        btnOkOnPress: () {},
+        btnOkText: 'รับทราบ',
+        buttonsTextStyle: GoogleFonts.prompt(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ).show();
+      return; // หยุด ไม่ส่งข้อมูล
+    }
 
     // 2) เพิ่มรายวิชา
     final createBody = {
@@ -173,11 +223,35 @@ class _PerformanceFormState extends State<PerformanceForm> {
             return {"s_id": m.studentIdController.text, "subject": subjectList};
           }).toList(),
     };
-    await http.post(
+
+    final createResponse = await http.post(
       Uri.parse('$baseUrl/api/student/create/subject'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(createBody),
     );
+
+    if (createResponse.statusCode != 200) {
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.error,
+        animType: AnimType.topSlide,
+        title: 'ไม่สามารถเพิ่มข้อมูลได้',
+        titleTextStyle: GoogleFonts.prompt(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.red,
+        ),
+        desc: 'ไม่สามารถเพิ่มข้อมูลได้ : เนื่องจากมีเข้ามูลในระบบแล้ว',
+        btnOkOnPress: () {},
+        btnOkText: 'รับทราบ',
+        buttonsTextStyle: GoogleFonts.prompt(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ).show();
+      return; // หยุด ไม่ส่งข้อมูล
+    }
 
     // แสดงข้อความสำเร็จ
     AwesomeDialog(
@@ -241,6 +315,17 @@ class _PerformanceFormState extends State<PerformanceForm> {
   }
 
   void _removeMember(int idx) {
+    if (idx == 0) {
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.warning,
+        animType: AnimType.topSlide,
+        title: 'ไม่สามารถลบได้',
+        desc: 'ไม่สามารถลบนักศึกษาคนแรกได้',
+        btnOkOnPress: () {},
+      ).show();
+      return;
+    }
     members[idx].ready.removeListener(_onReadyChanged);
     setState(() => members.removeAt(idx));
   }
@@ -249,7 +334,9 @@ class _PerformanceFormState extends State<PerformanceForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("แบบขอตรวจคุณสมบัติในการมีสิทธิขอจัดทำโครงงานปริญญานิพนธ์"),
+        title: const Text(
+          "แบบขอตรวจคุณสมบัติในการมีสิทธิขอจัดทำโครงงานปริญญานิพนธ์",
+        ),
         centerTitle: true,
         leading: BackButtonWidget(targetPage: DocumentRouter()),
       ),
@@ -262,7 +349,7 @@ class _PerformanceFormState extends State<PerformanceForm> {
                 ElevatedButton.icon(
                   onPressed: _addMember,
                   icon: const Icon(Icons.add),
-                  label: const Text("เพิ่มสมาชิก"),
+                  label: Text("เพิ่มสมาชิก", style: GoogleFonts.prompt()),
                 ),
                 const Spacer(),
                 Text("(${members.length}/3)"),
@@ -308,7 +395,10 @@ class _PerformanceFormState extends State<PerformanceForm> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _canSubmitAll ? Colors.green : Colors.grey,
                   ),
-                  child: const Text("ส่งแบบฟอร์มทั้งหมด"),
+                  child: Text(
+                    "ส่งแบบฟอร์ม",
+                    style: GoogleFonts.prompt(color: Colors.white),
+                  ),
                 );
               },
             ),
