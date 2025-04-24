@@ -23,39 +23,48 @@ class PerformanceForm extends StatefulWidget {
 class _PerformanceFormState extends State<PerformanceForm> {
   final List<MemberData> members = [MemberData()];
 
+  final ValueNotifier<bool> canSubmitAllNotifier = ValueNotifier(false);
+
   @override
   void initState() {
     super.initState();
     for (var m in members) {
       m.ready.addListener(_onReadyChanged);
     }
+    // _updateCanSubmitAll();
+  }
+
+  void _updateCanSubmitAll() {
+    final result = members.every((m) {
+      if (!m.ready.value) return false;
+      if (m.savedSubjectDetails.length < m.totalItems) return false;
+      for (final detail in m.savedSubjectDetails.values) {
+        if (detail.values.any((v) => v == null)) return false;
+      }
+      if (m.gpaController.text.isEmpty) return false;
+      return true;
+    });
+    canSubmitAllNotifier.value = result;
   }
 
   bool get _canSubmitAll {
     final result = members.every((m) {
       if (!m.ready.value) {
-        print("Member ${m.studentIdController.text} is not ready");
         return false;
       }
       if (m.savedSubjectDetails.length < m.totalItems) {
-        print("Member ${m.studentIdController.text} has incomplete subjects");
         return false;
       }
       for (final detail in m.savedSubjectDetails.values) {
         if (detail.values.any((v) => v == null)) {
-          print(
-            "Member ${m.studentIdController.text} has null values in subjects",
-          );
           return false;
         }
       }
       if (m.gpaController.text.isEmpty) {
-        print("Member ${m.studentIdController.text} has no GPA");
         return false;
       }
       return true;
     });
-    print("Can submit: $result");
     return result;
   }
 
@@ -92,6 +101,42 @@ class _PerformanceFormState extends State<PerformanceForm> {
   }
 
   Future<void> _submitAll() async {
+    // ตรวจสอบก่อนส่ง: ใครมีวิชาไม่ผ่าน >1
+    final badStudents =
+        members.where((m) {
+          final failed =
+              m.savedSubjectDetails.values.where((d) {
+                final g = d['grade'];
+                return g == 'F' || g == 'T' || g == 'I' || g == 'W';
+              }).length;
+          return failed > 1;
+        }).toList();
+
+    if (badStudents.isNotEmpty) {
+      final ids = badStudents.map((m) => m.studentIdController.text).join(', ');
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.warning,
+        animType: AnimType.topSlide,
+        title: 'ไม่ผ่านเงื่อนไข',
+        titleTextStyle: GoogleFonts.prompt(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.red,
+        ),
+        desc:
+            'นักศึกษาที่มีวิชาที่ไม่ผ่าน / ยังไม่ลงทะเบียน\nมากกว่า 1 วิชา\nรหัสนักศึกษา $ids',
+        btnOkOnPress: () {},
+        btnOkText: 'รับทราบ',
+        buttonsTextStyle: GoogleFonts.prompt(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ).show();
+      return; // หยุด ไม่ส่งข้อมูล
+    }
+
     // 1) อัพเดตข้อมูลนักศึกษา
     final updateBody = {
       "student":
@@ -140,14 +185,31 @@ class _PerformanceFormState extends State<PerformanceForm> {
       dialogType: DialogType.success,
       animType: AnimType.scale,
       title: 'สำเร็จ',
+      titleTextStyle: GoogleFonts.prompt(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: Colors.green,
+      ),
       desc: 'ส่งข้อมูลสมาชิกทั้งหมดเรียบร้อยแล้ว',
-      btnOkOnPress: () {},
-      btnOkColor: Colors.green,
+      btnOkOnPress: () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => DocumentRouter()),
+        );
+      },
+      btnOkText: 'รับทราบ',
+      buttonsTextStyle: GoogleFonts.prompt(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
     ).show();
   }
 
   void _onReadyChanged() {
-    setState(() {});
+    setState(() {
+      // _updateCanSubmitAll();
+    });
   }
 
   void _addMember() {
@@ -157,8 +219,19 @@ class _PerformanceFormState extends State<PerformanceForm> {
         dialogType: DialogType.warning,
         animType: AnimType.topSlide,
         title: 'ไม่สามารถเพิ่มได้',
+        titleTextStyle: GoogleFonts.prompt(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.yellow[800],
+        ),
         desc: 'เพิ่มสมาชิกได้สูงสุด 3 คน',
         btnOkOnPress: () {},
+        btnOkText: 'รับทราบ',
+        buttonsTextStyle: GoogleFonts.prompt(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ).show();
       return;
     }
@@ -220,19 +293,24 @@ class _PerformanceFormState extends State<PerformanceForm> {
                             ),
                         ],
                       ),
-                      MemberForm(data: d),
+                      MemberForm(data: d, onGradesChanged: _updateCanSubmitAll),
                     ],
                   ),
                 ),
               );
             }).toList(),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _canSubmitAll ? _submitAll : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _canSubmitAll ? Colors.green : Colors.grey,
-              ),
-              child: const Text("ส่งแบบฟอร์มทั้งหมด"),
+            ValueListenableBuilder<bool>(
+              valueListenable: canSubmitAllNotifier,
+              builder: (context, canSubmit, child) {
+                return ElevatedButton(
+                  onPressed: _canSubmitAll ? _submitAll : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _canSubmitAll ? Colors.green : Colors.grey,
+                  ),
+                  child: const Text("ส่งแบบฟอร์มทั้งหมด"),
+                );
+              },
             ),
           ],
         ),
@@ -259,7 +337,12 @@ class MemberData {
 
 class MemberForm extends StatefulWidget {
   final MemberData data;
-  const MemberForm({super.key, required this.data});
+  final VoidCallback onGradesChanged;
+  const MemberForm({
+    super.key,
+    required this.data,
+    required this.onGradesChanged,
+  });
   @override
   State<MemberForm> createState() => _MemberFormState();
 }
@@ -276,8 +359,10 @@ class _MemberFormState extends State<MemberForm> {
         d.firstNameController.text.isNotEmpty &&
         d.lastNameController.text.isNotEmpty &&
         d.studentIdController.text.isNotEmpty;
-    print("Ready status for ${d.studentIdController.text}: $valid");
+    print("จากไฟล์ academic_performance.dart");
+    print("สถานะพร้อมส่งของ ${d.studentIdController.text}: $valid");
     d.ready.value = valid;
+    print("สามารถส่งได้หรือยัง? : ${d.ready.value}");
   }
 
   @override
@@ -302,9 +387,11 @@ class _MemberFormState extends State<MemberForm> {
             CourseDropdown(
               value: widget.data.course,
               onCourseChanged: (v) {
-                setState(() => widget.data.course = v);
-                print("Course: ${widget.data.course}");
-                _updateReady();
+                setState(() {
+                  widget.data.course = v;
+                  print("Course: ${widget.data.course}");
+                  _updateReady();
+                });
               },
             ),
             const SizedBox(width: 20),
@@ -313,8 +400,11 @@ class _MemberFormState extends State<MemberForm> {
             CourseYearDropdown(
               value: widget.data.courseYear,
               onCourseYearChanged: (v) {
-                setState(() => widget.data.courseYear = v);
-                _updateReady();
+                setState(() {
+                  widget.data.courseYear = v;
+                  print("CourseYear: ${widget.data.course}");
+                  _updateReady();
+                });
               },
             ),
           ],
@@ -334,8 +424,11 @@ class _MemberFormState extends State<MemberForm> {
                   child: PrefixDropdown(
                     value: widget.data.prefix,
                     onPrefixChanged: (v) {
-                      setState(() => widget.data.prefix = v);
-                      _updateReady();
+                      setState(() {
+                        widget.data.prefix = v;
+                        print("Prefix: ${widget.data.prefix}");
+                        _updateReady();
+                      });
                     },
                   ),
                 ),
@@ -386,8 +479,11 @@ class _MemberFormState extends State<MemberForm> {
               child: Semester(
                 selectedValue: widget.data.semester,
                 onChanged: (v) {
-                  setState(() => widget.data.semester = v);
-                  _updateReady();
+                  setState(() {
+                    widget.data.semester = v;
+                    print("Semester: ${widget.data.semester}");
+                    _updateReady();
+                  });
                 },
               ),
             ),
@@ -399,8 +495,11 @@ class _MemberFormState extends State<MemberForm> {
               child: Stdyear(
                 selectedValue: widget.data.year,
                 onChanged: (v) {
-                  setState(() => widget.data.year = v);
-                  _updateReady();
+                  setState(() {
+                    widget.data.year = v;
+                    print("Semester: ${widget.data.semester}");
+                    _updateReady();
+                  });
                 },
               ),
             ),
@@ -417,9 +516,7 @@ class _MemberFormState extends State<MemberForm> {
           selectedPrefix: widget.data.prefix,
           selectedSemester: widget.data.semester,
           selectedYear: widget.data.year,
-          onGradeValidationChanged: (valid) {
-            _updateReady();
-          },
+          onGradeValidationChanged: (_) => widget.onGradesChanged(),
           memberData: widget.data,
         ),
       ],

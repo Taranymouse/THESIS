@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -131,17 +130,29 @@ class _SubjectsTableState extends State<SubjectsTable> {
     if (d.gpaController.text.isEmpty) return false;
     if (d.savedSubjectDetails.length < widget.memberData.totalItems)
       return false;
+    print("จากไฟล์ SubjectTable.dart");
+    print("จำนวนรายวิชาที่กรอก: ${d.savedSubjectDetails.length}");
+    print("จำนวนรายวิชาทั้งหมด : ${widget.memberData.totalItems}");
+    print("เกรดเฉลี่ยรวมที่กรอก : ${d.gpaController.text}");
     for (final detail in d.savedSubjectDetails.values) {
       if (detail.values.any((v) => v == null)) return false;
     }
+
     return true;
   }
 
   void checkIfAllFieldsFilled() {
-    final ok = _validateAllFields();
-    if (ok != isSubmitEnabled) {
-      setState(() => isSubmitEnabled = ok);
-      widget.onGradeValidationChanged?.call(ok);
+    final isValid = _validateAllFields();
+    print("จากไฟล์ SubjectTable.dart");
+    print("กรอกข้อมูลครบแล้วใช่ไหม? : $isValid");
+    if (isValid != isSubmitEnabled) {
+      setState(() {
+        isSubmitEnabled = isValid;
+        print(" บอกว่ากรอกข้อมูลครบแล้วได้ไหม? : $isSubmitEnabled");
+        widget.onGradeValidationChanged?.call(isValid);
+      });
+    } else {
+      widget.onGradeValidationChanged?.call(isSubmitEnabled);
     }
   }
 
@@ -318,14 +329,11 @@ class _SubjectsTableState extends State<SubjectsTable> {
     return Column(
       children: [
         const SizedBox(height: 10),
-        const Text(
-          "* กรุณาอัปโหลดเอกสารใบรับรองผลการศึกษา \n(สามารถดูได้จาก reg.su.ac.th)",
-          style: TextStyle(fontSize: 14, color: Colors.red),
+        Text(
+          "หมายเหตุ : กรุณาตรวจสอบผลการศึกษาจากเว็บระบบบริการการศึกษาของมหาวิทยาลัยด้วย (reg.su.ac.th)",
+          style: TextStyle(fontSize: 10, color: Colors.red[400]),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 10),
-
-        const SizedBox(height: 20),
         DataTable(
           columnSpacing: 30,
           dataRowMinHeight: 40,
@@ -409,6 +417,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
                         onChanged: (value) {
                           setState(() {
                             _updateSubjectDetail(id, 'semester', value);
+                            checkIfAllFieldsFilled();
                           });
                         },
                       ),
@@ -430,6 +439,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
                         onChanged: (value) {
                           setState(() {
                             _updateSubjectDetail(id, 'year', value);
+                            checkIfAllFieldsFilled();
                           });
                         },
                       ),
@@ -451,6 +461,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
                         onChanged: (value) {
                           setState(() {
                             _updateSubjectDetail(id, 'grade', value);
+                            checkIfAllFieldsFilled();
                           });
                         },
                       ),
@@ -459,12 +470,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
                 );
               }).toList(),
         ),
-        const SizedBox(height: 10),
-        Text(
-          "หมายเหตุ : กรุณาตรวจสอบผลการศึกษาจากเว็บระบบบริการการศึกษาของมหาวิทยาลัยด้วย (reg.su.ac.th)",
-          style: TextStyle(fontSize: 10, color: Colors.red[400]),
-          textAlign: TextAlign.center,
-        ),
+
         const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
