@@ -32,19 +32,31 @@ class _PerformanceFormState extends State<PerformanceForm> {
   }
 
   bool get _canSubmitAll {
-    // ตรวจว่าฟิลด์พื้นฐานครบ (ready) และ ตารางวิชาทุกคนกรอกครบ
-    return members.every((m) {
-      if (!m.ready.value) return false;
-      // ตรวจ savedSubjectDetails ต้องมีเท่ากับ totalItems ของแต่ละคน
-      if (m.savedSubjectDetails.length < m.totalItems) return false;
-      // ทุก detail ต้องไม่มีค่า null
-      for (final detail in m.savedSubjectDetails.values) {
-        if (detail.values.any((v) => v == null)) return false;
+    final result = members.every((m) {
+      if (!m.ready.value) {
+        print("Member ${m.studentIdController.text} is not ready");
+        return false;
       }
-      // GPA ต้องกรอก
-      if (m.gpaController.text.isEmpty) return false;
+      if (m.savedSubjectDetails.length < m.totalItems) {
+        print("Member ${m.studentIdController.text} has incomplete subjects");
+        return false;
+      }
+      for (final detail in m.savedSubjectDetails.values) {
+        if (detail.values.any((v) => v == null)) {
+          print(
+            "Member ${m.studentIdController.text} has null values in subjects",
+          );
+          return false;
+        }
+      }
+      if (m.gpaController.text.isEmpty) {
+        print("Member ${m.studentIdController.text} has no GPA");
+        return false;
+      }
       return true;
     });
+    print("Can submit: $result");
+    return result;
   }
 
   int getTermIdFromName(String? name) {
@@ -80,48 +92,49 @@ class _PerformanceFormState extends State<PerformanceForm> {
   }
 
   Future<void> _submitAll() async {
-    for (var m in members) {
-      // 1) อัพเดตข้อมูลนักศึกษา
-      final updateBody = {
-        "student": [
-          {
-            "s_id": m.studentIdController.text,
-            "overall_grade": m.gpaController.text,
-            "branch": int.parse(m.course!),
-            "course": int.parse(m.courseYear!),
-            "semester": getTermIdFromName(m.semester),
-            "year": int.parse(m.year!),
-          },
-        ],
-      };
-      await http.put(
-        Uri.parse('$baseUrl/api/student/update'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(updateBody),
-      );
-
-      // 2) เพิ่มรายวิชา
-      final subjectList =
-          m.savedSubjectDetails.entries.map((e) {
+    // 1) อัพเดตข้อมูลนักศึกษา
+    final updateBody = {
+      "student":
+          members.map((m) {
             return {
-              "subject_id": int.parse(e.key),
-              "term_id": getTermIdFromName(e.value["semester"]),
-              "year": int.parse(e.value["year"]),
-              "grade": getGradeIdFromCode(e.value["grade"]),
+              "s_id": m.studentIdController.text,
+              "overall_grade": m.gpaController.text,
+              "branch": int.parse(m.course!),
+              "course": int.parse(m.courseYear!),
+              "semester": getTermIdFromName(m.semester),
+              "year": int.parse(m.year!),
             };
-          }).toList();
-      final createBody = {
-        "student": [
-          {"s_id": m.studentIdController.text, "subject": subjectList},
-        ],
-      };
-      await http.post(
-        Uri.parse('$baseUrl/api/student/create/subject'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(createBody),
-      );
-    }
+          }).toList(),
+    };
+    await http.put(
+      Uri.parse('$baseUrl/api/student/update'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(updateBody),
+    );
 
+    // 2) เพิ่มรายวิชา
+    final createBody = {
+      "student":
+          members.map((m) {
+            final subjectList =
+                m.savedSubjectDetails.entries.map((e) {
+                  return {
+                    "subject_id": int.parse(e.key),
+                    "term_id": getTermIdFromName(e.value["semester"]),
+                    "year": int.parse(e.value["year"]),
+                    "grade": getGradeIdFromCode(e.value["grade"]),
+                  };
+                }).toList();
+            return {"s_id": m.studentIdController.text, "subject": subjectList};
+          }).toList(),
+    };
+    await http.post(
+      Uri.parse('$baseUrl/api/student/create/subject'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(createBody),
+    );
+
+    // แสดงข้อความสำเร็จ
     AwesomeDialog(
       context: context,
       dialogType: DialogType.success,
@@ -134,7 +147,6 @@ class _PerformanceFormState extends State<PerformanceForm> {
   }
 
   void _onReadyChanged() {
-    // เรียก setState เพียงครั้งเดียว
     setState(() {});
   }
 
@@ -264,7 +276,8 @@ class _MemberFormState extends State<MemberForm> {
         d.firstNameController.text.isNotEmpty &&
         d.lastNameController.text.isNotEmpty &&
         d.studentIdController.text.isNotEmpty;
-    widget.data.ready.value = valid;
+    print("Ready status for ${d.studentIdController.text}: $valid");
+    d.ready.value = valid;
   }
 
   @override

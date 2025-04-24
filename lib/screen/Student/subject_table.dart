@@ -122,6 +122,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
     final map = widget.memberData.savedSubjectDetails;
     map[id] ??= {'semester': null, 'year': null, 'grade': null};
     map[id]![field] = val;
+    print("Updated $field for subject $id: $val");
     checkIfAllFieldsFilled();
   }
 
@@ -406,7 +407,9 @@ class _SubjectsTableState extends State<SubjectsTable> {
                               );
                             }).toList(),
                         onChanged: (value) {
-                          _updateSubjectDetail(id, 'semester', value);
+                          setState(() {
+                            _updateSubjectDetail(id, 'semester', value);
+                          });
                         },
                       ),
                     ),
@@ -425,7 +428,9 @@ class _SubjectsTableState extends State<SubjectsTable> {
                               );
                             }).toList(),
                         onChanged: (value) {
-                          _updateSubjectDetail(id, 'year', value);
+                          setState(() {
+                            _updateSubjectDetail(id, 'year', value);
+                          });
                         },
                       ),
                     ),
@@ -444,7 +449,9 @@ class _SubjectsTableState extends State<SubjectsTable> {
                               );
                             }).toList(),
                         onChanged: (value) {
-                          _updateSubjectDetail(id, 'grade', value);
+                          setState(() {
+                            _updateSubjectDetail(id, 'grade', value);
+                          });
                         },
                       ),
                     ),
