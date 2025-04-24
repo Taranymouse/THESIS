@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
+import 'package:project/screen/Form/Form_Options/dropdown/selectPrefix.dart';
 
 class CreateStudentScreen extends StatefulWidget {
   const CreateStudentScreen({super.key});
@@ -17,19 +18,33 @@ class _CreateStudentScreenState extends State<CreateStudentScreen> {
   final _studentLastNameController = TextEditingController();
   final _studentIdController = TextEditingController();
   final SessionService _sessionService = SessionService();
+
   String? email;
   int? id_user;
 
   bool _isLoading = false;
+  int? selectedPrefix;
+
+  void onPrefixChanged(String? value) {
+    setState(() {
+      selectedPrefix = value != null ? int.tryParse(value) : null;
+    });
+  }
 
   Future<void> _submitStudent() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (selectedPrefix == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('กรุณาเลือกคำนำหน้าชื่อ')));
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    // สร้างข้อมูลที่จะส่งไปในรูปแบบ JSON
     final studentData = {
-      'id_prefix': 1, // ใช้ค่าเหมาะสมจากฟอร์มหรือค่าคงที่
+      'id_prefix': selectedPrefix,
       'first_name': _studentFirstNameController.text,
       'last_name': _studentLastNameController.text,
       'code_student': _studentIdController.text,
@@ -43,20 +58,17 @@ class _CreateStudentScreenState extends State<CreateStudentScreen> {
         body: json.encode(studentData),
       );
 
-      if (response.statusCode == 200) {
-        // ถ้าสำเร็จ
+      if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('สร้างข้อมูลนักศึกษาเรียบร้อย')),
         );
-        Navigator.pushReplacementNamed(context, '/home');
+        await Navigator.pushReplacementNamed(context, '/home');
       } else {
-        // ถ้ามีข้อผิดพลาดจาก API
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('เกิดข้อผิดพลาด: ${response.body}')),
         );
       }
     } catch (e) {
-      // จับข้อผิดพลาดที่เกิดขึ้น
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('เกิดข้อผิดพลาดในการเชื่อมต่อ API')),
       );
@@ -67,8 +79,8 @@ class _CreateStudentScreenState extends State<CreateStudentScreen> {
 
   Future<void> _onCheckUser() async {
     String? token = await _sessionService.getAuthToken();
-    String? email = await _sessionService.getUserSession();
-    print("Token : $token");
+    String? sessionEmail = await _sessionService.getUserSession();
+
     if (token != null) {
       final response = await http.get(
         Uri.parse('$baseUrl/api/auth/user'),
@@ -78,21 +90,17 @@ class _CreateStudentScreenState extends State<CreateStudentScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         String fetchedEmail = data["email"];
-        if (fetchedEmail == email) {
-          print("!!##  Email is $fetchedEmail");
-          print("!!## id_user : ${data['id_user']}");
+        if (fetchedEmail == sessionEmail) {
           setState(() {
             email = fetchedEmail;
             id_user = data['id_user'];
           });
-          print("!!## From Create Student : $email !!##");
-          print("!!## id_user : $id_user ");
-          await _sessionService.setIdStudent(data['id_user']);
+          await _sessionService.setIdUser(data['id_user']);
         } else {
-          print("Email is not in use.");
+          print("อีเมลไม่ตรงกับ session");
         }
       } else {
-        print("❌ Failed to fetch user data: ${response.body}");
+        print("❌ ไม่สามารถดึงข้อมูลผู้ใช้: ${response.body}");
       }
     }
   }
@@ -114,7 +122,7 @@ class _CreateStudentScreenState extends State<CreateStudentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('สร้างข้อมูลนักศึกษา')),
+      appBar: AppBar(title: const Text('สร้างข้อมูลนักศึกษา')),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child:
@@ -124,6 +132,27 @@ class _CreateStudentScreenState extends State<CreateStudentScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'คำนำหน้าชื่อ :',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(width: 20),
+                          SizedBox(
+                            width: 200,
+                            height: 60,
+                            child: PrefixDropdown(
+                              onPrefixChanged: onPrefixChanged,
+                              value: selectedPrefix?.toString(),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
                       TextFormField(
                         controller: _studentFirstNameController,
                         decoration: const InputDecoration(

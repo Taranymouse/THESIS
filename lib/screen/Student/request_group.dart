@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/student_performance.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
+import 'package:project/screen/Form/Form_Options/File/fileupload.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/stdyear.dart';
 import 'package:project/screen/Student/document_router.dart';
@@ -24,6 +26,7 @@ class _RequestGroupState extends State<RequestGroup> {
   String? selectedSemester;
   String? selectedYear;
   late List<int> studentIds;
+  PlatformFile? selectedFile;
 
   List<String> availableSemesters = [];
   List<String> availableYears = [];
@@ -144,7 +147,6 @@ class _RequestGroupState extends State<RequestGroup> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
               Divider(
                 color: Colors.grey,
                 thickness: 1,
@@ -153,7 +155,21 @@ class _RequestGroupState extends State<RequestGroup> {
                 endIndent: 20,
               ),
               GroupSubjectTable(studentIds: studentIds),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+              const SizedBox(height: 10),
+              const Text(
+                "แนบไฟล์เอกสาร",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              FileUploadWidget(
+                initialFile: selectedFile,
+                onFilePicked: (file) {
+                  setState(() {
+                    selectedFile = file;
+                  });
+                },
+              ),
+
               Divider(
                 color: Colors.grey,
                 thickness: 1,
@@ -214,7 +230,16 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
       };
 
       studentGrades =
-          studentJson.map((e) => StudentGradeGroup.fromJson(e)).toList();
+          studentJson
+              .where(
+                (e) =>
+                    e['subject_grades'] != null &&
+                    (e['subject_grades'] as List).isNotEmpty &&
+                    e['head_info'] != null &&
+                    (e['head_info'] as Map).isNotEmpty,
+              )
+              .map((e) => StudentGradeGroup.fromJson(e))
+              .toList();
     } else {
       throw Exception('โหลดข้อมูลไม่สำเร็จ');
     }
@@ -230,7 +255,13 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
         } else if (snapshot.hasError) {
           return Center(child: Text('เกิดข้อผิดพลาด: ${snapshot.error}'));
         } else if (studentGrades.isEmpty) {
-          return const Center(child: Text('ไม่พบข้อมูลนักศึกษา'));
+          return Center(
+            child: Text(
+              '* กรุณาทำ แบบตรวจสอบคุณสมบัติในการมีสิทธิ์ขอจัดทำโครงงานปริญญานิพนธ์ (IT00G / CS00G) ก่อน',
+              style: GoogleFonts.prompt(fontSize: 14, color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+          );
         }
 
         // ✅ คำนวณคะแนนรวมแต่ละคน และเฉลี่ยกลุ่ม
@@ -289,12 +320,16 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
                       Expanded(
                         child: Text(
                           '${student.firstName} ${student.lastName} (${student.codeStudent})',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       Text(
-                        'รวม: ${totalScore.toStringAsFixed(2)}',
+                        'คะแนนรวม: ${totalScore.toStringAsFixed(2)}',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -302,6 +337,7 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
                   ),
                   subtitle: Text(
                     ' ภาคเรียน ${student.termName} ปีการศึกษา ${student.year}',
+                    style: TextStyle(color: Colors.grey[700]),
                   ),
                   children: [
                     DataTable(

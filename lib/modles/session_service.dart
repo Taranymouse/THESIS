@@ -6,14 +6,27 @@ class SessionService {
   static const String _isLoggedInKey = 'isLoggedIn';
 
   // ฟังก์ชันเก็บข้อมูลid_student
-  Future<void> setIdStudent(int id_student ) async {
+  Future<void> setIdStudent(int id_student) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('id_student', id_student);
   }
+
   // ฟังก์ชันดึงข้อมูลid_student
   Future<int?> getIdStudent() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('id_student');
+  }
+
+  // ฟังก์ชันเก็บข้อมูลid_user
+  Future<void> setIdUser(int id_user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('id_user', id_user);
+  }
+
+  // ฟังก์ชันดึงข้อมูลid_user
+  Future<int?> getIdUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id_user');
   }
 
   // ฟังก์ชันเก็บข้อมูลอีเมล
@@ -48,6 +61,11 @@ class SessionService {
     await _storage.write(key: 'role', value: role);
   }
 
+  // ฟังก์ชันดึง token
+  Future<String?> getUserRole() async {
+    return await _storage.read(key: 'role');
+  }
+
   // ฟังก์ชันดึงอีเมลของผู้ใช้
   Future<String?> getUserSession() async {
     return await _storage.read(key: 'userEmail');
@@ -58,7 +76,7 @@ class SessionService {
     return await _storage.read(key: 'role');
   }
 
-  // ฟังก์ชันดึง uid
+  // ฟังก์ชันบันทึก uid
   Future<void> saveUserUid(String uid) async {
     await _storage.write(key: 'uid', value: uid);
   }
@@ -66,6 +84,46 @@ class SessionService {
   // ฟังก์ชันดึง uid
   Future<String?> getUserUid() async {
     return await _storage.read(key: 'uid');
+  }
+
+  // ฟังก์ชันบันทึก ชื่อผู้ใช้
+  Future<void> saveUserName(String firstname) async {
+    await _storage.write(key: 'firstname', value: firstname);
+  }
+
+  // ฟังก์ชันดึง ชื่อผู้ใช้
+  Future<String?> getUserName() async {
+    return await _storage.read(key: 'firstname');
+  }
+
+  // ฟังก์ชันบันทึกนามสกุล
+  Future<void> saveUserLastName(String lastname) async {
+    await _storage.write(key: 'lastname', value: lastname);
+  }
+
+  // ฟังก์ชันดึงนามสกุล
+  Future<String?> getUserLastName() async {
+    return await _storage.read(key: 'lastname');
+  }
+
+  // ฟังก์ชันบันทึกรหัสนักศึกษา
+  Future<void> saveStudentId(String studentId) async {
+    await _storage.write(key: 'studentId', value: studentId);
+  }
+
+  // ฟังก์ชันดึงรหัสนักศึกษา
+  Future<String?> getStudentId() async {
+    return await _storage.read(key: 'studentId');
+  }
+
+  // ฟังก์ชันบันทึกชื่อเลือกคำนำหน้า
+  Future<void> savePrefixName(String prefixName) async {
+    await _storage.write(key: 'prefixName', value: prefixName);
+  }
+
+  // ฟังก์ชันดึงชื่อเลือกคำนำหน้า
+  Future<String?> getPrefixName() async {
+    return await _storage.read(key: 'prefixName');
   }
 
   // ฟังก์ชันตรวจสอบว่า login แล้วหรือไม่
@@ -90,4 +148,3 @@ class SessionService {
     await prefs.clear(); // ลบข้อมูลทั้งหมดเมื่อ Logout
   }
 }
-

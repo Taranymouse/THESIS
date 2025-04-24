@@ -178,7 +178,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           final dynamic password = dataUser['password'];
 
           // 📌 บันทึก role ลงใน SessionService
-          await _sessionService.saveUserRole(role ?? '');
+          await _sessionService.saveUserRole(role ?? 'No Role');
+          print("!!## Role : $role");
 
           if (password == null) {
             // 🌟 ถ้า password ยังไม่เคยตั้ง

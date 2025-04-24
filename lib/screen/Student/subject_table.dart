@@ -1,18 +1,14 @@
 import 'dart:convert';
-
 import 'package:awesome_dialog/awesome_dialog.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/grade_model.dart';
-import 'package:project/modles/session_service.dart';
 import 'package:project/modles/subject_model.dart';
-import 'package:project/screen/Form/Form_Options/File/fileupload.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
-import 'package:project/screen/Student/document_router.dart';
+import 'package:project/screen/Student/academic_performance.dart';
 
 class SubjectsTable extends StatefulWidget {
   final String? selectedCourse;
@@ -24,6 +20,7 @@ class SubjectsTable extends StatefulWidget {
   final TextEditingController lastNameController;
   final TextEditingController studentIdController;
   final ValueChanged<bool>? onGradeValidationChanged;
+  final MemberData memberData;
 
   const SubjectsTable({
     super.key,
@@ -36,6 +33,7 @@ class SubjectsTable extends StatefulWidget {
     required this.lastNameController,
     required this.studentIdController,
     this.onGradeValidationChanged,
+    required this.memberData,
   });
 
   @override
@@ -45,118 +43,74 @@ class SubjectsTable extends StatefulWidget {
 class _SubjectsTableState extends State<SubjectsTable> {
   List<Subject> subjects = [];
   List<Grade> grades = [];
-  PlatformFile? selectedFile;
+  List<AcademicTerm> terms = [];
   bool isLoading = true;
-  int currentOffset = 0;
-  int totalItems = 0;
-  Map<String, Map<String, dynamic>> savedSubjectDetails = {};
-  final TextEditingController gpaController = TextEditingController();
   bool isSubmitEnabled = false;
-  List<AcademicTerm> academicTerms = []; // เพิ่มรายการภาคการศึกษา
-  String? selectedCourse;
-  String? selectedCourseYear;
-  String? selectedPrefix;
-  String? selectedSemester;
-  String? selectedYear;
-  TextEditingController firstNameController = TextEditingController();
-  TextEditingController lastNameController = TextEditingController();
-  TextEditingController studentIdController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    fetchSubjects(currentOffset);
-    fetchAcademicTerms();
-    fetchGrades();
+    fetchAll();
   }
 
-  @override
-  void dispose() {
-    gpaController.dispose();
-    firstNameController.dispose();
-    lastNameController.dispose();
-    studentIdController.dispose();
-
-    super.dispose();
+  Future<void> fetchAll() async {
+    await Future.wait([
+      fetchSubjects(widget.memberData.currentOffset),
+      fetchAcademicTerms(),
+      fetchGrades(),
+    ]);
+    setState(() => isLoading = false);
   }
 
   Future<void> fetchAcademicTerms() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/academic_terms'));
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(
-        utf8.decode(response.bodyBytes),
-      );
-      setState(() {
-        academicTerms = jsonList.map((e) => AcademicTerm.fromJson(e)).toList();
-      });
+    final res = await http.get(Uri.parse('$baseUrl/api/academic_terms'));
+    if (res.statusCode == 200) {
+      final list = jsonDecode(utf8.decode(res.bodyBytes)) as List;
+      terms = list.map((e) => AcademicTerm.fromJson(e)).toList();
     } else {
-      throw Exception('Failed to load academic terms');
-    }
-  }
-
-  Future<List<Subject>> fetchSubjects(int offset) async {
-    if (widget.selectedCourse == null || widget.selectedCourseYear == null) {
-      setState(() {
-        subjects = [];
-        isLoading = false;
-      });
-
-      // ✅ ตรวจสอบสถานะอีกครั้ง แม้ไม่มีข้อมูล
-      checkIfAllFieldsFilled();
-
-      return [];
-    }
-
-    final token = await SessionService().getAuthToken();
-    final response = await http.get(
-      Uri.parse(
-        '$baseUrl/api/subjects?offset=$offset&limit=10&course=${widget.selectedCourse}&course_year=${widget.selectedCourseYear}',
-      ),
-      headers: {"Authorization": "$token"},
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final List<dynamic> subjectData = data['data'];
-      final pagination = data['pagination'];
-      List<Subject> fetchedSubjects =
-          subjectData.map((item) => Subject.fromJson(item)).toList();
-
-      setState(() {
-        subjects = fetchedSubjects;
-        totalItems = pagination['total'];
-        isLoading = false;
-      });
-
-      // ✅ เรียกหลังโหลดเสร็จ
-      checkIfAllFieldsFilled();
-
-      return fetchedSubjects;
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-
-      // ✅ เรียกแม้โหลดไม่สำเร็จ
-      checkIfAllFieldsFilled();
-
-      throw Exception('ไม่มีข้อมูลวิชา');
+      throw Exception('Failed to load terms');
     }
   }
 
   Future<void> fetchGrades() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/grades'));
+    final res = await http.get(Uri.parse('$baseUrl/api/grades'));
+    if (res.statusCode == 200) {
+      final list = jsonDecode(utf8.decode(res.bodyBytes)) as List;
+      grades = list.map((e) => Grade.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load grades');
+    }
+  }
 
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(
-        utf8.decode(response.bodyBytes),
-      );
+  Future<void> fetchSubjects(int offset) async {
+    final course = widget.memberData.course;
+    final courseYear = widget.memberData.courseYear;
+    if (course == null || courseYear == null) {
       setState(() {
-        grades = jsonList.map((e) => Grade.fromJson(e)).toList();
+        subjects = [];
+        isLoading = false;
+      });
+      checkIfAllFieldsFilled();
+      return;
+    }
+    final res = await http.get(
+      Uri.parse(
+        '$baseUrl/api/subjects?offset=$offset&limit=10&course=$course&course_year=$courseYear',
+      ),
+    );
+    if (res.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      setState(() {
+        subjects =
+            (data['data'] as List).map((e) => Subject.fromJson(e)).toList();
+        widget.memberData.currentOffset = offset;
+        widget.memberData.totalItems = data['pagination']['total'];
+        isLoading = false; // 🔥 อัปเดตสถานะ Loading
       });
     } else {
-      throw Exception('ไม่มีข้อมูลเกรด');
+      throw Exception('Failed to load subjects');
     }
+    checkIfAllFieldsFilled();
   }
 
   List<String> _getAvailableCourseYears() {
@@ -164,81 +118,35 @@ class _SubjectsTableState extends State<SubjectsTable> {
     return List.generate(5, (index) => (currentYear - index).toString());
   }
 
-  @override
-  void didUpdateWidget(SubjectsTable oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedCourse != widget.selectedCourse ||
-        oldWidget.selectedCourseYear != widget.selectedCourseYear ||
-        oldWidget.selectedPrefix != widget.selectedPrefix ||
-        oldWidget.selectedSemester != widget.selectedSemester ||
-        oldWidget.selectedYear != widget.selectedYear ||
-        oldWidget.firstNameController.text != widget.firstNameController.text ||
-        oldWidget.lastNameController.text != widget.lastNameController.text ||
-        oldWidget.studentIdController.text != widget.studentIdController.text) {
-      checkIfAllFieldsFilled(); // 🔥 เพิ่มตรงนี้
-    }
-
-    if (oldWidget.selectedCourse != widget.selectedCourse ||
-        oldWidget.selectedCourseYear != widget.selectedCourseYear) {
-      currentOffset = 0;
-      isLoading = true;
-      fetchSubjects(currentOffset);
-    }
-  }
-
-  void _updateSubjectDetail(String idSubject, String field, dynamic value) {
-    setState(() {
-      if (!savedSubjectDetails.containsKey(idSubject)) {
-        savedSubjectDetails[idSubject] = {
-          'semester': null,
-          'year': null,
-          'grade': null,
-        };
-      }
-      savedSubjectDetails[idSubject]![field] = value;
-      print("Updated $field for $idSubject: $value");
-      print("Current savedSubjectDetails: $savedSubjectDetails");
-      checkIfAllFieldsFilled();
-    });
+  void _updateSubjectDetail(String id, String field, dynamic val) {
+    final map = widget.memberData.savedSubjectDetails;
+    map[id] ??= {'semester': null, 'year': null, 'grade': null};
+    map[id]![field] = val;
+    checkIfAllFieldsFilled();
   }
 
   bool _validateAllFields() {
-    if (gpaController.text.isEmpty) return false;
-    if (widget.selectedPrefix == null) return false;
-    if (widget.firstNameController.text.isEmpty) return false;
-    if (widget.lastNameController.text.isEmpty) return false;
-    if (widget.studentIdController.text.isEmpty) return false;
-    if (widget.selectedSemester == null) return false;
-    if (widget.selectedYear == null) return false;
-    if (selectedFile == null) return false;
-
-    if (savedSubjectDetails.length < totalItems) return false;
-
-    // เช็ครายละเอียดวิชา
-    for (var detail in savedSubjectDetails.values) {
-      if (detail['semester'] == null ||
-          detail['year'] == null ||
-          detail['grade'] == null) {
-        return false;
-      }
+    final d = widget.memberData;
+    if (d.gpaController.text.isEmpty) return false;
+    if (d.savedSubjectDetails.length < widget.memberData.totalItems)
+      return false;
+    for (final detail in d.savedSubjectDetails.values) {
+      if (detail.values.any((v) => v == null)) return false;
     }
-
     return true;
   }
 
   void checkIfAllFieldsFilled() {
-    bool allFilled = _validateAllFields();
-    setState(() {
-      isSubmitEnabled = allFilled;
-    });
-
-    // 🔥 ส่งค่าออกไปยังฟอร์มหลัก
-    widget.onGradeValidationChanged?.call(allFilled);
+    final ok = _validateAllFields();
+    if (ok != isSubmitEnabled) {
+      setState(() => isSubmitEnabled = ok);
+      widget.onGradeValidationChanged?.call(ok);
+    }
   }
 
   int countPassedSubjects() {
     int count = 0;
-    savedSubjectDetails.forEach((key, detail) {
+    widget.memberData.savedSubjectDetails.forEach((key, detail) {
       final grade = detail['grade'];
       if (grade != null && grade.isNotEmpty) {
         if (!(grade == 'F' || grade == 'I' || grade == 'W' || grade == 'T')) {
@@ -251,7 +159,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
 
   int countFailedOrNotRegisteredSubjects() {
     int count = 0;
-    savedSubjectDetails.forEach((key, detail) {
+    widget.memberData.savedSubjectDetails.forEach((key, detail) {
       final grade = detail['grade'];
       if (grade == null ||
           grade.isEmpty ||
@@ -334,24 +242,15 @@ class _SubjectsTableState extends State<SubjectsTable> {
       // ---------- 2) สร้างข้อมูลรายวิชา ----------
       final List<Map<String, dynamic>> subjectList = [];
 
-      savedSubjectDetails.forEach((subjectIdStr, detail) {
+      widget.memberData.savedSubjectDetails.forEach((subjectIdStr, detail) {
         // แปลงปี พ.ศ. เป็น ค.ศ. ก่อนส่ง เพราะ schema Subject.year เป็นปี ค.ศ.
         int yearBuddhist = int.parse(detail["year"].toString());
-        int yearGregorian = yearBuddhist - 543;
-
-        // ตรวจสอบปี Subject.year ให้อยู่ในช่วง ±10 ปี จากปีปัจจุบัน (ค.ศ.)
-        final currentYearAD = DateTime.now().year;
-        if (yearGregorian < currentYearAD - 10 ||
-            yearGregorian > currentYearAD + 10) {
-          throw Exception(
-            'ปีวิชาไม่อยู่ในช่วงที่อนุญาต: ${currentYearAD - 10} - ${currentYearAD + 10}',
-          );
-        }
+        int yearGregorian = yearBuddhist;
 
         subjectList.add({
           "subject_id": int.parse(subjectIdStr),
           "term_id": getTermIdFromName(detail["semester"]),
-          "year": yearGregorian, // ส่งเป็น ค.ศ.
+          "year": yearGregorian,
           "grade": getGradeIdFromCode(detail["grade"]),
         });
       });
@@ -379,6 +278,28 @@ class _SubjectsTableState extends State<SubjectsTable> {
   }
 
   @override
+  void didUpdateWidget(SubjectsTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedCourse != widget.selectedCourse ||
+        oldWidget.selectedCourseYear != widget.selectedCourseYear ||
+        oldWidget.selectedPrefix != widget.selectedPrefix ||
+        oldWidget.selectedSemester != widget.selectedSemester ||
+        oldWidget.selectedYear != widget.selectedYear ||
+        oldWidget.firstNameController.text != widget.firstNameController.text ||
+        oldWidget.lastNameController.text != widget.lastNameController.text ||
+        oldWidget.studentIdController.text != widget.studentIdController.text) {
+      checkIfAllFieldsFilled(); // 🔥 เพิ่มตรงนี้
+    }
+
+    if (oldWidget.selectedCourse != widget.selectedCourse ||
+        oldWidget.selectedCourseYear != widget.selectedCourseYear) {
+      widget.memberData.currentOffset = 0;
+      isLoading = true;
+      fetchSubjects(widget.memberData.currentOffset);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return Center(
@@ -402,19 +323,6 @@ class _SubjectsTableState extends State<SubjectsTable> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10),
-        const Text(
-          "แนบไฟล์เอกสาร",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        FileUploadWidget(
-          initialFile: selectedFile,
-          onFilePicked: (file) {
-            setState(() {
-              selectedFile = file;
-              checkIfAllFieldsFilled();
-            });
-          },
-        ),
 
         const SizedBox(height: 20),
         DataTable(
@@ -448,7 +356,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
               subjects.map((subject) {
                 final id = subject.id_subject.toString();
                 final detail =
-                    savedSubjectDetails[id] ??
+                    widget.memberData.savedSubjectDetails[id] ??
                     {'semester': null, 'year': null, 'grade': null};
                 final isRowFilled =
                     detail['semester'] != null &&
@@ -488,7 +396,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
                         value: detail['semester'],
                         hint: Text("-เลือก-", style: TextStyle(fontSize: 10)),
                         items:
-                            academicTerms.map((term) {
+                            terms.map((term) {
                               return DropdownMenuItem<String>(
                                 value: term.nameTerm,
                                 child: Text(
@@ -556,30 +464,31 @@ class _SubjectsTableState extends State<SubjectsTable> {
           children: [
             ElevatedButton(
               onPressed:
-                  currentOffset > 0
+                  widget.memberData.currentOffset > 0
                       ? () {
                         setState(() {
-                          currentOffset -= 10;
+                          widget.memberData.currentOffset -= 10;
                           isLoading = true;
                         });
-                        fetchSubjects(currentOffset);
+                        fetchSubjects(widget.memberData.currentOffset);
                       }
                       : null,
               child: Text('ก่อนหน้า', style: GoogleFonts.prompt(fontSize: 12)),
             ),
             Text(
-              "แสดง ${currentOffset + 1} - ${currentOffset + subjects.length} จาก $totalItems",
+              "แสดง ${widget.memberData.currentOffset + 1} - ${widget.memberData.currentOffset + subjects.length} จาก ${widget.memberData.totalItems}",
               style: GoogleFonts.prompt(fontSize: 12),
             ),
             ElevatedButton(
               onPressed:
-                  currentOffset + 10 < totalItems
+                  widget.memberData.currentOffset + 10 <
+                          widget.memberData.totalItems
                       ? () {
                         setState(() {
-                          currentOffset += 10;
+                          widget.memberData.currentOffset += 10;
                           isLoading = true;
                         });
-                        fetchSubjects(currentOffset);
+                        fetchSubjects(widget.memberData.currentOffset);
                       }
                       : null,
               child: Text('ถัดไป', style: GoogleFonts.prompt(fontSize: 12)),
@@ -597,7 +506,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
             SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
               child: TextField(
-                controller: gpaController,
+                controller: widget.memberData.gpaController,
                 style: TextStyle(fontSize: 16),
                 decoration: InputDecoration(
                   labelText: "เกรดเฉลี่ยรวม",
@@ -648,88 +557,6 @@ class _SubjectsTableState extends State<SubjectsTable> {
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        if (!isLoading && subjects.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () async {
-              final failedSubjects = countFailedOrNotRegisteredSubjects();
-
-              if (!_validateAllFields()) {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text("กรุณาเพิ่มข้อมูลให้ครบก่อนส่ง"),
-                    action: SnackBarAction(
-                      label: "Undo",
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      },
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              if (!isSubmitEnabled || failedSubjects > 1) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("คุณมีคุณสมบัติที่ไม่ตรงกับข้อกำหนด"),
-                  ),
-                );
-                Future.delayed(const Duration(seconds: 1), () {
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                });
-                return;
-              }
-
-              await submitStudentData(
-                studentId: widget.studentIdController.text,
-                overallGrade: gpaController.text,
-                branchId: int.parse(widget.selectedCourse!),
-                courseYear: int.parse(widget.selectedCourseYear!),
-                semesterId: getTermIdFromName(widget.selectedSemester),
-                academicYear: int.parse(widget.selectedYear!),
-                savedSubjectDetails: savedSubjectDetails,
-              );
-
-              // ✅ ส่งข้อมูลได้แล้ว
-              print("ส่งข้อมูลแล้วจ้า 🎉");
-              print("Submit pressed!");
-              print(
-                "ข้อมูลนักศึกษา: ${widget.selectedPrefix}, ${widget.firstNameController.text} ${widget.lastNameController.text}, ${widget.studentIdController.text}",
-              );
-              print("ภาคการศึกษา: ${widget.selectedSemester}");
-              print("ปีการศึกษา: ${widget.selectedYear}");
-              print("เกรดเฉลี่ยรวม : ${gpaController.text}");
-              print("รายละเอียดวิชา: $savedSubjectDetails");
-              print("ไฟล์ที่แนบ: ${selectedFile?.name}");
-
-              // แทนที่การแสดง SnackBar ด้วย AwesomeDialog
-              AwesomeDialog(
-                context: context,
-                dialogType: DialogType.success,
-                animType: AnimType.scale,
-                title: 'สำเร็จ',
-                titleTextStyle: GoogleFonts.prompt(),
-                desc: 'ส่งข้อมูลเรียบร้อยแล้ว',
-                btnOkOnPress: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => DocumentRouter()),
-                  );
-                },
-                btnOkText: 'ตกลง',
-                btnOkColor: Colors.green,
-              ).show();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isSubmitEnabled ? Colors.green : Colors.grey,
-              foregroundColor: Colors.white,
-            ),
-            child: Text("ส่งแบบฟอร์ม", style: GoogleFonts.prompt(fontSize: 16)),
-          ),
-        ],
       ],
     );
   }

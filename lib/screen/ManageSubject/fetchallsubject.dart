@@ -98,6 +98,7 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
               ),
             ),
             DropDownTopContent(
+              selectedCourse: course,
               onCourseChanged: (value) {
                 setState(() {
                   course = value;
@@ -134,6 +135,7 @@ class _AllSubjectsPageState extends State<AllSubjectsPage> {
 }
 
 class DropDownTopContent extends StatefulWidget {
+  final String? selectedCourse;
   final Function(String?) onCourseChanged;
   final Function(String?) onCourseYearChanged;
 
@@ -141,6 +143,7 @@ class DropDownTopContent extends StatefulWidget {
     Key? key,
     required this.onCourseChanged,
     required this.onCourseYearChanged,
+    required this.selectedCourse,
   }) : super(key: key);
 
   @override
@@ -158,6 +161,7 @@ class _DropDownTopContentState extends State<DropDownTopContent> {
             const Text("หลักสูตร :"),
             const SizedBox(width: 10),
             CourseDropdown(
+              value: widget.selectedCourse,
               onCourseChanged: widget.onCourseChanged, // ส่งค่ากลับไป
             ),
             const SizedBox(width: 20),
@@ -216,40 +220,6 @@ class _GetSubjectsState extends State<GetSubjects> {
       ),
     );
   }
-
-  // void checkAndLoadNextPage() async {
-  //   int nextPage = widget.currentPage + 1;
-  //   int nextOffset = nextPage * 10;
-
-  //   final subjectBloc = context.read<GetSubjectBloc>();
-
-  //   subjectBloc.add(
-  //     FetchAllSubject(
-  //       offset: nextOffset,
-  //       limit: 10,
-  //       courseYear: widget.courseYear,
-  //       branchId: widget.course,
-  //     ),
-  //   );
-
-  //   final state = await subjectBloc.stream.firstWhere(
-  //     (state) => state is! SubjectLoading,
-  //   );
-
-  //   if (state is SubjectsLoaded) {
-  //     if (state.subjects.isNotEmpty) {
-  //       widget.onPageChange(nextPage); // ✅ มีข้อมูล -> เปลี่ยนหน้า
-  //     } else {
-  //       setState(() {
-  //         _hasNextPage = false; // ✅ ไม่มีข้อมูล -> ปิดปุ่ม
-  //       });
-
-  //       ScaffoldMessenger.of(
-  //         context,
-  //       ).showSnackBar(const SnackBar(content: Text("ไม่มีข้อมูลหน้าถัดไป")));
-  //     }
-  //   }
-  // }
 
   void loadPreviousPage() {
     if (widget.currentPage > 0) {

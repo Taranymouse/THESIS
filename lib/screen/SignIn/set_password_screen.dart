@@ -36,6 +36,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
   }
 
   Future<void> _submitPassword() async {
+    final sessionService = SessionService();
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -60,8 +61,12 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('ตั้งรหัสผ่านสำเร็จ')));
 
-        // เปลี่ยนหน้าไปยังหน้า home
-        Navigator.pushReplacementNamed(context, '/create-student');
+        String userRole = await sessionService.getUserRole() ?? '';
+        if (userRole == "1") {
+          Navigator.pushReplacementNamed(context, '/create-student');
+        } else if (userRole == "4") {
+          Navigator.pushReplacementNamed(context, '/admin-home');
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('เกิดข้อผิดพลาด: ${response.body}')),

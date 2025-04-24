@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:project/ColorPlate/color.dart';
+import 'package:project/screen/Admin/admin_document_router.dart';
 
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/ManageSubject/fetchallsubject.dart';
@@ -36,6 +37,23 @@ class AdminMenu extends StatelessWidget {
                 _buildButton(
                   context,
                   icon: FaIcon(
+                    FontAwesomeIcons.file,
+                    color: Colors.blueAccent,
+                    size: 30,
+                  ),
+                  label: "จัดการเอกสาร",
+                  color: Colors.blueAccent,
+                  onPressed: () async {
+                    await LoadingScreen.showWithNavigation(context, () async {
+                      // จำลองการโหลดข้อมูล
+                      await Future.delayed(const Duration(seconds: 2));
+                    }, AdminDocumentRouter());
+                  },
+                ),
+
+                _buildButton(
+                  context,
+                  icon: FaIcon(
                     FontAwesomeIcons.book,
                     color: Colors.blueAccent,
                     size: 30,
@@ -43,49 +61,10 @@ class AdminMenu extends StatelessWidget {
                   label: "จัดการรายวิชา",
                   color: Colors.blueAccent,
                   onPressed: () async {
-                    await LoadingScreen.showWithNavigation(
-                      context,
-                      () async {
-                        // จำลองการโหลดข้อมูล
-                        await Future.delayed(
-                          const Duration(seconds: 2),
-                        ); // เปลี่ยนระยะเวลาตามความเหมาะสม
-                      },
-                      AllSubjectsPage(), // หน้าใหม่ที่จะไป
-                    );
-                  },
-                ),
-
-                _buildButton(
-                  context,
-                  icon: FaIcon(
-                    FontAwesomeIcons.usersGear,
-                    color: Colors.redAccent,
-                    size: 20,
-                  ),
-                  label: "จัดการกลุ่ม",
-                  color: Colors.redAccent,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Group Managements Coming soon..."),
-                      ),
-                    );
-                  },
-                ),
-                _buildButton(
-                  context,
-                  icon: FaIcon(
-                    FontAwesomeIcons.userTie,
-                    color: Colors.deepPurple,
-                    size: 20,
-                  ),
-                  label: "จัดการอาจารย์",
-                  color: Colors.redAccent,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Contact Coming soon...")),
-                    );
+                    await LoadingScreen.showWithNavigation(context, () async {
+                      // จำลองการโหลดข้อมูล
+                      await Future.delayed(const Duration(seconds: 2));
+                    }, AllSubjectsPage());
                   },
                 ),
               ],

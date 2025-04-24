@@ -4,11 +4,10 @@ import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/Student/academic_performance.dart';
 import 'package:project/screen/Student/request_group.dart';
-import 'package:project/screen/Student/student_check_performance.dart';
 import 'package:project/screen/home.dart';
 
-class DocumentRouter extends StatelessWidget {
-  DocumentRouter({super.key});
+class AdminDocumentRouter extends StatelessWidget {
+  AdminDocumentRouter({super.key});
   final SessionService sessionService = SessionService();
 
   @override
@@ -31,7 +30,7 @@ class DocumentRouter extends StatelessWidget {
               onTap: () async {
                 await LoadingScreen.showWithNavigation(context, () async {
                   await Future.delayed(const Duration(seconds: 2));
-                }, PerformanceForm());
+                }, const PerformanceForm());
               },
             ),
             DocumentCard(

@@ -60,7 +60,16 @@ class _HomepageContentState extends State<HomepageContent> {
   void initState() {
     super.initState();
     _loadDisplayName();
-    _onCheckUser();
+    _loadUserAndCheckStudent();
+  }
+
+  Future<void> _loadUserAndCheckStudent() async {
+    await _onCheckUser();
+    if (id_user != null) {
+      await _onCheckStudent();
+    } else {
+      print("❌ id_user is null, cannot fetch student data.");
+    }
   }
 
   Future<void> _loadDisplayName() async {
@@ -90,7 +99,6 @@ class _HomepageContentState extends State<HomepageContent> {
         setState(() {
           displayName = fetchedDisplayName;
         });
-        // บันทึก displayName ลงใน SessionService
         await _sessionService.saveDisplayName(fetchedDisplayName);
       } else {
         print("❌ Failed to fetch user data: ${response.body}");
@@ -101,7 +109,9 @@ class _HomepageContentState extends State<HomepageContent> {
   Future<void> _onCheckUser() async {
     String? token = await _sessionService.getAuthToken();
     String? email = await _sessionService.getUserSession();
+    int? id_student = await _sessionService.getIdStudent();
     print("Token : $token");
+    print("id_student : $id_student");
     if (token != null) {
       final response = await http.get(
         Uri.parse('$baseUrl/api/auth/user'),
@@ -124,6 +134,22 @@ class _HomepageContentState extends State<HomepageContent> {
       } else {
         print("❌ Failed to fetch user data: ${response.body}");
       }
+    }
+  }
+
+  Future<void> _onCheckStudent() async {
+    print("--- FROM _onCheckStudent ---");
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/student/get/active_user/${id_user.toString()}'),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("!!## id_student : ${data['data']['id_student']}");
+      await _sessionService.setIdStudent(data['data']['id_student']);
+      final test_id_student = await _sessionService.getIdStudent();
+      print("!!## test_id_student : $test_id_student");
+    } else {
+      print("❌ Failed to fetch user data: ${response.body}");
     }
   }
 
