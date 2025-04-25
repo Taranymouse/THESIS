@@ -1,25 +1,22 @@
 class SubjectGrade {
   final String subjectName;
-  final String termName;
-  final int year;
   final String gradeCode;
-  final String overallGrade;
+  final double credit;
+  final double gradePoint;
 
   SubjectGrade({
     required this.subjectName,
-    required this.termName,
-    required this.year,
     required this.gradeCode,
-    required this.overallGrade,
+    required this.credit,
+    required this.gradePoint,
   });
 
   factory SubjectGrade.fromJson(Map<String, dynamic> json) {
     return SubjectGrade(
       subjectName: json['subject_name'],
-      termName: json['term_name'],
-      year: json['year'],
       gradeCode: json['grade_code'],
-      overallGrade: json['overall_grade'],
+      credit: (json['credit'] as num).toDouble(),
+      gradePoint: (json['grade_point'] as num).toDouble(),
     );
   }
 }
@@ -31,6 +28,8 @@ class StudentGradeGroup {
   final String codeStudent;
   final int year;
   final String termName;
+  final double overallGrade;
+  final String label;
   final List<SubjectGrade> subjectGrades;
 
   StudentGradeGroup({
@@ -40,20 +39,25 @@ class StudentGradeGroup {
     required this.codeStudent,
     required this.year,
     required this.termName,
+    required this.overallGrade,
+    required this.label,
     required this.subjectGrades,
   });
 
   factory StudentGradeGroup.fromJson(Map<String, dynamic> json) {
+    final head = json['head_info'] ?? {};
     return StudentGradeGroup(
       idStudent: json['id_student'],
-      firstName: json['head_info']['first_name'],
-      lastName: json['head_info']['last_name'],
-      codeStudent: json['head_info']['code_student'],
-      year: json['head_info']['year'],
-      termName: json['head_info']['term_name'],
-      subjectGrades: List<SubjectGrade>.from(
-        json['subject_grades'].map((e) => SubjectGrade.fromJson(e)),
-      ),
+      firstName: head['first_name'],
+      lastName: head['last_name'],
+      codeStudent: head['code_student'],
+      year: head['year'],
+      termName: head['term_name'],
+      overallGrade: double.tryParse(json['overall_grade'].toString()) ?? 0.0,
+      label: json['label'] ?? '',
+      subjectGrades: (json['head_info'] as List)
+          .map((e) => SubjectGrade.fromJson(e))
+          .toList(),
     );
   }
 }

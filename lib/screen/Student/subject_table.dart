@@ -12,7 +12,6 @@ import 'package:project/screen/Student/academic_performance.dart';
 class SubjectsTable extends StatefulWidget {
   final String? selectedCourse;
   final String? selectedCourseYear;
-  final String? selectedPrefix;
   final String? selectedSemester;
   final String? selectedYear;
   final TextEditingController firstNameController;
@@ -25,7 +24,6 @@ class SubjectsTable extends StatefulWidget {
     super.key,
     required this.selectedCourse,
     required this.selectedCourseYear,
-    required this.selectedPrefix,
     required this.selectedSemester,
     required this.selectedYear,
     required this.firstNameController,
@@ -294,7 +292,6 @@ class _SubjectsTableState extends State<SubjectsTable> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedCourse != widget.selectedCourse ||
         oldWidget.selectedCourseYear != widget.selectedCourseYear ||
-        oldWidget.selectedPrefix != widget.selectedPrefix ||
         oldWidget.selectedSemester != widget.selectedSemester ||
         oldWidget.selectedYear != widget.selectedYear ||
         oldWidget.firstNameController.text != widget.firstNameController.text ||

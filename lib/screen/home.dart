@@ -60,16 +60,7 @@ class _HomepageContentState extends State<HomepageContent> {
   void initState() {
     super.initState();
     _loadDisplayName();
-    _loadUserAndCheckStudent();
-  }
-
-  Future<void> _loadUserAndCheckStudent() async {
-    await _onCheckUser();
-    if (id_user != null) {
-      await _onCheckStudent();
-    } else {
-      print("❌ id_user is null, cannot fetch student data.");
-    }
+    _onCheckUser();
   }
 
   Future<void> _loadDisplayName() async {
@@ -109,9 +100,7 @@ class _HomepageContentState extends State<HomepageContent> {
   Future<void> _onCheckUser() async {
     String? token = await _sessionService.getAuthToken();
     String? email = await _sessionService.getUserSession();
-    int? id_student = await _sessionService.getIdStudent();
     print("Token : $token");
-    print("id_student : $id_student");
     if (token != null) {
       final response = await http.get(
         Uri.parse('$baseUrl/api/auth/user'),
@@ -124,16 +113,20 @@ class _HomepageContentState extends State<HomepageContent> {
         if (fetchedEmail == email) {
           print("!!##  Email is $fetchedEmail");
           print("!!## id_user : ${data['id_user']}");
+          await _sessionService.setIdUser(data['id_user']);
           setState(() {
             email = fetchedEmail;
             id_user = data['id_user'];
           });
+          await _onCheckStudent();
         } else {
           print("Email is not in use.");
         }
       } else {
         print("❌ Failed to fetch user data: ${response.body}");
       }
+      int? id_student = await _sessionService.getIdStudent();
+      print("id_student : $id_student");
     }
   }
 
@@ -145,21 +138,20 @@ class _HomepageContentState extends State<HomepageContent> {
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
 
-      print("!!## id_student : ${data['data']['id_student']}");
       await _sessionService.setIdStudent(data['data']['id_student']);
       await _sessionService.saveStudentId(data['data']['code_student']);
       await _sessionService.saveUserName(data['data']['first_name']);
       await _sessionService.saveUserLastName(data['data']['last_name']);
-      await _sessionService.savePrefix(data['data']['id_prefix']);
-      print("!!## first_name : ${data['data']['first_name']}");
-      print("!!## last_name : ${data['data']['last_name']}");
-      print("!!## student_id : ${data['data']['code_student']}");
-      print("!!## id_prefix : ${data['data']['id_prefix']}");
-      final test_id_student = await _sessionService.getIdStudent();
-      print("!!## test_id_student : $test_id_student");
     } else {
       print("❌ Failed to fetch user data: ${response.body}");
     }
+    String? testname = await _sessionService.getUserName();
+    String? testlast = await _sessionService.getUserLastName();
+    String? teststudentid = await _sessionService.getStudentId();
+    print("ข้อมูลนักศึกษา : $teststudentid $testname $testlast");
+    print(
+      "บันทึกข้อมูลจาก API /api/student/get/active_user/${id_user.toString()}",
+    );
   }
 
   @override

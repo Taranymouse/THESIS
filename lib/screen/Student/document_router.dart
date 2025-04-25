@@ -1,15 +1,95 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/Student/academic_performance.dart';
 import 'package:project/screen/Student/request_group.dart';
-import 'package:project/screen/Student/student_check_performance.dart';
 import 'package:project/screen/home.dart';
 
-class DocumentRouter extends StatelessWidget {
-  DocumentRouter({super.key});
+class DocumentRouter extends StatefulWidget {
+  const DocumentRouter({super.key});
+
+  @override
+  _DocumentRouterState createState() => _DocumentRouterState();
+}
+
+class _DocumentRouterState extends State<DocumentRouter> {
   final SessionService sessionService = SessionService();
+  late int? id_user;
+
+  @override
+  void initState() {
+    super.initState();
+    initializeSession();
+  }
+
+  Future<void> initializeSession() async {
+    await _onCheckStudent();
+    _checkGroupProject();
+  }
+
+  Future<void> _checkGroupProject() async {
+    print("--- FROM _checkGroupProject ---");
+    int? id_group_project = await sessionService.getProjectGroupId();
+
+    if (id_group_project != null) {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/student/get/$id_group_project'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+
+        // ✅ ดึงรายการ id_student ทั้งหมดจาก response
+        final List<int> studentIds =
+            (data['data'] as List)
+                .map((student) => student['id_student'] as int)
+                .toList();
+
+        print("📌 studentIds: $studentIds");
+
+        // ✅ บันทึกเก็บไว้ใน SessionService
+        await sessionService.saveUpdatedStudentIds(studentIds);
+      } else {
+        print("❌ Failed to fetch group project data: ${response.body}");
+      }
+    } else {
+      print("ยังไม่มีการจัดกลุ่มโปรเจค");
+    }
+  }
+
+  Future<void> _onCheckStudent() async {
+    print("--- FROM _onCheckStudent ---");
+    id_user = await sessionService.getIdUser();
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/student/get/active_user/${id_user.toString()}'),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      if (data['data']['id_group_project'] != null) {
+        await sessionService.setProjectGroupId(
+          data['data']['id_group_project'],
+        );
+      } else {
+        print("นักศึกษายังไม่ได้ทำ IT00G / CS00G");
+      }
+    } else {
+      print("❌ Failed to fetch user data: ${response.body}");
+    }
+    String? testname = await sessionService.getUserName();
+    String? testlast = await sessionService.getUserLastName();
+    String? teststudentid = await sessionService.getStudentId();
+    int? test_idgroupproject = await sessionService.getProjectGroupId();
+    print("ข้อมูลนักศึกษา : $teststudentid $testname $testlast");
+    print("id กลุ่มโปรเจค : $test_idgroupproject");
+    print(
+      "บันทึกข้อมูลจาก API /api/student/get/active_user/${id_user.toString()}",
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,12 +119,12 @@ class DocumentRouter extends StatelessWidget {
                   'แบบคำร้องขอเข้ารับการจัดสรรกลุ่มสำหรับการจัดทำโครงงานปริญญานิพนธ์',
               subtitle: '(CP00R)',
               onTap: () async {
-                int? studentId = await sessionService.getIdStudent();
+                final updatedIds = await sessionService.getUpdatedStudentIds();
 
-                if (studentId != null) {
+                if (updatedIds != null) {
                   await LoadingScreen.showWithNavigation(context, () async {
                     await Future.delayed(const Duration(seconds: 2));
-                  }, RequestGroup(studentIds: [studentId]));
+                  }, RequestGroup(studentIds: updatedIds));
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

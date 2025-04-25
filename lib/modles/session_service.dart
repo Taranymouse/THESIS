@@ -1,9 +1,23 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   static const String _isLoggedInKey = 'isLoggedIn';
+
+  Future<void> saveUpdatedStudentIds(List<int> ids) async {
+    final jsonString = jsonEncode(ids);
+    await _storage.write(key: 'updated_student_ids', value: jsonString);
+  }
+
+  Future<List<int>> getUpdatedStudentIds() async {
+    final jsonString = await _storage.read(key: 'updated_student_ids');
+    if (jsonString == null) return [];
+    final List<dynamic> parsed = jsonDecode(jsonString);
+    return parsed.cast<int>();
+  }
 
   // ฟังก์ชันเก็บข้อมูลid_student
   Future<void> setIdStudent(int id_student) async {
@@ -27,6 +41,18 @@ class SessionService {
   Future<int?> getIdUser() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('id_user');
+  }
+
+    // ฟังก์ชันเก็บข้อมูลid_group_project
+  Future<void> setProjectGroupId(int id_user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('id_group_project', id_user);
+  }
+
+  // ฟังก์ชันดึงข้อมูลid_group_project
+  Future<int?> getProjectGroupId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id_group_project');
   }
 
   // ฟังก์ชันเก็บข้อมูลอีเมล

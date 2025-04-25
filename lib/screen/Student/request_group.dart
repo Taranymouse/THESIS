@@ -9,8 +9,6 @@ import 'package:project/API/api_config.dart';
 import 'package:project/modles/student_performance.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Form/Form_Options/File/fileupload.dart';
-import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
-import 'package:project/screen/Form/Form_Options/dropdown/stdyear.dart';
 import 'package:project/screen/Student/document_router.dart';
 
 class RequestGroup extends StatefulWidget {
@@ -23,8 +21,6 @@ class RequestGroup extends StatefulWidget {
 }
 
 class _RequestGroupState extends State<RequestGroup> {
-  String? selectedSemester;
-  String? selectedYear;
   late List<int> studentIds;
   PlatformFile? selectedFile;
 
@@ -35,47 +31,6 @@ class _RequestGroupState extends State<RequestGroup> {
   void initState() {
     super.initState();
     studentIds = widget.studentIds;
-    _fetchAndSetSemesterYearFromStudent();
-  }
-
-  Future<void> _fetchAndSetSemesterYearFromStudent() async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/check/group-all-subjects'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(studentIds), // ส่ง List<int> ตรงๆ
-      );
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(utf8.decode(response.bodyBytes)) as List;
-
-        // เก็บ semester/year ที่พบทั้งหมด
-        Set<String> semesters = {};
-        Set<String> years = {};
-
-        for (var student in decoded) {
-          final headInfo = student['head_info'];
-          if (headInfo != null) {
-            semesters.add(headInfo['term_name'] ?? '');
-            years.add(headInfo['year']?.toString() ?? '');
-          }
-        }
-
-        setState(() {
-          availableSemesters = semesters.where((e) => e.isNotEmpty).toList();
-          availableYears = years.where((e) => e.isNotEmpty).toList();
-
-          // กำหนดค่าเริ่มต้นเป็นค่าแรกถ้ามี
-          if (availableSemesters.isNotEmpty)
-            selectedSemester = availableSemesters[0];
-          if (availableYears.isNotEmpty) selectedYear = availableYears[0];
-        });
-      } else {
-        throw Exception("โหลดข้อมูลนักศึกษาไม่สำเร็จ");
-      }
-    } catch (e) {
-      print("เกิดข้อผิดพลาดในการดึงข้อมูล semester/year: $e");
-    }
   }
 
   @override
@@ -93,67 +48,6 @@ class _RequestGroupState extends State<RequestGroup> {
           padding: EdgeInsets.all(15),
           child: Column(
             children: [
-              Row(
-                children: [
-                  const Text("ภาคการศึกษา :"),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: DropdownButton<String>(
-                      value: selectedSemester,
-                      isExpanded:
-                          true, // เพิ่มค่านี้เพื่อให้ dropdown ขยายเต็มพื้นที่
-                      items:
-                          availableSemesters
-                              .map(
-                                (sem) => DropdownMenuItem(
-                                  value: sem,
-                                  child: Text(
-                                    sem,
-                                    style: GoogleFonts.prompt(fontSize: 14),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedSemester = value;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 20), // เพิ่มพื้นที่ว่างระหว่าง dropdown
-                  const Text("ปีการศึกษา :"),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: DropdownButton<String>(
-                      value: selectedYear,
-                      isExpanded: true,
-                      items:
-                          availableYears.map((year) {
-                            return DropdownMenuItem<String>(
-                              value: year,
-                              child: Text(
-                                year,
-                                style: GoogleFonts.prompt(fontSize: 14),
-                              ),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedYear = value;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              Divider(
-                color: Colors.grey,
-                thickness: 1,
-                height: 20,
-                indent: 20,
-                endIndent: 20,
-              ),
               GroupSubjectTable(studentIds: studentIds),
               const SizedBox(height: 10),
               const SizedBox(height: 10),
@@ -202,7 +96,6 @@ class GroupSubjectTable extends StatefulWidget {
 class _GroupSubjectTableState extends State<GroupSubjectTable> {
   late Future<void> _loadingFuture;
   List<StudentGradeGroup> studentGrades = [];
-  Map<String, double> gradeMap = {}; // grade_code -> grade_point
 
   @override
   void initState() {
@@ -211,35 +104,56 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
   }
 
   Future<void> _fetchData() async {
-    final gradesResponse = await http.get(Uri.parse('$baseUrl/api/grades'));
-    final studentResponse = await http.post(
-      Uri.parse('$baseUrl/api/check/group-all-subjects'),
+    final headResponse = await http.post(
+      Uri.parse('$baseUrl/api/check/group-head-calculate'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(widget.studentIds),
     );
 
-    if (gradesResponse.statusCode == 200 && studentResponse.statusCode == 200) {
-      final gradesJson =
-          jsonDecode(utf8.decode(gradesResponse.bodyBytes)) as List;
-      final studentJson =
-          jsonDecode(utf8.decode(studentResponse.bodyBytes)) as List;
+    final subjectResponse = await http.post(
+      Uri.parse('$baseUrl/api/check/group-subject-calculate'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(widget.studentIds),
+    );
 
-      gradeMap = {
-        for (var g in gradesJson)
-          g['grade_code']: (g['grade_point'] as num).toDouble(),
-      };
+    if (headResponse.statusCode == 200 && subjectResponse.statusCode == 200) {
+      final headJson = jsonDecode(utf8.decode(headResponse.bodyBytes)) as List;
+      final subjectJson =
+          jsonDecode(utf8.decode(subjectResponse.bodyBytes)) as List;
 
       studentGrades =
-          studentJson
-              .where(
-                (e) =>
-                    e['subject_grades'] != null &&
-                    (e['subject_grades'] as List).isNotEmpty &&
-                    e['head_info'] != null &&
-                    (e['head_info'] as Map).isNotEmpty,
-              )
-              .map((e) => StudentGradeGroup.fromJson(e))
-              .toList();
+          subjectJson.map((subjectEntry) {
+            final idStudent = subjectEntry['id_student'];
+            final label = subjectEntry['label'];
+            final overallGrade =
+                double.tryParse(subjectEntry['overall_grade'] ?? "0.0") ?? 0.0;
+            final subjects =
+                (subjectEntry['head_info'] as List).map((s) {
+                  return SubjectGrade(
+                    subjectName: s['subject_name'],
+                    gradeCode: s['grade_code'],
+                    credit: (s['credit'] as num).toDouble(),
+                    gradePoint: (s['grade_point'] as num).toDouble(),
+                  );
+                }).toList();
+
+            final headData =
+                headJson.firstWhere(
+                  (e) => e['id_student'] == idStudent,
+                )['head_info'];
+
+            return StudentGradeGroup(
+              idStudent: idStudent,
+              codeStudent: headData['code_student'],
+              firstName: headData['first_name'],
+              lastName: headData['last_name'],
+              termName: headData['term_name'],
+              year: headData['year'],
+              subjectGrades: subjects,
+              label: label,
+              overallGrade: overallGrade,
+            );
+          }).toList();
     } else {
       throw Exception('โหลดข้อมูลไม่สำเร็จ');
     }
@@ -264,7 +178,6 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
           );
         }
 
-        // ✅ คำนวณคะแนนรวมแต่ละคน และเฉลี่ยกลุ่ม
         final List<double> individualScores = [];
 
         for (var student in studentGrades) {
@@ -272,9 +185,7 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
             sum,
             subject,
           ) {
-            final gradePoint = gradeMap[subject.gradeCode] ?? 0.0;
-            const credit = 4.0; // ยังไม่มี field จริง
-            return sum + (gradePoint * credit);
+            return sum + (subject.gradePoint * subject.credit);
           });
           individualScores.add(totalScore);
         }
@@ -285,7 +196,6 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ✅ แสดงคะแนนเฉลี่ยของกลุ่ม
             Card(
               color: Colors.lightBlue[50],
               elevation: 2,
@@ -301,8 +211,6 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
                 ),
               ),
             ),
-
-            // ✅ แสดงรายคนนักศึกษา
             ...List.generate(studentGrades.length, (index) {
               final student = studentGrades[index];
               final totalScore = individualScores[index];
@@ -350,6 +258,12 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
                         ),
                         DataColumn(
                           label: Text(
+                            'เกรด',
+                            style: GoogleFonts.prompt(fontSize: 10),
+                          ),
+                        ),
+                        DataColumn(
+                          label: Text(
                             'คะแนน',
                             style: GoogleFonts.prompt(fontSize: 10),
                           ),
@@ -357,23 +271,34 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
                       ],
                       rows:
                           student.subjectGrades.map((subject) {
-                            final gradePoint =
-                                gradeMap[subject.gradeCode] ?? 0.0;
                             return DataRow(
                               cells: [
                                 DataCell(
                                   SizedBox(
                                     width:
-                                        MediaQuery.of(context).size.width * 0.5,
+                                        MediaQuery.of(context).size.width *
+                                        0.35,
                                     child: Text(
                                       subject.subjectName,
-                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(fontSize: 8),
+                                      maxLines: 2,
+                                      softWrap: true,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ),
                                 DataCell(
-                                  Text((gradePoint * 4).toStringAsFixed(2)),
+                                  Text(
+                                    subject.gradeCode,
+                                    style: const TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                                DataCell(
+                                  Text(
+                                    (subject.gradePoint * subject.credit)
+                                        .toStringAsFixed(2),
+                                    style: const TextStyle(fontSize: 10),
+                                  ),
                                 ),
                               ],
                             );

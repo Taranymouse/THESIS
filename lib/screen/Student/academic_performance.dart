@@ -23,6 +23,7 @@ class PerformanceForm extends StatefulWidget {
 
 class _PerformanceFormState extends State<PerformanceForm> {
   final List<MemberData> members = [MemberData()];
+  final SessionService _sessionService = SessionService();
 
   final ValueNotifier<bool> canSubmitAllNotifier = ValueNotifier(false);
 
@@ -181,6 +182,15 @@ class _PerformanceFormState extends State<PerformanceForm> {
       body: jsonEncode(updateBody),
     );
 
+    final responseBody = jsonDecode(utf8.decode(updateResponse.bodyBytes));
+    if (updateResponse.statusCode == 200 && responseBody['resCode'] == 200) {
+      final List<int> studentIds = List<int>.from(responseBody['code_student']);
+      await _sessionService.saveUpdatedStudentIds(studentIds);
+      print("✅ บันทึก id_student ที่อัปเดต: $studentIds");
+    } else {
+      print("X บันทึก id_student ไม่ได้: ${responseBody['resCode']}");
+    }
+
     if (updateResponse.statusCode != 200) {
       final failedIds = members
           .map((m) => m.studentIdController.text)
@@ -189,13 +199,13 @@ class _PerformanceFormState extends State<PerformanceForm> {
         context: context,
         dialogType: DialogType.error,
         animType: AnimType.topSlide,
-        title: 'ไม่พบข้อมูล',
+        title: 'ไม่พบข้อมูลนักศึกษา',
         titleTextStyle: GoogleFonts.prompt(
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: Colors.red,
         ),
-        desc: 'ไม่พบข้อมูล รหัสนักศึกษา: $failedIds',
+        desc: 'กรุณาตรวจสอบ รหัสนักศึกษา: $failedIds',
         btnOkOnPress: () {},
         btnOkText: 'รับทราบ',
         buttonsTextStyle: GoogleFonts.prompt(
@@ -241,7 +251,7 @@ class _PerformanceFormState extends State<PerformanceForm> {
           fontWeight: FontWeight.bold,
           color: Colors.red,
         ),
-        desc: 'ไม่สามารถเพิ่มข้อมูลได้ : เนื่องจากมีเข้ามูลในระบบแล้ว',
+        desc: 'ไม่สามารถเพิ่มข้อมูลได้ : \nเนื่องจากมีเข้ามูลในระบบแล้ว',
         btnOkOnPress: () {},
         btnOkText: 'รับทราบ',
         buttonsTextStyle: GoogleFonts.prompt(
@@ -298,7 +308,7 @@ class _PerformanceFormState extends State<PerformanceForm> {
           fontWeight: FontWeight.bold,
           color: Colors.yellow[800],
         ),
-        desc: 'เพิ่มสมาชิกได้สูงสุด 3 คน',
+        desc: 'สามารถเพิ่มสมาชิกได้สูงสุด 3 คน',
         btnOkOnPress: () {},
         btnOkText: 'รับทราบ',
         buttonsTextStyle: GoogleFonts.prompt(
@@ -320,7 +330,12 @@ class _PerformanceFormState extends State<PerformanceForm> {
         context: context,
         dialogType: DialogType.warning,
         animType: AnimType.topSlide,
-        title: 'ไม่สามารถลบได้',
+        title: 'คำแนะนำ',
+        titleTextStyle: GoogleFonts.prompt(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.blueAccent,
+        ),
         desc: 'ไม่สามารถลบนักศึกษาคนแรกได้',
         btnOkOnPress: () {},
       ).show();
@@ -410,7 +425,7 @@ class _PerformanceFormState extends State<PerformanceForm> {
 }
 
 class MemberData {
-  String? course, courseYear, prefix, semester, year;
+  String? course, courseYear, semester, year;
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final studentIdController = TextEditingController();
@@ -443,7 +458,6 @@ class _MemberFormState extends State<MemberForm> {
     final valid =
         d.course != null &&
         d.courseYear != null &&
-        d.prefix != null &&
         d.semester != null &&
         d.year != null &&
         d.firstNameController.text.isNotEmpty &&
@@ -505,26 +519,6 @@ class _MemberFormState extends State<MemberForm> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                const Text("คำนำหน้า: "),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.3,
-                  child: PrefixDropdown(
-                    value: widget.data.prefix,
-                    onPrefixChanged: (v) {
-                      setState(() {
-                        widget.data.prefix = v;
-                        print("Prefix: ${widget.data.prefix}");
-                        _updateReady();
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 10),
             SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
               child: TextField(
@@ -603,7 +597,6 @@ class _MemberFormState extends State<MemberForm> {
           firstNameController: widget.data.firstNameController,
           lastNameController: widget.data.lastNameController,
           studentIdController: widget.data.studentIdController,
-          selectedPrefix: widget.data.prefix,
           selectedSemester: widget.data.semester,
           selectedYear: widget.data.year,
           onGradeValidationChanged: (_) => widget.onGradesChanged(),
