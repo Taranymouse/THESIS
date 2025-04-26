@@ -15,8 +15,7 @@ import 'package:project/bloc/Subject/IT/subject_repository.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Admin/admin_check_performance.dart';
 import 'package:project/screen/Admin/adminhome.dart';
-import 'package:project/screen/Form/CheckPerForm/Content.dart';
-import 'package:project/screen/ManageSubject/createsubject.dart';
+import 'package:project/screen/Admin/ManageSubject/createsubject.dart';
 import 'package:project/screen/Profeser/profhome.dart';
 import 'package:project/screen/SignIn/create_student.dart';
 import 'package:project/screen/SignIn/login.dart';
@@ -27,9 +26,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // ตรวจสอบสถานะการเข้าสู่ระบบ
   final sessionService = SessionService();
   final isLoggedIn = await sessionService.isLoggedIn();
+  final userRole = isLoggedIn ? await sessionService.getUserRole() : null;
+  print("Role on main: $userRole");
 
   runApp(
     MultiBlocProvider(
@@ -41,25 +41,41 @@ void main() async {
         BlocProvider(
           create: (context) => LoginBloc()..add(CheckSessionEvent()),
         ),
-        BlocProvider(
-          create: (context) => SubjectBloc(SubjectRepository()),
-        ), // ส่ง repo ไปที่ SubjectBloc
+        BlocProvider(create: (context) => SubjectBloc(SubjectRepository())),
         BlocProvider(create: (context) => SubjectCsBloc()),
         BlocProvider(create: (context) => BottomNavBloc()),
         BlocProvider(create: (context) => GetSubjectBloc()),
       ],
-      child: MyApp(isLoggedIn: isLoggedIn),
+      child: MyApp(isLoggedIn: isLoggedIn, userRole: userRole),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
+  final String? userRole;
 
-  const MyApp({super.key, required this.isLoggedIn});
+  const MyApp({super.key, required this.isLoggedIn, this.userRole});
 
   @override
   Widget build(BuildContext context) {
+    String initialRoute;
+
+    if (!isLoggedIn) {
+      initialRoute = '/login';
+    } else {
+      switch (userRole) {
+        case '1':
+          initialRoute = '/home';
+          break;
+        case '4':
+          initialRoute = '/admin-home';
+          break;
+        default:
+          initialRoute = '/login';
+      }
+    }
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Project',
@@ -80,8 +96,7 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.black),
         ),
       ),
-      // home: StudentListPage(),
-      initialRoute: isLoggedIn ? '/home' : '/login',
+      initialRoute: initialRoute,
       routes: {
         '/login': (context) => Login(),
         '/home': (context) => Homepage(),

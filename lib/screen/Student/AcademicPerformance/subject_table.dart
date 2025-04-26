@@ -7,7 +7,7 @@ import 'package:project/API/api_config.dart';
 import 'package:project/modles/grade_model.dart';
 import 'package:project/modles/subject_model.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
-import 'package:project/screen/Student/academic_performance.dart';
+import 'package:project/screen/Student/AcademicPerformance/academic_performance.dart';
 
 class SubjectsTable extends StatefulWidget {
   final String? selectedCourse;
@@ -517,7 +517,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
               width: MediaQuery.of(context).size.width * 0.8,
               child: TextField(
                 controller: widget.memberData.gpaController,
-                style: TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 16),
                 decoration: InputDecoration(
                   labelText: "เกรดเฉลี่ยรวม",
                   labelStyle: TextStyle(fontSize: 14),

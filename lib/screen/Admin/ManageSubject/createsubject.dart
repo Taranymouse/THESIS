@@ -86,27 +86,22 @@ class _CreatesubjectState extends State<Createsubject> {
                   children: [
                     Text("หลักสูตร :"),
                     SizedBox(width: 10),
-                    Expanded(
-                      child: CourseDropdown(
-                        onCourseChanged: (newValue) {
-                          setState(() {
-                            selectedCourse =
-                                newValue; // เก็บค่าหลักสูตรที่เลือก
-                          });
-                        },
-                      ),
+                    CourseDropdown(
+                      onCourseChanged: (newValue) {
+                        setState(() {
+                          selectedCourse = newValue; // เก็บค่าหลักสูตรที่เลือก
+                        });
+                      },
                     ),
                     SizedBox(width: 10),
                     Text("ปีหลักสูตร :"),
-                    Expanded(
-                      child: CourseYearDropdown(
-                        onCourseYearChanged: (newValue) {
-                          setState(() {
-                            selectedCourseYear =
-                                newValue; // เก็บค่าปีหลักสูตรที่เลือก
-                          });
-                        },
-                      ),
+                    CourseYearDropdown(
+                      onCourseYearChanged: (newValue) {
+                        setState(() {
+                          selectedCourseYear =
+                              newValue; // เก็บค่าปีหลักสูตรที่เลือก
+                        });
+                      },
                     ),
                   ],
                 ),

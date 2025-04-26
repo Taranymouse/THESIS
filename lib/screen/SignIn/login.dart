@@ -17,10 +17,15 @@ class Login extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text("Login"), centerTitle: true),
       body: BlocConsumer<LoginBloc, LoginState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is LoginSuccess) {
             // 👉 บันทึกว่าผู้ใช้เข้าสู่ระบบแล้ว
             SessionService().setLoggedIn(true);
+
+            // 👉 บันทึก Role ของผู้ใช้งาน
+            await SessionService().saveUserRole(state.role);
+            print("บันทึก Role สำเร็จ : ${state.role}");
+
             context.read<BottomNavBloc>().add(ChangePage(index: 1));
             // ตรวจสอบ role และไปยังหน้าแตกต่างกันตาม role
             if (state.role == "1") {
@@ -31,10 +36,7 @@ class Login extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/admin-home');
             } else {
               // ในกรณีที่ role ไม่ตรงกับที่กำหนด
-              // Navigator.pushReplacementNamed(context, '/home');
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text("หา role ไม่เจอ")));
+              print("Role not recognized: $state.role");
             }
           } else if (state is RequireSetPasswordState) {
             Navigator.pushReplacementNamed(
@@ -193,24 +195,5 @@ class Login extends StatelessWidget {
       ),
       obscureText: obscureText,
     );
-  }
-
-  void _checkLoginStatus(BuildContext context) async {
-    String? token = await SessionService().getAuthToken();
-    String? role = await SessionService().getUserRoleSession();
-
-    if (token != null) {
-      // ข้ามไปที่ Homepage โดยอิงจาก role
-      if (role == "1") {
-        Navigator.pushReplacementNamed(context, '/home');
-      } else if (role == "4") {
-        Navigator.pushReplacementNamed(context, '/admin-home');
-      } else {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } else {
-      // กลับไปหน้า Login ถ้าไม่มี Token
-      Navigator.pushReplacementNamed(context, '/login');
-    }
   }
 }

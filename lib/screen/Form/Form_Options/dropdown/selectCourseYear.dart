@@ -18,7 +18,7 @@ class CourseYearDropdown extends StatefulWidget {
 class _CourseYearDropdownState extends State<CourseYearDropdown> {
   String? selectedCourseYear;
 
-    @override
+  @override
   void didUpdateWidget(covariant CourseYearDropdown oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.value != widget.value) {
@@ -44,10 +44,7 @@ class _CourseYearDropdownState extends State<CourseYearDropdown> {
       child: Column(
         children: [
           DropdownButton<String>(
-            hint: Text(
-              "- เลือก -",
-              style: GoogleFonts.prompt(fontSize: 10),
-            ),
+            hint: Text(" - เลือก -", style: GoogleFonts.prompt(fontSize: 10)),
             value: selectedCourseYear,
             isExpanded: true,
             items:

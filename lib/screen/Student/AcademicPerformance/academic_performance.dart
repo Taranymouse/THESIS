@@ -13,7 +13,7 @@ import 'package:project/screen/Form/Form_Options/dropdown/selectPrefix.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/stdyear.dart';
 import 'package:project/screen/Student/document_router.dart';
-import 'package:project/screen/Student/subject_table.dart';
+import 'package:project/screen/Student/AcademicPerformance/subject_table.dart';
 
 class PerformanceForm extends StatefulWidget {
   const PerformanceForm({super.key});
@@ -520,34 +520,62 @@ class _MemberFormState extends State<MemberForm> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
+              width: MediaQuery.of(context).size.width * 1,
               child: TextField(
                 controller: widget.data.firstNameController,
+                style: const TextStyle(fontSize: 16),
                 decoration: InputDecoration(
-                  labelText: 'ชื่อ',
-                  labelStyle: GoogleFonts.prompt(fontSize: 12),
+                  labelText: "ชื่อ",
+                  labelStyle: TextStyle(fontSize: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 14,
+                  ),
                 ),
+                onChanged: (value) {},
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(height: 10),
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
+              width: MediaQuery.of(context).size.width * 1,
               child: TextField(
                 controller: widget.data.lastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'นามสกุล',
-                  labelStyle: TextStyle(fontSize: 12),
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(
+                  labelText: "นามสกุล",
+                  labelStyle: TextStyle(fontSize: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 14,
+                  ),
                 ),
+                onChanged: (value) {},
               ),
             ),
+            const SizedBox(height: 10),
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
+              width: MediaQuery.of(context).size.width * 1,
               child: TextField(
                 controller: widget.data.studentIdController,
-                decoration: const InputDecoration(
-                  labelText: 'รหัสนักศึกษา',
-                  labelStyle: TextStyle(fontSize: 12),
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(
+                  labelText: "รหัสนักศึกษา",
+                  labelStyle: TextStyle(fontSize: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 14,
+                  ),
                 ),
+                onChanged: (value) {},
               ),
             ),
           ],

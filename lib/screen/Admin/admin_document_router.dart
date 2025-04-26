@@ -3,8 +3,8 @@ import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
-import 'package:project/screen/Student/academic_performance.dart';
-import 'package:project/screen/Student/request_group.dart';
+import 'package:project/screen/Student/AcademicPerformance/academic_performance.dart';
+import 'package:project/screen/Student/RequestGroup/request_group.dart';
 
 class AdminDocumentRouter extends StatelessWidget {
   AdminDocumentRouter({super.key});

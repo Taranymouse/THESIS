@@ -6,8 +6,8 @@ import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
-import 'package:project/screen/Student/academic_performance.dart';
-import 'package:project/screen/Student/request_group.dart';
+import 'package:project/screen/Student/AcademicPerformance/academic_performance.dart';
+import 'package:project/screen/Student/RequestGroup/request_group.dart';
 import 'package:project/screen/home.dart';
 
 class DocumentRouter extends StatefulWidget {

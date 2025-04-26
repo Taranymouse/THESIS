@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:project/ColorPlate/color.dart';
 import 'package:project/screen/Admin/admin_document_router.dart';
+import 'package:project/screen/Admin/RequestGroup/admin_student_allocate.dart';
 
 import 'package:project/screen/Loading/loading_screen.dart';
-import 'package:project/screen/ManageSubject/fetchallsubject.dart';
+import 'package:project/screen/Admin/ManageSubject/fetchallsubject.dart';
 
 class AdminMenu extends StatelessWidget {
   const AdminMenu({super.key});
@@ -37,17 +38,17 @@ class AdminMenu extends StatelessWidget {
                 _buildButton(
                   context,
                   icon: FaIcon(
-                    FontAwesomeIcons.file,
-                    color: Colors.blueAccent,
+                    FontAwesomeIcons.groupArrowsRotate,
+                    color: Colors.deepPurple,
                     size: 30,
                   ),
-                  label: "จัดการเอกสาร",
-                  color: Colors.blueAccent,
+                  label: "จัดสรรนักศึกษา",
+                  color: Colors.deepPurple,
                   onPressed: () async {
                     await LoadingScreen.showWithNavigation(context, () async {
                       // จำลองการโหลดข้อมูล
                       await Future.delayed(const Duration(seconds: 2));
-                    }, AdminDocumentRouter());
+                    }, AdminStudentAllocate());
                   },
                 ),
 
@@ -67,6 +68,23 @@ class AdminMenu extends StatelessWidget {
                     }, AllSubjectsPage());
                   },
                 ),
+
+                // _buildButton(
+                //   context,
+                //   icon: FaIcon(
+                //     FontAwesomeIcons.groupArrowsRotate,
+                //     color: Colors.deepPurple,
+                //     size: 30,
+                //   ),
+                //   label: "จัดสรรนักศึกษา",
+                //   color: Colors.deepPurple,
+                //   onPressed: () async {
+                //     await LoadingScreen.showWithNavigation(context, () async {
+                //       // จำลองการโหลดข้อมูล
+                //       await Future.delayed(const Duration(seconds: 2));
+                //     }, AdminStudentAllocate());
+                //   },
+                // ),
               ],
             ),
           ),

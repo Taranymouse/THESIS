@@ -1,99 +1,21 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/student_performance.dart';
-import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
-import 'package:project/screen/Form/Form_Options/File/fileupload.dart';
-import 'package:project/screen/Student/document_router.dart';
 
-class RequestGroup extends StatefulWidget {
+class AdminGroupSubjectTable extends StatefulWidget {
   final List<int> studentIds;
 
-  const RequestGroup({super.key, required this.studentIds});
+  const AdminGroupSubjectTable({super.key, required this.studentIds});
 
   @override
-  State<RequestGroup> createState() => _RequestGroupState();
+  State<AdminGroupSubjectTable> createState() => _AdminGroupSubjectTableleState();
 }
 
-class _RequestGroupState extends State<RequestGroup> {
-  late List<int> studentIds;
-  PlatformFile? selectedFile;
-
-  List<String> availableSemesters = [];
-  List<String> availableYears = [];
-
-  @override
-  void initState() {
-    super.initState();
-    studentIds = widget.studentIds;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "แบบคำร้องขอเข้ารับการจัดสรรกลุ่มสำหรับการจัดทำโครงงานปริญญานิพนธ์",
-        ),
-        centerTitle: true,
-        leading: BackButtonWidget(targetPage: DocumentRouter()),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(15),
-          child: Column(
-            children: [
-              GroupSubjectTable(studentIds: studentIds),
-              const SizedBox(height: 10),
-              const SizedBox(height: 10),
-              const Text(
-                "แนบไฟล์เอกสาร",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              FileUploadWidget(
-                initialFile: selectedFile,
-                onFilePicked: (file) {
-                  setState(() {
-                    selectedFile = file;
-                  });
-                },
-              ),
-
-              Divider(
-                color: Colors.grey,
-                thickness: 1,
-                height: 20,
-                indent: 20,
-                endIndent: 20,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "* กรณีนักศึกษามีอาจารย์ที่ปรึกษาโครงงานแล้วเท่านั้น",
-                style: TextStyle(color: Colors.red, fontSize: 10),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class GroupSubjectTable extends StatefulWidget {
-  final List<int> studentIds;
-
-  const GroupSubjectTable({super.key, required this.studentIds});
-
-  @override
-  State<GroupSubjectTable> createState() => _GroupSubjectTableState();
-}
-
-class _GroupSubjectTableState extends State<GroupSubjectTable> {
+class _AdminGroupSubjectTableleState extends State<AdminGroupSubjectTable> {
   late Future<void> _loadingFuture;
   List<StudentGradeGroup> studentGrades = [];
 

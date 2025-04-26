@@ -8,7 +8,7 @@ import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart';
-import 'package:project/screen/ManageSubject/editsubject.dart';
+import 'package:project/screen/Admin/ManageSubject/editsubject.dart';
 
 class AllSubjectsPage extends StatefulWidget {
   @override

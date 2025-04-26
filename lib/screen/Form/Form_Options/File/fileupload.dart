@@ -5,32 +5,31 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FileUploadWidget extends StatefulWidget {
-  final PlatformFile? initialFile; // ✅ เพิ่มตัวรับไฟล์เดิม
-  final void Function(PlatformFile? file)? onFilePicked;
+  final List<PlatformFile>? initialFiles;
+  final void Function(List<PlatformFile>)? onFilesPicked;
 
-  const FileUploadWidget({Key? key, this.onFilePicked, this.initialFile})
-    : super(key: key);
+  const FileUploadWidget({Key? key, this.onFilesPicked, this.initialFiles})
+      : super(key: key);
 
   @override
   State<FileUploadWidget> createState() => _FileUploadWidgetState();
 }
 
 class _FileUploadWidgetState extends State<FileUploadWidget> {
-  PlatformFile? pickedFile;
+  List<PlatformFile> pickedFiles = [];
 
   @override
   void initState() {
     super.initState();
-    pickedFile = widget.initialFile; // ✅ กำหนดไฟล์เริ่มต้น
+    pickedFiles = widget.initialFiles ?? [];
   }
 
   @override
   void didUpdateWidget(covariant FileUploadWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialFile != oldWidget.initialFile &&
-        widget.initialFile != pickedFile) {
+    if (widget.initialFiles != oldWidget.initialFiles) {
       setState(() {
-        pickedFile = widget.initialFile;
+        pickedFiles = widget.initialFiles ?? [];
       });
     }
   }
@@ -38,76 +37,83 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
   Future<void> pickFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
       );
 
       if (result != null && result.files.isNotEmpty) {
         setState(() {
-          pickedFile = result.files.first;
+          pickedFiles.addAll(result.files);
         });
-        widget.onFilePicked?.call(pickedFile);
+        widget.onFilesPicked?.call(pickedFiles);
       }
     } catch (e) {
       print('Error picking file: $e');
     }
   }
 
-  void removeFile() {
+  void removeFile(int index) {
     setState(() {
-      pickedFile = null;
+      pickedFiles.removeAt(index);
     });
-    widget.onFilePicked?.call(null);
+    widget.onFilesPicked?.call(pickedFiles);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          ElevatedButton.icon(
-            onPressed: pickFile,
-            icon: const Icon(Icons.upload_file),
-            label: const Text('เลือกไฟล์'),
-            style: ElevatedButton.styleFrom(
-              textStyle: GoogleFonts.prompt(
-                fontSize: 12,
-              ), // กำหนด style ข้อความ
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ElevatedButton.icon(
+          onPressed: pickFile,
+          icon: const Icon(Icons.upload_file),
+          label: const Text('เลือกไฟล์'),
+          style: ElevatedButton.styleFrom(
+            textStyle: GoogleFonts.prompt(fontSize: 12),
           ),
-          const SizedBox(height: 10),
-          if (pickedFile != null) ...[
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('ชื่อไฟล์: ${pickedFile!.name}'),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: removeFile,
-                  tooltip: 'ลบไฟล์ที่เลือก',
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (pickedFile!.extension != null &&
-                pickedFile!.extension!.toLowerCase() != 'pdf' &&
-                pickedFile!.path != null)
-              Image.file(
-                File(pickedFile!.path!),
-                width: 200,
-                height: 200,
-                fit: BoxFit.cover,
-              )
-            else
-              const Text(
-                'ไฟล์ PDF ไม่สามารถแสดงตัวอย่างได้',
-                style: TextStyle(fontStyle: FontStyle.italic),
-              ),
-          ],
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        if (pickedFiles.isNotEmpty)
+          Column(
+            children: pickedFiles.asMap().entries.map((entry) {
+              final index = entry.key;
+              final file = entry.value;
+              return Column(
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Expanded(child: Text('• ${file.name}', overflow: TextOverflow.ellipsis)),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => removeFile(index),
+                      ),
+                    ],
+                  ),
+                  if (file.extension != null &&
+                      file.extension!.toLowerCase() != 'pdf' &&
+                      file.path != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Image.file(
+                        File(file.path!),
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  else
+                    const Text(
+                      'ไฟล์ PDF ไม่สามารถแสดงตัวอย่างได้',
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                  const Divider(),
+                ],
+              );
+            }).toList(),
+          ),
+      ],
     );
   }
 }
