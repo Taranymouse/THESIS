@@ -74,24 +74,70 @@ class _AdminStudentAllocateState extends State<AdminStudentAllocate> {
                             ) ??
                             0;
 
+                        final int groupId =
+                            int.tryParse(
+                              student_group['id_group_project'].toString(),
+                            ) ??
+                            0;
+
+                        final int id_member =
+                            int.tryParse(
+                              student_group['id_member'].toString(),
+                            ) ??
+                            0;
+
                         if (studentId != 0) {
                           // ถ้าแปลงได้จริง ๆ (ไม่ใช่ 0)
                           await sessionService.saveUpdatedStudentIds(
                             [studentId], // ส่งเป็น List<int>
                           );
+
+                          if (groupId != 0) {
+                            await sessionService.setProjectGroupId(
+                              groupId, // ส่งเป็น int
+                            );
+                            print(
+                              "บันทึก id_group_project ของกลุ่มนี้ สำเร็จ : $groupId",
+                            );
+                          } else {
+                            // ถ้าแปลงไม่ได้ (groupId = 0) ให้แจ้งเตือน
+                            print(
+                              "บันทึก id_group_project ของกลุ่มนี้ ไม่สำเร็จ",
+                            );
+                          }
+
+                          if (id_member != 0) {
+                            await sessionService.setIdmember(id_member);
+                            print(
+                              "บันทึก id_member ของกลุ่มนี้ สำเร็จ : $id_member",
+                            );
+                          } else {
+                            print("บันทึก id_member ของกลุ่มนี้ ไม่สำเร็จ");
+                          }
+
                           print(
                             "บันทึก id_student ของกลุ่มนี้ สำเร็จ : $studentId",
                           );
-                          final test =
+
+                          final test_id_student =
                               await sessionService.getUpdatedStudentIds();
-                          print("test: $test");
+                          print("test id_student : $test_id_student");
+                          final test_id_group_project =
+                              await sessionService.getProjectGroupId();
+                          print(
+                            "test id_group_project : $test_id_group_project",
+                          );
+                          final test_id_member =
+                              await sessionService.getIdmember();
+                          print("test id_member : $test_id_member");
                           // แล้วค่อยเปลี่ยนหน้า
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (context) =>
-                                      AdminRequestGroup(studentIds: test),
+                                  (context) => AdminRequestGroup(
+                                    studentIds: test_id_student,
+                                  ),
                             ),
                           );
                         } else {

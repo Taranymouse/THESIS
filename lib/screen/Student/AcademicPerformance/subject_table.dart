@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -6,6 +7,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/grade_model.dart';
 import 'package:project/modles/subject_model.dart';
+import 'package:project/screen/Form/Form_Options/File/fileupload.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
 import 'package:project/screen/Student/AcademicPerformance/academic_performance.dart';
 
@@ -43,6 +45,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
   List<AcademicTerm> terms = [];
   bool isLoading = true;
   bool isSubmitEnabled = false;
+  List<PlatformFile> selectedFiles = [];
 
   @override
   void initState() {
@@ -564,6 +567,20 @@ class _SubjectsTableState extends State<SubjectsTable> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "* กรุณา Upload เอกสารผลการศึกษา (transcript)",
+              style: TextStyle(fontSize: 12, color: Colors.red[600]),
+            ),
+            const SizedBox(height: 10),
+            FileUploadWidget(
+              initialFiles: selectedFiles,
+              onFilesPicked: (files) {
+                setState(() {
+                  selectedFiles = files;
+                });
+              },
             ),
           ],
         ),

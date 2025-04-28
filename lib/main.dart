@@ -16,11 +16,12 @@ import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Admin/admin_check_performance.dart';
 import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Admin/ManageSubject/createsubject.dart';
+import 'package:project/screen/Coordinator/coordinator_home.dart';
 import 'package:project/screen/Profeser/profhome.dart';
 import 'package:project/screen/SignIn/create_student.dart';
 import 'package:project/screen/SignIn/login.dart';
 import 'package:project/screen/SignIn/set_password_screen.dart';
-import 'package:project/screen/home.dart';
+import 'package:project/screen/Student/home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,6 +69,12 @@ class MyApp extends StatelessWidget {
         case '1':
           initialRoute = '/home';
           break;
+        case '2':
+          initialRoute = '/prof-home';
+          break;
+        case '3':
+          initialRoute = '/coordinator-home';
+          break;
         case '4':
           initialRoute = '/admin-home';
           break;
@@ -102,6 +109,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => Homepage(),
         '/admin-home': (context) => AdminHomepage(),
         '/prof-home': (context) => ProfHomepage(),
+        '/coordinator-home': (context) => CoordinatorHome(),
         '/set-password': (context) => SetPasswordScreen(),
         '/create-student': (context) => CreateStudentScreen(),
         '/createsubject': (context) => Createsubject(),

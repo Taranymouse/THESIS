@@ -4,7 +4,6 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/bloc/Login/login_bloc.dart';
 import 'package:project/modles/session_service.dart';
-import 'package:project/screen/SignIn/set_password_screen.dart';
 
 class Login extends StatelessWidget {
   final _emailController = TextEditingController();
@@ -26,17 +25,24 @@ class Login extends StatelessWidget {
             await SessionService().saveUserRole(state.role);
             print("บันทึก Role สำเร็จ : ${state.role}");
 
+            await SessionService().saveUserRole(state.role).catchError((e) {
+              print("Error saving user role: $e");
+            });
+
             context.read<BottomNavBloc>().add(ChangePage(index: 1));
             // ตรวจสอบ role และไปยังหน้าแตกต่างกันตาม role
             if (state.role == "1") {
               Navigator.pushReplacementNamed(context, '/home');
             } else if (state.role == "2") {
               Navigator.pushReplacementNamed(context, '/prof-home');
+            } else if (state.role == "3") {
+              Navigator.pushReplacementNamed(context, '/coordinator-home');
             } else if (state.role == "4") {
               Navigator.pushReplacementNamed(context, '/admin-home');
             } else {
               // ในกรณีที่ role ไม่ตรงกับที่กำหนด
               print("Role not recognized: $state.role");
+              Navigator.pushReplacementNamed(context, '/login');
             }
           } else if (state is RequireSetPasswordState) {
             Navigator.pushReplacementNamed(

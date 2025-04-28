@@ -12,10 +12,10 @@ class GroupSubjectTable extends StatefulWidget {
   const GroupSubjectTable({super.key, required this.studentIds});
 
   @override
-  State<GroupSubjectTable> createState() => _GroupSubjectTableState();
+  State<GroupSubjectTable> createState() => __GroupSubjectTableState();
 }
 
-class _GroupSubjectTableState extends State<GroupSubjectTable> {
+class __GroupSubjectTableState extends State<GroupSubjectTable> {
   late Future<void> _loadingFuture;
   List<StudentGradeGroup> studentGrades = [];
 
@@ -38,6 +38,9 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
       body: jsonEncode(widget.studentIds),
     );
 
+    print('Head Response: ${utf8.decode(headResponse.bodyBytes)}');
+    print('Subject Response: ${utf8.decode(subjectResponse.bodyBytes)}');
+
     if (headResponse.statusCode == 200 && subjectResponse.statusCode == 200) {
       final headJson = jsonDecode(utf8.decode(headResponse.bodyBytes)) as List;
       final subjectJson =
@@ -49,6 +52,14 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
             final label = subjectEntry['label'];
             final overallGrade =
                 double.tryParse(subjectEntry['overall_grade'] ?? "0.0") ?? 0.0;
+
+            // หาข้อมูลจาก headResponse
+            final headEntry = headJson.firstWhere(
+              (e) => e['id_student'] == idStudent,
+              orElse: () => null,
+            );
+            final headInfo = headEntry != null ? headEntry['head_info'] : null;
+
             final subjects =
                 (subjectEntry['head_info'] as List).map((s) {
                   return SubjectGrade(
@@ -59,18 +70,13 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
                   );
                 }).toList();
 
-            final headData =
-                headJson.firstWhere(
-                  (e) => e['id_student'] == idStudent,
-                )['head_info'];
-
             return StudentGradeGroup(
               idStudent: idStudent,
-              codeStudent: headData['code_student'],
-              firstName: headData['first_name'],
-              lastName: headData['last_name'],
-              termName: headData['term_name'],
-              year: headData['year'],
+              codeStudent: headInfo?['code_student'] ?? '',
+              firstName: headInfo?['first_name'] ?? '',
+              lastName: headInfo?['last_name'] ?? '',
+              termName: headInfo?['term_name'] ?? '',
+              year: headInfo?['year'] ?? '',
               subjectGrades: subjects,
               label: label,
               overallGrade: overallGrade,
@@ -156,18 +162,32 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
                           ),
                         ),
                       ),
-                      Text(
-                        'คะแนนรวม: ${totalScore.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'คะแนนรวม: ${totalScore.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'เกรดเฉลี่ย: ${student.overallGrade.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  subtitle: Text(
-                    ' ภาคเรียน ${student.termName} ปีการศึกษา ${student.year}',
-                    style: TextStyle(color: Colors.grey[700]),
+                  subtitle: Center(
+                    child: Text(
+                      ' ภาคเรียน ${student.termName} ปีการศึกษา ${student.year}',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
                   ),
                   children: [
                     DataTable(
@@ -226,7 +246,11 @@ class _GroupSubjectTableState extends State<GroupSubjectTable> {
                             );
                           }).toList(),
                     ),
-                    const SizedBox(height: 12),
+                    Text(
+                      'เกรดเฉลี่ย (GPA) : ${student.overallGrade.toStringAsFixed(2)}',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 10),
                   ],
                 ),
               );

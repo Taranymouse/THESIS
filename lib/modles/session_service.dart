@@ -55,6 +55,18 @@ class SessionService {
     return prefs.getInt('id_group_project');
   }
 
+    // ฟังก์ชันเก็บข้อมูลid_member
+  Future<void> setIdmember(int id_member) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('id_member', id_member);
+  }
+
+  // ฟังก์ชันดึงข้อมูลid_member
+  Future<int?> getIdmember() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id_member');
+  }
+
   // ฟังก์ชันเก็บข้อมูลอีเมล
   Future<void> saveEmailSession(String email) async {
     await _storage.write(key: 'userEmail', value: email);

@@ -53,8 +53,6 @@ class _AdminHomepageContentState extends State<AdminHomepageContent> {
   final SessionService _sessionService = SessionService();
   String? displayName;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -110,7 +108,8 @@ class _AdminHomepageContentState extends State<AdminHomepageContent> {
             "ยินดีต้อนรับ: ${displayName}",
             style: Theme.of(context).textTheme.bodyLarge,
           ),
-          SizedBox(height: 20),
+          const Text("ตำแหน่ง : แอดมิน", style: TextStyle(fontSize: 14)),
+          const SizedBox(height: 10),
           AnnouncementCarousel(),
           SizedBox(height: 20),
           AdminMenu(),

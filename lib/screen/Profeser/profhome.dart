@@ -53,8 +53,6 @@ class _ProfHomepageContentState extends State<ProfHomepageContent> {
   final SessionService _sessionService = SessionService();
   String? displayName;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -110,7 +108,8 @@ class _ProfHomepageContentState extends State<ProfHomepageContent> {
             "ยินดีต้อนรับ: ${displayName}",
             style: Theme.of(context).textTheme.bodyLarge,
           ),
-          SizedBox(height: 20),
+          const Text("ตำแหน่ง : อาจารย์", style: TextStyle(fontSize: 14)),
+          const SizedBox(height: 10),
           AnnouncementCarousel(),
           SizedBox(height: 20),
           ProfMenu(),

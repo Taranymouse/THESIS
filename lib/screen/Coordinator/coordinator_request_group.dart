@@ -8,16 +8,17 @@ import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Admin/RequestGroup/admin_group_subject_table.dart';
 
-class AdminRequestGroup extends StatefulWidget {
+class CoordinatorRequestGroup extends StatefulWidget {
   final List<int> studentIds;
 
-  const AdminRequestGroup({super.key, required this.studentIds});
+  const CoordinatorRequestGroup({super.key, required this.studentIds});
 
   @override
-  State<AdminRequestGroup> createState() => _AdminRequestGroupState();
+  State<CoordinatorRequestGroup> createState() =>
+      _CoordinatorRequestGroupState();
 }
 
-class _AdminRequestGroupState extends State<AdminRequestGroup> {
+class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
   late List<int> studentIds;
   List<PlatformFile> selectedFiles = [];
 
@@ -215,7 +216,7 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
               if (priorities.isEmpty)
                 const Text("นักศึกษาเลือกอาจารย์ที่ปรึกษาแล้ว"),
               const SizedBox(height: 20),
-              const Text("ผลการพิจารณาของผู้ประสานงานรายวิชา"),
+              const Text("ผลการพิจารณาของผู้ประสานงาน"),
               const SizedBox(height: 10),
 
               DropdownButtonFormField<int>(
@@ -223,7 +224,7 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  labelText: 'เลือกกลุ่มโครงงาน',
+                  labelText: 'เลือกอาจารย์ที่ปรึกษา',
                 ),
                 value: null,
                 items:
