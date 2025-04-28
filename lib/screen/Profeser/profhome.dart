@@ -52,11 +52,19 @@ class ProfHomepageContent extends StatefulWidget {
 class _ProfHomepageContentState extends State<ProfHomepageContent> {
   final SessionService _sessionService = SessionService();
   String? displayName;
+  String? email;
+  int? id_user;
 
   @override
   void initState() {
     super.initState();
-    _loadDisplayName();
+    initialize();
+  }
+
+  Future<void> initialize() async {
+    await _loadDisplayName();
+    await _onCheckUser();
+    await onCheckProfessor();
   }
 
   Future<void> _loadDisplayName() async {
@@ -68,15 +76,16 @@ class _ProfHomepageContentState extends State<ProfHomepageContent> {
       });
     } else {
       // ถ้าไม่มีใน SessionService ให้โหลดจาก API
-      _onCheckUser();
+      _onDisplayNameAPI();
     }
   }
 
-  Future<void> _onCheckUser() async {
+  Future<void> _onDisplayNameAPI() async {
     String? token = await _sessionService.getAuthToken();
+    print("Token : $token");
     if (token != null) {
       final response = await http.get(
-        Uri.parse('$baseUrl/user'),
+        Uri.parse('$baseUrl/api/auth/user'),
         headers: {"Authorization": "$token"},
       );
 
@@ -86,11 +95,87 @@ class _ProfHomepageContentState extends State<ProfHomepageContent> {
         setState(() {
           displayName = fetchedDisplayName;
         });
-        // บันทึก displayName ลงใน SessionService
         await _sessionService.saveDisplayName(fetchedDisplayName);
       } else {
         print("❌ Failed to fetch user data: ${response.body}");
       }
+    }
+  }
+
+  Future<void> _onCheckUser() async {
+    String? token = await _sessionService.getAuthToken();
+    String? email = await _sessionService.getUserSession();
+    print("Token : $token");
+    if (token != null) {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/auth/user'),
+        headers: {"Authorization": "$token"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        String fetchedEmail = data["email"];
+        if (fetchedEmail == email) {
+          print("!!##  Email is $fetchedEmail");
+          print("!!## id_user : ${data['id_user']}");
+          await _sessionService.setIdUser(data['id_user']);
+          final test_id_user = await _sessionService.getIdUser();
+          print("TEST id_user : $test_id_user");
+          setState(() {
+            email = fetchedEmail;
+            id_user = data['id_user'];
+          });
+        } else {
+          print("Email is not in use.");
+        }
+      } else {
+        print("❌ Failed to fetch user data: ${response.body}");
+      }
+    }
+  }
+
+  Future<void> onCheckProfessor() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/groups/professors'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        final getIdUser = await _sessionService.getIdUser();
+        print("!!## GET id_user : $getIdUser");
+
+        // สร้าง List ของอาจารย์ขึ้นมา
+        final List<Map<String, dynamic>> professorList =
+            List<Map<String, dynamic>>.from(data);
+
+        // หาว่ามีอาจารย์คนไหน id_user ตรงกับ session ไหม
+        final matchedProfessor = professorList.firstWhere(
+          (prof) => prof['id_user'] == getIdUser,
+          orElse: () => {},
+        );
+
+        // ถ้ามีเจอ (คือ matchedProfessor ไม่ใช่อันว่าง)
+        if (matchedProfessor.isNotEmpty) {
+          final int idMember = matchedProfessor['id_member'];
+          final int idGroup = matchedProfessor['id_group'];
+          await _sessionService.setIdmember(idMember);
+          await _sessionService.setProjectGroupId(idGroup);
+          print('พบอาจารย์แล้ว => id_member: $idMember , id_group $idGroup');
+          final test_id_member = await _sessionService.getIdmember();
+          final test_id_group_project =
+              await _sessionService.getProjectGroupId();
+          print(
+            "TEST => id_member : $test_id_member , id_group_project : $test_id_group_project",
+          );
+        } else {
+          print('ไม่พบอาจารย์ที่ id_user ตรงกับ session');
+        }
+      } else {
+        print('Failed to fetch professors: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in onCheckProfessor: $e');
     }
   }
 
@@ -105,7 +190,9 @@ class _ProfHomepageContentState extends State<ProfHomepageContent> {
         children: [
           SizedBox(height: 20),
           Text(
-            "ยินดีต้อนรับ: ${displayName}",
+            displayName != null
+                ? "ยินดีต้อนรับ: $displayName"
+                : "กำลังโหลดข้อมูลผู้ใช้...",
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const Text("ตำแหน่ง : อาจารย์", style: TextStyle(fontSize: 14)),

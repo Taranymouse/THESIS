@@ -23,35 +23,21 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
   List<PlatformFile> selectedFiles = [];
 
   List<Map<String, dynamic>> groupProjects = []; // สำหรับ groups/members
-  List<String?> selectedGroups = []; // สำหรับเลือกกลุ่ม
 
   List<Map<String, dynamic>> priorities = [];
   final SessionService sessionService = SessionService();
   List<Professor> professorList = [];
 
-  String advisorName = ''; // <-- เพิ่มตัวแปรตรงนี้
+  String advisorName = '';
+
+  int? selectedProfessorId;
 
   @override
   void initState() {
     super.initState();
     studentIds = widget.studentIds;
-    fetchGroupProject();
     fetchPriorities();
-    fetchProfessorsAndAdvisor(); // เรียก function ใหม่
-  }
-
-  Future<void> fetchGroupProject() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/groups/members'));
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      setState(() {
-        groupProjects = List<Map<String, dynamic>>.from(data);
-        groupProjects.sort((a, b) => a['id_group'].compareTo(b['id_group']));
-        selectedGroups = List.filled(5, null);
-      });
-    } else {
-      print('Failed to fetch group project data: ${response.statusCode}');
-    }
+    fetchProfessorsAndAdvisor();
   }
 
   Future<void> fetchPriorities() async {
@@ -71,6 +57,9 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
           });
         } else {
           print('Failed to fetch priorities: ${response.statusCode}');
+          print(
+            'นักศึกษาไม่ได้เลือกอันดับกลุ่มมา แสดงว่าเลือกอาจารย์ที่ปรึกษามา',
+          );
         }
       } else {
         print("!!### ไม่มี id_group_project ที่เก็บมาเลย");
@@ -216,6 +205,13 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
               if (priorities.isEmpty)
                 const Text("นักศึกษาเลือกอาจารย์ที่ปรึกษาแล้ว"),
               const SizedBox(height: 20),
+              const Divider(
+                color: Colors.grey,
+                thickness: 1,
+                height: 20,
+                indent: 20,
+                endIndent: 20,
+              ),
               const Text("ผลการพิจารณาของผู้ประสานงาน"),
               const SizedBox(height: 10),
 
@@ -228,30 +224,31 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
                 ),
                 value: null,
                 items:
-                    groupProjects
-                        .where((group) => group['id_group'] != 1)
-                        .map<DropdownMenuItem<int>>((group) {
-                          return DropdownMenuItem<int>(
-                            value: group['id_group'],
-                            child: Text(
-                              group['group_name'] ?? '',
-                              style: GoogleFonts.prompt(),
-                            ),
-                          );
-                        })
-                        .toList(),
+                    professorList.map((professor) {
+                      return DropdownMenuItem<int>(
+                        value: professor.idMember,
+                        child: Text(
+                          professor.fullName,
+                          style: GoogleFonts.prompt(),
+                        ),
+                      );
+                    }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    if (value != null) {
-                      selectedGroups[0] = value.toString();
-                    }
+                    selectedProfessorId = value; // เก็บ id ที่เลือก
                   });
                 },
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  print('กลุ่มที่เลือก: $selectedGroups');
+                  if (selectedProfessorId != null) {
+                    print('อาจารย์ที่เลือก id: $selectedProfessorId');
+                  } else {
+                    print('ยังไม่ได้เลือกอาจารย์');
+                  }
+                  // update coordinator_confirmed เป็น 1 ด้วยใน group_project
+                  // id_status เป็น 3 (มีอาจารย์รับกลุ่มแล้ว)
                 },
                 child: Text("ยืนยัน", style: GoogleFonts.prompt()),
               ),

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:project/ColorPlate/color.dart';
-
 import 'package:project/screen/Loading/loading_screen.dart';
-
-import 'package:project/screen/Profeser/proposalForm.dart';
+import 'package:project/screen/Profeser/prof_allocate.dart';
 
 class ProfMenu extends StatelessWidget {
   const ProfMenu({super.key});
@@ -41,7 +39,7 @@ class ProfMenu extends StatelessWidget {
                     color: Colors.blueAccent,
                     size: 30,
                   ),
-                  label: "แบบคำร้อง",
+                  label: "แบบคำร้องขอจัดสรรกลุ่ม",
                   color: Colors.blueAccent,
                   onPressed: () async {
                     await LoadingScreen.showWithNavigation(
@@ -52,43 +50,43 @@ class ProfMenu extends StatelessWidget {
                           const Duration(seconds: 2),
                         ); // เปลี่ยนระยะเวลาตามความเหมาะสม
                       },
-                      Proposalform(), // หน้าใหม่ที่จะไป
+                      ProfAllocate(), // หน้าใหม่ที่จะไป
                     );
                   },
                 ),
 
-                _buildButton(
-                  context,
-                  icon: FaIcon(
-                    FontAwesomeIcons.usersGear,
-                    color: Colors.redAccent,
-                    size: 20,
-                  ),
-                  label: "ติดต่อ",
-                  color: Colors.redAccent,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Group Managements Coming soon..."),
-                      ),
-                    );
-                  },
-                ),
-                _buildButton(
-                  context,
-                  icon: FaIcon(
-                    FontAwesomeIcons.userTie,
-                    color: Colors.deepPurple,
-                    size: 20,
-                  ),
-                  label: "ตาราง",
-                  color: Colors.redAccent,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Contact Coming soon...")),
-                    );
-                  },
-                ),
+                // _buildButton(
+                //   context,
+                //   icon: FaIcon(
+                //     FontAwesomeIcons.usersGear,
+                //     color: Colors.redAccent,
+                //     size: 20,
+                //   ),
+                //   label: "ติดต่อ",
+                //   color: Colors.redAccent,
+                //   onPressed: () {
+                //     ScaffoldMessenger.of(context).showSnackBar(
+                //       SnackBar(
+                //         content: Text("Group Managements Coming soon..."),
+                //       ),
+                //     );
+                //   },
+                // ),
+                // _buildButton(
+                //   context,
+                //   icon: FaIcon(
+                //     FontAwesomeIcons.userTie,
+                //     color: Colors.deepPurple,
+                //     size: 20,
+                //   ),
+                //   label: "ตาราง",
+                //   color: Colors.redAccent,
+                //   onPressed: () {
+                //     ScaffoldMessenger.of(context).showSnackBar(
+                //       SnackBar(content: Text("Contact Coming soon...")),
+                //     );
+                //   },
+                // ),
               ],
             ),
           ),

@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:project/ColorPlate/color.dart';
 import 'package:project/screen/Coordinator/coordinator_allocate.dart';
-
 import 'package:project/screen/Loading/loading_screen.dart';
 
-import 'package:project/screen/Profeser/proposalForm.dart';
 
 class CoorMenu extends StatelessWidget {
   const CoorMenu({super.key});

@@ -5,20 +5,21 @@ import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
-import 'package:project/screen/Coordinator/coordinator_home.dart';
-import 'package:project/screen/Coordinator/coordinator_request_group.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
+import 'package:project/screen/Profeser/prof_request_group.dart';
+import 'package:project/screen/Profeser/profhome.dart';
 
-class CoordinatorAllocate extends StatefulWidget {
-  const CoordinatorAllocate({super.key});
+class ProfAllocate extends StatefulWidget {
+  const ProfAllocate({super.key});
 
   @override
-  State<CoordinatorAllocate> createState() => _CoordinatorAllocateState();
+  State<ProfAllocate> createState() => _ProfAllocateState();
 }
 
-class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
+class _ProfAllocateState extends State<ProfAllocate> {
   final SessionService sessionService = SessionService();
   late int idGroup;
+  late int idMember;
   List<Map<String, dynamic>> matchedProjects = [];
   bool isLoading = true;
 
@@ -35,14 +36,21 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
 
   Future<void> onCheckIdGroupProject() async {
     final idGroupProject = await sessionService.getProjectGroupId();
+    final idMemberProf = await sessionService.getIdmember();
     print(
-      '!!## FROM CoordinatorAllocate ##!! \n TEST => id_group_project : $idGroupProject',
+      '!!## FROM ProfAllocate ##!! \n TEST => id_group_project : $idGroupProject , id_member : $idMemberProf',
     );
     final int checkIdGroup = idGroupProject ?? 0;
+    final int checkIdmember = idMemberProf ?? 0;
     if (checkIdGroup != 0) {
       idGroup = checkIdGroup;
     } else {
       print("ไม่มี id_group_project");
+    }
+    if (checkIdmember != 0) {
+      idMember = checkIdmember;
+    } else {
+      print("ไม่มี id_member");
     }
   }
 
@@ -60,12 +68,24 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
         matchedProjects =
             data
                 .where((project) {
-                  return project['assigned_group'] == idGroup;
+                  return project['assigned_group'] == idGroup &&
+                      project['id_member'] == idMember;
+                  //เพิ่มการเช็ค coordinator_confirmed != 0 เพื่อให้รู้ว่าผู้ประสานงานยืนยันมา ในภายหลัง
                 })
                 .cast<Map<String, dynamic>>()
                 .toList();
-
-        print("Matched Projects: $matchedProjects");
+        if (matchedProjects.isNotEmpty) {
+          final int idMemberFromMatched = matchedProjects[0]['id_member'] ?? 0;
+          await sessionService.setIdmemberInGroupProject(idMemberFromMatched);
+          print("Matched Projects: $matchedProjects");
+          final idMemberGroup =
+              await sessionService.getIdmemberInGroupProject();
+          print(
+            "!!## TEST GET id_member FROM Matched Projects => $idMemberGroup",
+          );
+        } else {
+          print("ไม่มีข้อมูลตามฟิลเตอร์ด้วย => assigned_group id_member");
+        }
       } else {
         print('Failed to fetch group projects: ${response.statusCode}');
       }
@@ -84,9 +104,7 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
       appBar: AppBar(
         title: const Text("จัดสรรนักศึกษาภายในกลุ่ม"),
         centerTitle: true,
-        leading: BackButtonWidget(
-          targetPage: CoordinatorHome(),
-        ), // เปลี่ยนตามหน้ากลับของคุณ
+        leading: BackButtonWidget(targetPage: ProfHomepage()),
       ),
       body:
           isLoading
@@ -158,7 +176,7 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (context) => CoordinatorRequestGroup(
+                                  (context) => ProfRequestGroup(
                                     studentIds: testIdStudent,
                                   ),
                             ),

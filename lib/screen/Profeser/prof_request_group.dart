@@ -8,49 +8,37 @@ import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Admin/RequestGroup/admin_group_subject_table.dart';
 
-class AdminRequestGroup extends StatefulWidget {
+class ProfRequestGroup extends StatefulWidget {
   final List<int> studentIds;
 
-  const AdminRequestGroup({super.key, required this.studentIds});
+  const ProfRequestGroup({super.key, required this.studentIds});
 
   @override
-  State<AdminRequestGroup> createState() => _AdminRequestGroupState();
+  State<ProfRequestGroup> createState() => _ProfRequestGroupState();
 }
 
-class _AdminRequestGroupState extends State<AdminRequestGroup> {
+class _ProfRequestGroupState extends State<ProfRequestGroup> {
   late List<int> studentIds;
   List<PlatformFile> selectedFiles = [];
 
   List<Map<String, dynamic>> groupProjects = []; // สำหรับ groups/members
-  List<String?> selectedGroups = []; // สำหรับเลือกกลุ่ม
 
   List<Map<String, dynamic>> priorities = [];
   final SessionService sessionService = SessionService();
   List<Professor> professorList = [];
 
-  String advisorName = ''; // <-- เพิ่มตัวแปรตรงนี้
+  String advisorName = '';
+
+  int? selectedProfessorId;
+
+  int? selectedAdvisorIdFromSession;
 
   @override
   void initState() {
     super.initState();
     studentIds = widget.studentIds;
-    fetchGroupProject();
     fetchPriorities();
-    fetchProfessorsAndAdvisor(); // เรียก function ใหม่
-  }
-
-  Future<void> fetchGroupProject() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/groups/members'));
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      setState(() {
-        groupProjects = List<Map<String, dynamic>>.from(data);
-        groupProjects.sort((a, b) => a['id_group'].compareTo(b['id_group']));
-        selectedGroups = List.filled(5, null);
-      });
-    } else {
-      print('Failed to fetch group project data: ${response.statusCode}');
-    }
+    fetchProfessorsAndAdvisor();
   }
 
   Future<void> fetchPriorities() async {
@@ -70,6 +58,9 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
           });
         } else {
           print('Failed to fetch priorities: ${response.statusCode}');
+          print(
+            'นักศึกษาไม่ได้เลือกอันดับกลุ่มมา แสดงว่าเลือกอาจารย์ที่ปรึกษามา',
+          );
         }
       } else {
         print("!!### ไม่มี id_group_project ที่เก็บมาเลย");
@@ -83,11 +74,18 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
     try {
       await fetchProfessors(); // โหลด professorList ให้เสร็จก่อน
 
-      final int? idMember = await sessionService.getIdmember();
-      print("!!## idMember : $idMember");
-      if (idMember != null) {
+      final int? idMemberGroup =
+          await sessionService.getIdmemberInGroupProject();
+      print("!!## idMemberGroup (จาก group project): $idMemberGroup");
+
+      if (idMemberGroup != null && idMemberGroup != 0) {
+        setState(() {
+          selectedProfessorId = idMemberGroup; // <<<<< เพิ่มบรรทัดนี้
+          selectedAdvisorIdFromSession = idMemberGroup;
+        });
+
         final Professor advisor = professorList.firstWhere(
-          (prof) => prof.idMember == idMember,
+          (prof) => prof.idMember == idMemberGroup,
           orElse: () => Professor(idMember: 0, fullName: ''),
         );
         if (advisor.fullName.isNotEmpty) {
@@ -95,6 +93,8 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
             advisorName = advisor.fullName;
           });
         }
+      } else {
+        print("ไม่ได้ id_member จาก session");
       }
     } catch (e) {
       print('Error fetching professors and advisor: $e');
@@ -215,7 +215,15 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
               if (priorities.isEmpty)
                 const Text("นักศึกษาเลือกอาจารย์ที่ปรึกษาแล้ว"),
               const SizedBox(height: 20),
-              const Text("ผลการพิจารณาของผู้ประสานงานรายวิชา"),
+
+              const Divider(
+                color: Colors.grey,
+                thickness: 1,
+                height: 20,
+                indent: 20,
+                endIndent: 20,
+              ),
+              const Text("ผลการพิจารณาของผู้ประสานงาน"),
               const SizedBox(height: 10),
 
               DropdownButtonFormField<int>(
@@ -223,36 +231,35 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  labelText: 'เลือกกลุ่มโครงงาน',
+                  labelText: 'เลือกอาจารย์ที่ปรึกษา',
                 ),
-                value: null,
+                value: selectedProfessorId,
                 items:
-                    groupProjects
-                        .where((group) => group['id_group'] != 1)
-                        .map<DropdownMenuItem<int>>((group) {
-                          return DropdownMenuItem<int>(
-                            value: group['id_group'],
-                            child: Text(
-                              group['group_name'] ?? '',
-                              style: GoogleFonts.prompt(),
-                            ),
-                          );
-                        })
-                        .toList(),
+                    professorList.map((professor) {
+                      return DropdownMenuItem<int>(
+                        value: professor.idMember,
+                        child: Text(
+                          professor.fullName,
+                          style: GoogleFonts.prompt(),
+                        ),
+                      );
+                    }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    if (value != null) {
-                      selectedGroups[0] = value.toString();
-                    }
+                    selectedProfessorId = value;
                   });
                 },
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  print('กลุ่มที่เลือก: $selectedGroups');
-                  // update assigned_group ด้วยใน group_project
-                  // id_status เป็น 2 (รออาจารย์ประสานงานยืนยัน)
+                  if (selectedProfessorId != null) {
+                    print('อาจารย์ที่เลือก id: $selectedProfessorId');
+                  } else {
+                    print('ยังไม่ได้เลือกอาจารย์');
+                  }
+                  // update member_approve เป็น 1 ด้วยใน group_project
+                  // id_status เป็น 4 (กลุ่มได้รับการยืนยันแล้ว)
                 },
                 child: Text("ยืนยัน", style: GoogleFonts.prompt()),
               ),
