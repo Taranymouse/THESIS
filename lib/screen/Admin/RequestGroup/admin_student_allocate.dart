@@ -62,89 +62,78 @@ class _AdminStudentAllocateState extends State<AdminStudentAllocate> {
                       title: Text(
                         student_group['members'] ?? "ไม่มีข้อมูลนักศึกษา",
                       ),
-                      subtitle: Text(
-                        student_group['name_doc'] ?? "เอกสารไม่ทราบชื่อ",
-                      ),
+                      // subtitle: Text(
+                      //   student_group['name_doc'] ?? "เอกสารไม่ทราบชื่อ",
+                      // ),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () async {
-                        // แปลง String -> int ก่อน
-                        final int studentId =
-                            int.tryParse(
-                              student_group['student_ids'].toString(),
-                            ) ??
-                            0;
+                        final String studentIdsStr =
+                            student_group['student_ids'] ?? "";
+                        final List<int> studentIds =
+                            studentIdsStr
+                                .split(',')
+                                .map((id) => int.tryParse(id.trim()))
+                                .where((id) => id != null)
+                                .cast<int>()
+                                .toList();
 
                         final int groupId =
                             int.tryParse(
                               student_group['id_group_project'].toString(),
                             ) ??
                             0;
+                        final String professorName =
+                            student_group['professor_name'] ??
+                            "ยังไม่มีอาจารย์";
 
-                        final int id_member =
-                            int.tryParse(
-                              student_group['id_member'].toString(),
-                            ) ??
-                            0;
-
-                        if (studentId != 0) {
-                          // ถ้าแปลงได้จริง ๆ (ไม่ใช่ 0)
+                        if (studentIds.isNotEmpty) {
                           await sessionService.saveUpdatedStudentIds(
-                            [studentId], // ส่งเป็น List<int>
+                            studentIds,
                           );
+                          await sessionService.setNameProfessor(professorName);
 
                           if (groupId != 0) {
-                            await sessionService.setProjectGroupId(
-                              groupId, // ส่งเป็น int
-                            );
+                            await sessionService.setProjectGroupId(groupId);
                             print(
-                              "บันทึก id_group_project ของกลุ่มนี้ สำเร็จ : $groupId",
+                              "บันทึก id_group_project ของกลุ่มนี้สำเร็จ : $groupId",
                             );
                           } else {
-                            // ถ้าแปลงไม่ได้ (groupId = 0) ให้แจ้งเตือน
                             print(
-                              "บันทึก id_group_project ของกลุ่มนี้ ไม่สำเร็จ",
+                              "บันทึก id_group_project ของกลุ่มนี้ไม่สำเร็จ",
                             );
-                          }
-
-                          if (id_member != 0) {
-                            await sessionService.setIdmember(id_member);
-                            print(
-                              "บันทึก id_member ของกลุ่มนี้ สำเร็จ : $id_member",
-                            );
-                          } else {
-                            print("บันทึก id_member ของกลุ่มนี้ ไม่สำเร็จ");
                           }
 
                           print(
-                            "บันทึก id_student ของกลุ่มนี้ สำเร็จ : $studentId",
+                            "บันทึก student_ids ของกลุ่มนี้สำเร็จ : $studentIds",
+                          );
+                          print(
+                            "บันทึก professor_name สำเร็จ : $professorName",
                           );
 
-                          final test_id_student =
+                          final testIdStudent =
                               await sessionService.getUpdatedStudentIds();
-                          print("test id_student : $test_id_student");
-                          final test_id_group_project =
+                          final testGroupId =
                               await sessionService.getProjectGroupId();
-                          print(
-                            "test id_group_project : $test_id_group_project",
-                          );
-                          final test_id_member =
-                              await sessionService.getIdmember();
-                          print("test id_member : $test_id_member");
-                          // แล้วค่อยเปลี่ยนหน้า
+                          final testProfessorName =
+                              await sessionService.getNameProfessor();
+
+                          print("test student_ids : $testIdStudent");
+                          print("test id_group_project : $testGroupId");
+                          print("test professor_name : $testProfessorName");
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder:
                                   (context) => AdminRequestGroup(
-                                    studentIds: test_id_student,
+                                    studentIds: testIdStudent,
                                   ),
                             ),
                           );
                         } else {
-                          // ถ้าแปลงไม่ได้ (studentId = 0) ให้แจ้งเตือน
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('ไม่สามารถบันทึก student id ได้'),
+                              content: Text('ไม่สามารถบันทึก student ids ได้'),
                             ),
                           );
                         }

@@ -99,8 +99,12 @@ class __GroupSubjectTableState extends State<GroupSubjectTable> {
         } else if (studentGrades.isEmpty) {
           return Center(
             child: Text(
-              '* กรุณาทำ แบบตรวจสอบคุณสมบัติในการมีสิทธิ์ขอจัดทำโครงงานปริญญานิพนธ์ (IT00G / CS00G) ก่อน',
-              style: GoogleFonts.prompt(fontSize: 14, color: Colors.red),
+              '* กรุณาทำ แบบตรวจสอบคุณสมบัติในการมีสิทธิ์ขอจัดทำโครงงานปริญญานิพนธ์ก่อน \n(IT00G / CS00G) ',
+              style: GoogleFonts.prompt(
+                fontSize: 18,
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
           );

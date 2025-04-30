@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -19,7 +20,6 @@ class CoordinatorRequestGroup extends StatefulWidget {
 }
 
 class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
-  late List<int> studentIds;
   List<PlatformFile> selectedFiles = [];
 
   List<Map<String, dynamic>> groupProjects = []; // สำหรับ groups/members
@@ -28,27 +28,37 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
   final SessionService sessionService = SessionService();
   List<Professor> professorList = [];
 
-  String advisorName = '';
+  String? advisorName;
 
   int? selectedProfessorId;
+  int? idGroupProject;
 
   @override
   void initState() {
     super.initState();
-    studentIds = widget.studentIds;
-    fetchPriorities();
-    fetchProfessorsAndAdvisor();
+    initialize();
+  }
+
+  Future<void> initialize() async {
+    await getProfessorName();
+    await fetchProfessors();
+    await fetchPriorities();
+  }
+
+  Future<void> getProfessorName() async {
+    advisorName = await sessionService.getNameProfessor();
+    print("TEST advisorName => $advisorName");
   }
 
   Future<void> fetchPriorities() async {
-    final int? idGroupProject = await sessionService.getProjectGroupId();
+    final int? idGroup = await sessionService.getProjectGroupId();
     print(
-      "### From admin_request_group ###\n id_group_project : $idGroupProject",
+      "### From coordinator_request_group ###\n id_group_project : $idGroup",
     );
     try {
-      if (idGroupProject != 0) {
+      if (idGroup != 0) {
         final response = await http.get(
-          Uri.parse('$baseUrl/api/check/$idGroupProject'),
+          Uri.parse('$baseUrl/api/check/$idGroup'),
         );
         if (response.statusCode == 200) {
           final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -69,28 +79,6 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
     }
   }
 
-  Future<void> fetchProfessorsAndAdvisor() async {
-    try {
-      await fetchProfessors(); // โหลด professorList ให้เสร็จก่อน
-
-      final int? idMember = await sessionService.getIdmember();
-      print("!!## idMember : $idMember");
-      if (idMember != null) {
-        final Professor advisor = professorList.firstWhere(
-          (prof) => prof.idMember == idMember,
-          orElse: () => Professor(idMember: 0, fullName: ''),
-        );
-        if (advisor.fullName.isNotEmpty) {
-          setState(() {
-            advisorName = advisor.fullName;
-          });
-        }
-      }
-    } catch (e) {
-      print('Error fetching professors and advisor: $e');
-    }
-  }
-
   Future<void> fetchProfessors() async {
     try {
       final response = await http.get(
@@ -106,6 +94,67 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
       }
     } catch (e) {
       print('Error fetching professors: $e');
+    }
+  }
+
+  Future<void> updateCoordinatorConfirmed() async {
+    final int? idGroup = await sessionService.getProjectGroupId();
+
+    if (idGroup != null && selectedProfessorId != null) {
+      try {
+        final response = await http.post(
+          Uri.parse('$baseUrl/api/check/coordinator-update-id-member'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'id_group_project': idGroup,
+            'id_member': selectedProfessorId,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          // อัปเดตสำเร็จ
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.success,
+            animType: AnimType.topSlide,
+            title: 'สำเร็จ',
+            desc: 'อัพเดทกลุ่มให้กับกลุ่มโปรเจคสำเร็จ',
+            btnOkOnPress: () {},
+          ).show();
+        } else {
+          // แสดงข้อผิดพลาด
+          print('อัปเดตไม่สำเร็จ: ${response.statusCode}');
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.error,
+            animType: AnimType.topSlide,
+            title: 'เกิดข้อผิดพลาด',
+            desc: 'ไม่สามารถอัพเดทข้อมูลกลุ่มโปรเจคได้',
+            btnOkOnPress: () {},
+          ).show();
+        }
+      } catch (e) {
+        print('เกิดข้อผิดพลาดขณะส่งข้อมูล: $e');
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.warning,
+          animType: AnimType.topSlide,
+          title: 'แจ้งเตือน',
+          desc: 'เกิดข้อผิดพลาด: $e',
+          btnOkOnPress: () {},
+        ).show();
+      }
+    } else {
+      print("id_group_project หรือ selectedProfessorId เป็น null");
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.warning,
+        animType: AnimType.topSlide,
+        title: 'แจ้งเตือน',
+        desc: 'กรุณาเลือกกลุ่มให้กับโปรเจคก่อนยืนยัน',
+        btnOkOnPress: () {},
+      ).show();
+      return;
     }
   }
 
@@ -128,7 +177,7 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
           padding: const EdgeInsets.all(15),
           child: Column(
             children: [
-              AdminGroupSubjectTable(studentIds: studentIds),
+              AdminGroupSubjectTable(studentIds: widget.studentIds),
               const SizedBox(height: 10),
               const Divider(
                 color: Colors.grey,
@@ -154,9 +203,7 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    advisorName.isNotEmpty
-                        ? advisorName
-                        : 'ไม่ได้เลือกอาจารย์ที่ปรึกษา',
+                    advisorName ?? 'กำลังโหลด...',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
@@ -203,7 +250,7 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
                           : [],
                 ),
               if (priorities.isEmpty)
-                const Text("นักศึกษาเลือกอาจารย์ที่ปรึกษาแล้ว"),
+                const Text("นักศึกษาไม่ได้เลือกอันดับกลุ่ม"),
               const SizedBox(height: 20),
               const Divider(
                 color: Colors.grey,
@@ -249,6 +296,19 @@ class _CoordinatorRequestGroupState extends State<CoordinatorRequestGroup> {
                   }
                   // update coordinator_confirmed เป็น 1 ด้วยใน group_project
                   // id_status เป็น 3 (มีอาจารย์รับกลุ่มแล้ว)
+                  AwesomeDialog(
+                    context: context,
+                    dialogType: DialogType.warning,
+                    animType: AnimType.topSlide,
+                    title: 'ยืนยัน',
+                    desc: 'ต้องการที่จะอัพเดทข้อมูลใช่ไหม ?',
+                    btnOkOnPress: () {
+                      updateCoordinatorConfirmed();
+                    },
+                    btnCancelOnPress: () {
+                      print("ไม่อัพเดท");
+                    },
+                  ).show();
                 },
                 child: Text("ยืนยัน", style: GoogleFonts.prompt()),
               ),

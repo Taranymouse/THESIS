@@ -43,7 +43,7 @@ class SessionService {
     return prefs.getInt('id_user');
   }
 
-    // ฟังก์ชันเก็บข้อมูลid_group_project
+  // ฟังก์ชันเก็บข้อมูลid_group_project
   Future<void> setProjectGroupId(int id_user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('id_group_project', id_user);
@@ -55,7 +55,7 @@ class SessionService {
     return prefs.getInt('id_group_project');
   }
 
-    // ฟังก์ชันเก็บข้อมูลid_member
+  // ฟังก์ชันเก็บข้อมูลid_member
   Future<void> setIdmember(int id_member) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('id_member', id_member);
@@ -67,7 +67,17 @@ class SessionService {
     return prefs.getInt('id_member');
   }
 
-    // ฟังก์ชันเก็บอาจารย์ที่นักศึกษาเลือกมา (id_member) จากกลุ่มโปรเจค
+  // ฟังก์ชันเก็บข้อมูลชื่ออาจารย์ที่ปรึกษาที่นศ เลือก
+  Future<void> setNameProfessor(String name) async {
+    await _storage.write(key: 'professor_name', value: name);
+  }
+
+  // ฟังก์ชันดึงข้อมูลชื่ออาจารย์ที่ปรึกษาที่นศ เลือก
+  Future<String?> getNameProfessor() async {
+    return await _storage.read(key: 'professor_name');
+  }
+
+  // ฟังก์ชันเก็บอาจารย์ที่นักศึกษาเลือกมา (id_member) จากกลุ่มโปรเจค
   Future<void> setIdmemberInGroupProject(int id_member) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('id_member', id_member);

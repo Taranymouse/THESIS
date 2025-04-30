@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -22,21 +23,30 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
   List<PlatformFile> selectedFiles = [];
 
   List<Map<String, dynamic>> groupProjects = []; // สำหรับ groups/members
-  List<String?> selectedGroups = []; // สำหรับเลือกกลุ่ม
+  int? selectedGroups; // สำหรับเลือกกลุ่ม
 
   List<Map<String, dynamic>> priorities = [];
   final SessionService sessionService = SessionService();
   List<Professor> professorList = [];
 
-  String advisorName = ''; // <-- เพิ่มตัวแปรตรงนี้
+  String? advisorName; // <-- เพิ่มตัวแปรตรงนี้
 
   @override
   void initState() {
     super.initState();
+    initialize();
+  }
+
+  Future<void> initialize() async {
     studentIds = widget.studentIds;
-    fetchGroupProject();
-    fetchPriorities();
-    fetchProfessorsAndAdvisor(); // เรียก function ใหม่
+
+    await getProfessorName();
+    await fetchGroupProject();
+    await fetchPriorities();
+  }
+
+  Future<void> getProfessorName() async {
+    advisorName = await sessionService.getNameProfessor();
   }
 
   Future<void> fetchGroupProject() async {
@@ -46,7 +56,7 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
       setState(() {
         groupProjects = List<Map<String, dynamic>>.from(data);
         groupProjects.sort((a, b) => a['id_group'].compareTo(b['id_group']));
-        selectedGroups = List.filled(5, null);
+        // selectedGroups = List.filled(5, null);
       });
     } else {
       print('Failed to fetch group project data: ${response.statusCode}');
@@ -79,43 +89,64 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
     }
   }
 
-  Future<void> fetchProfessorsAndAdvisor() async {
-    try {
-      await fetchProfessors(); // โหลด professorList ให้เสร็จก่อน
+  Future<void> updateAssignedGroup() async {
+    final int? idGroupProject = await sessionService.getProjectGroupId();
 
-      final int? idMember = await sessionService.getIdmember();
-      print("!!## idMember : $idMember");
-      if (idMember != null) {
-        final Professor advisor = professorList.firstWhere(
-          (prof) => prof.idMember == idMember,
-          orElse: () => Professor(idMember: 0, fullName: ''),
+    if (idGroupProject != null && selectedGroups != null) {
+      try {
+        final response = await http.post(
+          Uri.parse('$baseUrl/api/check/admin-update-assigned-group'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'id_group_project': idGroupProject,
+            'assigned_group': selectedGroups,
+          }),
         );
-        if (advisor.fullName.isNotEmpty) {
-          setState(() {
-            advisorName = advisor.fullName;
-          });
-        }
-      }
-    } catch (e) {
-      print('Error fetching professors and advisor: $e');
-    }
-  }
 
-  Future<void> fetchProfessors() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/groups/professors'),
-      );
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
-        setState(() {
-          professorList = data.map((item) => Professor.fromJson(item)).toList();
-        });
-      } else {
-        print('Failed to fetch professors: ${response.statusCode}');
+        if (response.statusCode == 200) {
+          // อัปเดตสำเร็จ
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.success,
+            animType: AnimType.topSlide,
+            title: 'สำเร็จ',
+            desc: 'อัพเดทกลุ่มให้กับกลุ่มโปรเจคสำเร็จ',
+            btnOkOnPress: () {},
+          ).show();
+        } else {
+          // แสดงข้อผิดพลาด
+          print('อัปเดตไม่สำเร็จ: ${response.statusCode}');
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.error,
+            animType: AnimType.topSlide,
+            title: 'เกิดข้อผิดพลาด',
+            desc: 'ไม่สามารถอัพเดทข้อมูลกลุ่มโปรเจคได้',
+            btnOkOnPress: () {},
+          ).show();
+        }
+      } catch (e) {
+        print('เกิดข้อผิดพลาดขณะส่งข้อมูล: $e');
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.warning,
+          animType: AnimType.topSlide,
+          title: 'แจ้งเตือน',
+          desc: 'เกิดข้อผิดพลาด: $e',
+          btnOkOnPress: () {},
+        ).show();
       }
-    } catch (e) {
-      print('Error fetching professors: $e');
+    } else {
+      print("id_group_project หรือ selectedGroups เป็น null");
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.warning,
+        animType: AnimType.topSlide,
+        title: 'แจ้งเตือน',
+        desc: 'กรุณาเลือกกลุ่มให้กับโปรเจคก่อนยืนยัน',
+        btnOkOnPress: () {},
+      ).show();
+      return;
     }
   }
 
@@ -164,14 +195,11 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    advisorName.isNotEmpty
-                        ? advisorName
-                        : 'ไม่ได้เลือกอาจารย์ที่ปรึกษา',
+                    advisorName ?? 'กำลังโหลด...',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
               const Divider(
                 color: Colors.grey,
@@ -213,8 +241,15 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
                           : [],
                 ),
               if (priorities.isEmpty)
-                const Text("นักศึกษาเลือกอาจารย์ที่ปรึกษาแล้ว"),
-              const SizedBox(height: 20),
+                const Text("นักศึกษาไม่ได้เลือกอันดับกลุ่ม"),
+              const Divider(
+                color: Colors.grey,
+                thickness: 1,
+                height: 20,
+                indent: 20,
+                endIndent: 20,
+              ),
+              const SizedBox(height: 10),
               const Text("ผลการพิจารณาของผู้ประสานงานรายวิชา"),
               const SizedBox(height: 10),
 
@@ -242,7 +277,7 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
                 onChanged: (value) {
                   setState(() {
                     if (value != null) {
-                      selectedGroups[0] = value.toString();
+                      selectedGroups = value;
                     }
                   });
                 },
@@ -253,6 +288,19 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
                   print('กลุ่มที่เลือก: $selectedGroups');
                   // update assigned_group ด้วยใน group_project
                   // id_status เป็น 2 (รออาจารย์ประสานงานยืนยัน)
+                  AwesomeDialog(
+                    context: context,
+                    dialogType: DialogType.warning,
+                    animType: AnimType.topSlide,
+                    title: 'ยืนยัน',
+                    desc: 'ต้องการที่จะอัพเดทข้อมูลใช่ไหม ?',
+                    btnOkOnPress: () {
+                      updateAssignedGroup();
+                    },
+                    btnCancelOnPress: () {
+                      print("ไม่อัพเดท");
+                    },
+                  ).show();
                 },
                 child: Text("ยืนยัน", style: GoogleFonts.prompt()),
               ),

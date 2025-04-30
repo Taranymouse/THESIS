@@ -19,7 +19,7 @@ class CoordinatorAllocate extends StatefulWidget {
 class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
   final SessionService sessionService = SessionService();
   late int idGroup;
-  List<Map<String, dynamic>> matchedProjects = [];
+  List<dynamic> matchedProjects = [];
   bool isLoading = true;
 
   @override
@@ -49,23 +49,13 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
   Future<void> onFetchGroupProject() async {
     try {
       final response = await http.get(
-        Uri.parse(
-          '$baseUrl/api/check/group-project-current?assigned_group=$idGroup',
-        ),
+        Uri.parse('$baseUrl/api/check/coordinator-group-project/$idGroup'),
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
-
-        matchedProjects =
-            data
-                .where((project) {
-                  return project['assigned_group'] == idGroup;
-                })
-                .cast<Map<String, dynamic>>()
-                .toList();
-
-        print("Matched Projects: $matchedProjects");
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        matchedProjects = data;
+        print("Projects: ${data}");
       } else {
         print('Failed to fetch group projects: ${response.statusCode}');
       }
@@ -108,51 +98,53 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
                       title: Text(
                         studentGroup['members'] ?? 'ไม่มีข้อมูลนักศึกษา',
                       ),
-                      subtitle: Text(
-                        studentGroup['name_doc'] ?? 'ไม่มีชื่อเอกสาร',
-                      ),
+                      subtitle: Text(studentGroup['professor_name']),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () async {
-                        final int studentId =
-                            int.tryParse(
-                              studentGroup['student_ids'].toString(),
-                            ) ??
-                            0;
+                        // แปลง student_ids เป็น List<int>
+                        final String rawStudentIds =
+                            studentGroup['student_ids'].toString();
+                        final List<int> studentIdList =
+                            rawStudentIds
+                                .split(',')
+                                .map((id) => int.tryParse(id.trim()))
+                                .where((id) => id != null)
+                                .cast<int>()
+                                .toList();
+
                         final int groupId =
                             int.tryParse(
                               studentGroup['id_group_project'].toString(),
                             ) ??
                             0;
-                        final int idMember =
-                            int.tryParse(
-                              studentGroup['id_member'].toString(),
-                            ) ??
-                            0;
+                        final String nameprof =studentGroup['professor_name'] ?? '';
 
-                        if (studentId != 0) {
-                          await sessionService.saveUpdatedStudentIds([
-                            studentId,
-                          ]);
+                        if (studentIdList.isNotEmpty) {
+                          await sessionService.saveUpdatedStudentIds(
+                            studentIdList,
+                          );
+
                           if (groupId != 0) {
                             await sessionService.setProjectGroupId(groupId);
                             print("บันทึก id_group_project : $groupId");
                           }
-                          if (idMember != 0) {
-                            await sessionService.setIdmember(idMember);
-                            print("บันทึก id_member : $idMember");
+
+                          if (nameprof.isNotEmpty) {
+                            await sessionService.setNameProfessor(nameprof);
+                            print("บันทึกชื่ออาจารย์ : $nameprof");
                           }
 
-                          print("บันทึก id_student : $studentId");
+                          print("บันทึก id_student ทั้งหมด: $studentIdList");
 
                           final testIdStudent =
                               await sessionService.getUpdatedStudentIds();
                           final testIdGroupProject =
                               await sessionService.getProjectGroupId();
-                          final testIdMember =
-                              await sessionService.getIdmember();
+                          final testnameprof =
+                              await sessionService.getNameProfessor();
                           print("test id_student : $testIdStudent");
                           print("test id_group_project : $testIdGroupProject");
-                          print("test id_member : $testIdMember");
+                          print("test professor_name : $testnameprof");
 
                           Navigator.push(
                             context,

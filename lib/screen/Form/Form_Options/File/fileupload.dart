@@ -37,7 +37,7 @@ class _FileUploadWidgetState extends State<FileUploadWidget> {
   Future<void> pickFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        allowMultiple: true,
+        allowMultiple: false,
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
       );

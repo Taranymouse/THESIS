@@ -21,6 +21,8 @@ class SubjectsTable extends StatefulWidget {
   final TextEditingController studentIdController;
   final ValueChanged<bool>? onGradeValidationChanged;
   final MemberData memberData;
+  final void Function(MemberData member, List<PlatformFile> files)?
+  onFilesChanged;
 
   const SubjectsTable({
     super.key,
@@ -33,6 +35,7 @@ class SubjectsTable extends StatefulWidget {
     required this.studentIdController,
     this.onGradeValidationChanged,
     required this.memberData,
+    this.onFilesChanged,
   });
 
   @override
@@ -162,7 +165,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
     widget.memberData.savedSubjectDetails.forEach((key, detail) {
       final grade = detail['grade'];
       if (grade != null && grade.isNotEmpty) {
-        if (!(grade == 'F' || grade == 'I' || grade == 'W' || grade == 'T')) {
+        if (!(grade == 'F' || grade == 'I' || grade == 'W')) {
           count++;
         }
       }
@@ -178,8 +181,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
           grade.isEmpty ||
           grade == 'F' ||
           grade == 'I' ||
-          grade == 'W' ||
-          grade == 'T') {
+          grade == 'W') {
         count++;
       }
     });
@@ -374,10 +376,7 @@ class _SubjectsTableState extends State<SubjectsTable> {
                 final grade = detail['grade']?.toString() ?? '';
                 Color? rowColor;
                 if (isRowFilled) {
-                  if (grade == 'F' ||
-                      grade == 'I' ||
-                      grade == 'W' ||
-                      grade == 'T') {
+                  if (grade == 'F' || grade == 'I' || grade == 'W') {
                     rowColor = Colors.red[100];
                   } else {
                     rowColor = Colors.green[100];
@@ -580,6 +579,9 @@ class _SubjectsTableState extends State<SubjectsTable> {
                 setState(() {
                   selectedFiles = files;
                 });
+                if (widget.onFilesChanged != null) {
+                  widget.onFilesChanged!(widget.memberData, files);
+                }
               },
             ),
           ],

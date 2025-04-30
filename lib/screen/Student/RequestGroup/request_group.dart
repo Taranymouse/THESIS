@@ -1,14 +1,12 @@
 import 'dart:convert';
-
-import 'package:file_picker/file_picker.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
-
+import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
-import 'package:project/screen/Form/Form_Options/File/fileupload.dart';
 import 'package:project/screen/Student/RequestGroup/group_subject_table.dart';
 import 'package:project/screen/Student/document_router.dart';
 
@@ -102,6 +100,111 @@ class _RequestGroupState extends State<RequestGroup> {
       }
     } catch (e) {
       print('Error fetching professors: $e');
+    }
+  }
+
+  Future<void> submitRequest() async {
+    final url = Uri.parse('$baseUrl/api/check/update');
+    final SessionService sessionService = SessionService();
+    final idGroupProject = await sessionService.getProjectGroupId();
+    print("Test id_group_project => $idGroupProject");
+
+    // ตรวจสอบว่าผู้ใช้เลือกอาจารย์ที่ปรึกษาหรือไม่
+    bool hasProfessor = selectedProfessorId != null;
+
+    // กรณีเลือกอาจารย์ที่ปรึกษา (ส่ง id_member)
+    if (hasProfessor) {
+      final requestBody = {
+        "id_group_project": idGroupProject,
+        "id_member": selectedProfessorId,
+        "group_request": null,
+      };
+
+      try {
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        );
+
+        if (response.statusCode == 200) {
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.success,
+            animType: AnimType.topSlide,
+            title: 'สำเร็จ',
+            desc: 'ส่งข้อมูลสำเร็จแล้ว',
+            btnOkOnPress: () {},
+          ).show();
+        } else {
+          print('Error: ${response.statusCode}');
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.error,
+            animType: AnimType.topSlide,
+            title: 'ผิดพลาด',
+            desc: 'เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่',
+            btnOkOnPress: () {},
+          ).show();
+        }
+      } catch (e) {
+        print('Error sending request: $e');
+      }
+    }
+    // กรณีไม่มีอาจารย์ที่ปรึกษา → ส่งอันดับกลุ่ม (group_request)
+    else {
+      // แปลง selectedGroups ที่เป็นตัวอักษร (A, B, C) → เป็น idGroup
+      List<Map<String, dynamic>> groupRequest = [];
+
+      for (int i = 0; i < selectedGroups.length; i++) {
+        String? letter = selectedGroups[i];
+        if (letter != null) {
+          final matchedGroup = groupList.firstWhere((g) => g.letter == letter);
+          groupRequest.add({
+            "request_group": matchedGroup.idGroup,
+            "priority": i + 1,
+          });
+        }
+      }
+
+      if (groupRequest.isEmpty) {
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.warning,
+          animType: AnimType.topSlide,
+          title: 'แจ้งเตือน',
+          desc: 'กรุณาเลือกอันดับกลุ่มอย่างน้อย 1 อันดับ',
+          btnOkOnPress: () {},
+        ).show();
+        return;
+      }
+
+      final requestBody = {
+        "id_group_project": idGroupProject,
+        "id_member": 0,
+        "group_request": groupRequest,
+      };
+
+      try {
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        );
+
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('ส่งข้อมูลสำเร็จ')));
+        } else {
+          print('Error: ${response.statusCode}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('เกิดข้อผิดพลาดในการส่งข้อมูล')),
+          );
+        }
+      } catch (e) {
+        print('Error sending request: $e');
+      }
     }
   }
 
@@ -258,6 +361,20 @@ class _RequestGroupState extends State<RequestGroup> {
               ElevatedButton(
                 onPressed: () {
                   // TODO: กดส่งแบบฟอร์ม
+
+                  AwesomeDialog(
+                    context: context,
+                    dialogType: DialogType.warning,
+                    animType: AnimType.topSlide,
+                    title: 'ยืนยัน',
+                    desc: 'ยืนยันที่จะส่งข้อมูลหรือไม่',
+                    btnOkOnPress: () {
+                      submitRequest();
+                    },
+                    btnCancelOnPress: () {
+                      print("ไม่ส่งข้อมูล");
+                    },
+                  ).show();
                 },
                 child: const Text("ส่งแบบฟอร์ม"),
               ),

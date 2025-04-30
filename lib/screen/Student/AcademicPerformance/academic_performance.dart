@@ -1,16 +1,17 @@
 import 'dart:convert';
-
+import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourse.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/selectCourseYear.dart';
-import 'package:project/screen/Form/Form_Options/dropdown/selectPrefix.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/semester.dart';
 import 'package:project/screen/Form/Form_Options/dropdown/stdyear.dart';
 import 'package:project/screen/Student/document_router.dart';
@@ -67,6 +68,7 @@ class _PerformanceFormState extends State<PerformanceForm> {
         if (detail.values.any((v) => v == null)) return false;
       }
       if (m.gpaController.text.isEmpty) return false;
+      if (m.fileSelected = false) return false;
       return true;
     });
     canSubmitAllNotifier.value = result;
@@ -132,13 +134,15 @@ class _PerformanceFormState extends State<PerformanceForm> {
           final failed =
               m.savedSubjectDetails.values.where((d) {
                 final g = d['grade'];
-                return g == 'F' || g == 'T' || g == 'I' || g == 'W';
+                return g == 'F' || g == 'I' || g == 'W';
               }).length;
           return failed > 1;
         }).toList();
 
     if (badStudents.isNotEmpty) {
-      final ids = badStudents.map((m) => m.studentIdController.text).join(', ');
+      final ids = badStudents
+          .map((m) => m.studentIdController.text)
+          .join(' , ');
       AwesomeDialog(
         context: context,
         dialogType: DialogType.warning,
@@ -262,6 +266,54 @@ class _PerformanceFormState extends State<PerformanceForm> {
         ),
       ).show();
       return; // หยุด ไม่ส่งข้อมูล
+    }
+
+    // 3) Upload transcript
+    final List<String> codeStudents = [];
+    final List<PlatformFile> transcriptFiles = [];
+
+    for (final m in members) {
+      if (m.selectedFiles != null && m.selectedFiles.isNotEmpty) {
+        // สมมติให้เลือกได้ไฟล์เดียว/คน (ถ้าเลือกหลายไฟล์/คน ให้วนลูปเพิ่ม)
+        codeStudents.add(m.studentIdController.text);
+        transcriptFiles.add(m.selectedFiles.first);
+      }
+    }
+
+    if (codeStudents.isNotEmpty && transcriptFiles.isNotEmpty) {
+      final uri = Uri.parse('$baseUrl/api/upload/student/upload-transcripts');
+
+      final dio = Dio();
+      final formData = FormData();
+
+      for (final code in codeStudents) {
+        formData.fields.add(MapEntry('code_students', code));
+      }
+      for (final file in transcriptFiles) {
+        formData.files.add(
+          MapEntry(
+            'files',
+            await MultipartFile.fromFile(
+              file.path!,
+              filename: path.basename(file.path!),
+              contentType: MediaType('application', 'pdf'),
+            ),
+          ),
+        );
+      }
+      final response = await dio.post(
+        '$baseUrl/api/upload/student/upload-transcripts',
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ Upload transcript success');
+      } else {
+        print('❌ Upload transcript failed: ${response.data}');
+        // แจ้งเตือนผู้ใช้ด้วย AwesomeDialog หรืออื่น ๆ ได้
+      }
+    } else {
+      print('ไม่มีไฟล์ transcript ที่ต้องอัปโหลด');
     }
 
     // แสดงข้อความสำเร็จ
@@ -396,7 +448,11 @@ class _PerformanceFormState extends State<PerformanceForm> {
                             ),
                         ],
                       ),
-                      MemberForm(data: d, onGradesChanged: _updateCanSubmitAll),
+                      MemberForm(
+                        data: d,
+                        onGradesChanged: _updateCanSubmitAll,
+                        onFilesChanged: _updateCanSubmitAll,
+                      ),
                     ],
                   ),
                 ),
@@ -435,6 +491,8 @@ class MemberData {
   int totalItems = 0;
   Map<String, Map<String, dynamic>> savedSubjectDetails = {};
   final TextEditingController gpaController = TextEditingController();
+  bool fileSelected = false;
+  List<PlatformFile> selectedFiles = [];
 
   void dispose() {
     gpaController.dispose();
@@ -444,10 +502,12 @@ class MemberData {
 class MemberForm extends StatefulWidget {
   final MemberData data;
   final VoidCallback onGradesChanged;
+  final VoidCallback onFilesChanged;
   const MemberForm({
     super.key,
     required this.data,
     required this.onGradesChanged,
+    required this.onFilesChanged,
   });
   @override
   State<MemberForm> createState() => _MemberFormState();
@@ -463,7 +523,8 @@ class _MemberFormState extends State<MemberForm> {
         d.year != null &&
         d.firstNameController.text.isNotEmpty &&
         d.lastNameController.text.isNotEmpty &&
-        d.studentIdController.text.isNotEmpty;
+        d.studentIdController.text.isNotEmpty &&
+        d.fileSelected;
     print("จากไฟล์ academic_performance.dart");
     print("สถานะพร้อมส่งของ ${d.studentIdController.text}: $valid");
     d.ready.value = valid;
@@ -477,6 +538,12 @@ class _MemberFormState extends State<MemberForm> {
     widget.data.firstNameController.addListener(_updateReady);
     widget.data.lastNameController.addListener(_updateReady);
     widget.data.studentIdController.addListener(_updateReady);
+    // onFileSelected();
+  }
+
+  void onFileSelected() {
+    widget.data.fileSelected = true;
+    _updateReady();
   }
 
   @override
@@ -630,6 +697,12 @@ class _MemberFormState extends State<MemberForm> {
           selectedYear: widget.data.year,
           onGradeValidationChanged: (_) => widget.onGradesChanged(),
           memberData: widget.data,
+          onFilesChanged: (memberData, files) {
+            setState(() {
+              memberData.selectedFiles = files;
+              onFileSelected();
+            });
+          },
         ),
       ],
     );
