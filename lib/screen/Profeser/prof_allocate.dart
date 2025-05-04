@@ -108,7 +108,7 @@ class _ProfAllocateState extends State<ProfAllocate> {
                       title: Text(
                         studentGroup['members'] ?? 'ไม่มีข้อมูลนักศึกษา',
                       ),
-                      subtitle: Text("มอบหมายให้คุณเป็นที่ปรึกษาโปรเจค"),
+                      subtitle: Text("ประสงค์ให้คุณเป็นที่ปรึกษาโปรเจค"),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () async {
                         // แปลง student_ids เป็น List<int>

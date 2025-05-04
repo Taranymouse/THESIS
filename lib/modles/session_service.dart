@@ -148,32 +148,38 @@ class SessionService {
 
   // ฟังก์ชันบันทึก ชื่อผู้ใช้
   Future<void> saveUserName(String firstname) async {
-    await _storage.write(key: 'firstname', value: firstname);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('firstname', firstname);
   }
 
   // ฟังก์ชันดึง ชื่อผู้ใช้
   Future<String?> getUserName() async {
-    return await _storage.read(key: 'firstname');
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('firstname');
   }
 
   // ฟังก์ชันบันทึกนามสกุล
   Future<void> saveUserLastName(String lastname) async {
-    await _storage.write(key: 'lastname', value: lastname);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('lastname', lastname);
   }
 
   // ฟังก์ชันดึงนามสกุล
   Future<String?> getUserLastName() async {
-    return await _storage.read(key: 'lastname');
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('lastname');
   }
 
   // ฟังก์ชันบันทึกรหัสนักศึกษา
   Future<void> saveStudentId(String studentId) async {
-    await _storage.write(key: 'studentId', value: studentId);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('studentId', studentId);
   }
 
   // ฟังก์ชันดึงรหัสนักศึกษา
   Future<String?> getStudentId() async {
-    return await _storage.read(key: 'studentId');
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('studentId');
   }
 
   // ฟังก์ชันบันทึกชื่อเลือกคำนำหน้า
@@ -203,6 +209,18 @@ class SessionService {
   Future<void> setLoggedIn(bool isLoggedIn) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_isLoggedInKey, isLoggedIn);
+  }
+
+  // ฟังก์ชันตรวจสอบว่าทำแบบฟอร์ม IT00G / CS00G แล้วหรือไม่
+  Future<bool> isDoneFromG() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_isLoggedInKey) ?? false;
+  }
+
+  // ฟังก์ชันตั้งค่า แบบฟอร์ม IT00G / CS00G status
+  Future<void> setDoneFromG(bool isDoneFromG) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isLoggedInKey, isDoneFromG);
   }
 
   // ฟังก์ชันลบข้อมูล session

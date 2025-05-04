@@ -7,6 +7,7 @@ import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/Student/AcademicPerformance/academic_performance.dart';
+import 'package:project/screen/Student/ProposalForm/proposal_form.dart';
 import 'package:project/screen/Student/RequestGroup/request_group.dart';
 import 'package:project/screen/Student/home.dart';
 
@@ -74,8 +75,10 @@ class _DocumentRouterState extends State<DocumentRouter> {
         await sessionService.setProjectGroupId(
           data['data']['id_group_project'],
         );
+        await sessionService.setDoneFromG(true);
       } else {
         print("นักศึกษายังไม่ได้ทำ IT00G / CS00G");
+        await sessionService.setDoneFromG(false);
       }
     } else {
       print("❌ Failed to fetch user data: ${response.body}");
@@ -84,11 +87,13 @@ class _DocumentRouterState extends State<DocumentRouter> {
     String? testlast = await sessionService.getUserLastName();
     String? teststudentid = await sessionService.getStudentId();
     int? test_idgroupproject = await sessionService.getProjectGroupId();
+    bool test_do_g = await sessionService.isDoneFromG();
     print("ข้อมูลนักศึกษา : $teststudentid $testname $testlast");
     print("id กลุ่มโปรเจค : $test_idgroupproject");
     print(
       "บันทึกข้อมูลจาก API /api/student/get/active_user/${id_user.toString()}",
     );
+    print("ทำแบบฟอร์ม IT00G / CS00G แล้วใช่ไหม ? : $test_do_g");
   }
 
   @override
@@ -138,13 +143,10 @@ class _DocumentRouterState extends State<DocumentRouter> {
             DocumentCard(
               title: 'แบบคำร้องขอเสนอหัวข้อโครงงานปริญญานิพนธ์',
               subtitle: '(IT01S / CS01S)',
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("ยังไม่เปิดให้บริการ"),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
+              onTap: () async {
+                await LoadingScreen.showWithNavigation(context, () async {
+                  await Future.delayed(const Duration(seconds: 2));
+                }, ProposalForm());
               },
             ),
             DocumentCard(

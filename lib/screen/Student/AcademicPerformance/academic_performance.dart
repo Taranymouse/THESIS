@@ -26,17 +26,53 @@ class PerformanceForm extends StatefulWidget {
 class _PerformanceFormState extends State<PerformanceForm> {
   final List<MemberData> members = [MemberData()];
   final SessionService _sessionService = SessionService();
-
   final ValueNotifier<bool> canSubmitAllNotifier = ValueNotifier(false);
+  bool? isDone;
+  List<Map<String, dynamic>>? existingMembersData;
 
   @override
   void initState() {
     super.initState();
-    // กำหนดข้อมูลนักศึกษาคนแรกจาก SessionService
+    isDoneFromG().then((_) {
+      if (isDone == true) {
+        _fetchExistingData();
+      }
+    });
     _initializeFirstMember();
     // ฟังการเปลี่ยนแปลงของสมาชิกแต่ละคน
     for (var m in members) {
       m.ready.addListener(_onReadyChanged);
+    }
+  }
+
+  Future<void> isDoneFromG() async {
+    final bool dofromg = await _sessionService.isDoneFromG();
+    isDone = dofromg;
+    print(" isDone : $isDone");
+  }
+
+  Future<void> _fetchExistingData() async {
+    print("_fetchExistingData START");
+    try {
+      final studentIds = await _sessionService.getUpdatedStudentIds();
+      print("studentIds : $studentIds");
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/check/group-all-subjects'),
+        body: jsonEncode(studentIds),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        print("Data : => $data");
+        setState(() {
+          existingMembersData = List<Map<String, dynamic>>.from(
+            jsonDecode(utf8.decode(response.bodyBytes)),
+          );
+        });
+      }
+    } catch (e) {
+      print('Error fetching existing data: $e');
     }
   }
 
@@ -281,8 +317,6 @@ class _PerformanceFormState extends State<PerformanceForm> {
     }
 
     if (codeStudents.isNotEmpty && transcriptFiles.isNotEmpty) {
-      final uri = Uri.parse('$baseUrl/api/upload/student/upload-transcripts');
-
       final dio = Dio();
       final formData = FormData();
 
@@ -412,68 +446,135 @@ class _PerformanceFormState extends State<PerformanceForm> {
         padding: const EdgeInsets.all(15),
         child: Column(
           children: [
-            Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _addMember,
-                  icon: const Icon(Icons.add),
-                  label: Text("เพิ่มสมาชิก", style: GoogleFonts.prompt()),
-                ),
-                const Spacer(),
-                Text("(${members.length}/3)"),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ...members.asMap().entries.map((e) {
-              final i = e.key;
-              final d = e.value;
-              return Card(
-                key: ValueKey(i),
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            "สมาชิก ${i + 1}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const Spacer(),
-                          if (members.length > 1)
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _removeMember(i),
+            if (isDone == false) ...[
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _addMember,
+                    icon: const Icon(Icons.add),
+                    label: Text("เพิ่มสมาชิก", style: GoogleFonts.prompt()),
+                  ),
+                  const Spacer(),
+                  Text("(${members.length}/3)"),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ...members.asMap().entries.map((e) {
+                final i = e.key;
+                final d = e.value;
+                return Card(
+                  key: ValueKey(i),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              "สมาชิก ${i + 1}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                        ],
-                      ),
-                      MemberForm(
-                        data: d,
-                        onGradesChanged: _updateCanSubmitAll,
-                        onFilesChanged: _updateCanSubmitAll,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-            const SizedBox(height: 20),
-            ValueListenableBuilder<bool>(
-              valueListenable: canSubmitAllNotifier,
-              builder: (context, canSubmit, child) {
-                return ElevatedButton(
-                  onPressed: _canSubmitAll ? _submitAll : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _canSubmitAll ? Colors.green : Colors.grey,
-                  ),
-                  child: Text(
-                    "ส่งแบบฟอร์ม",
-                    style: GoogleFonts.prompt(color: Colors.white),
+                            const Spacer(),
+                            if (members.length > 1)
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => _removeMember(i),
+                              ),
+                          ],
+                        ),
+                        MemberForm(
+                          data: d,
+                          onGradesChanged: _updateCanSubmitAll,
+                          onFilesChanged: _updateCanSubmitAll,
+                        ),
+                      ],
+                    ),
                   ),
                 );
-              },
-            ),
+              }).toList(),
+              const SizedBox(height: 20),
+              ValueListenableBuilder<bool>(
+                valueListenable: canSubmitAllNotifier,
+                builder: (context, canSubmit, child) {
+                  return ElevatedButton(
+                    onPressed: _canSubmitAll ? _submitAll : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          _canSubmitAll ? Colors.green : Colors.grey,
+                    ),
+                    child: Text(
+                      "ส่งแบบฟอร์ม",
+                      style: GoogleFonts.prompt(color: Colors.white),
+                    ),
+                  );
+                },
+              ),
+            ] else ...[
+              const Text("คุณได้ทำแบบฟอร์ในนี้ไปเรียบร้อยแล้ว"),
+              if (existingMembersData == null)
+                const Center(child: CircularProgressIndicator())
+              else
+                ...existingMembersData!.asMap().entries.map((e) {
+                  final index = e.key;
+                  final studentData = e.value;
+                  // เตรียม MemberData (ถ้า index เกิน members ให้เพิ่ม)
+                  while (members.length <= index) {
+                    final m = MemberData();
+                    m.ready.addListener(_onReadyChanged);
+                    members.add(m);
+                  }
+                  return Card(
+                    key: ValueKey(index),
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "สมาชิก ${index + 1}",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "รหัสนักศึกษา: ${studentData['head_info']['code_student']}",
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          MemberForm(
+                            data: members[index],
+                            initialData: studentData,
+                            onGradesChanged: _updateCanSubmitAll,
+                            onFilesChanged: _updateCanSubmitAll,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              const SizedBox(height: 20),
+              ValueListenableBuilder<bool>(
+                valueListenable: canSubmitAllNotifier,
+                builder: (context, canSubmit, child) {
+                  return ElevatedButton(
+                    onPressed: _canSubmitAll ? _submitAll : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          _canSubmitAll ? Colors.blue : Colors.grey,
+                    ),
+                    child: Text(
+                      "อัปเดตข้อมูล",
+                      style: GoogleFonts.prompt(color: Colors.white),
+                    ),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -501,11 +602,13 @@ class MemberData {
 
 class MemberForm extends StatefulWidget {
   final MemberData data;
+  final Map<String, dynamic>? initialData;
   final VoidCallback onGradesChanged;
   final VoidCallback onFilesChanged;
   const MemberForm({
     super.key,
     required this.data,
+    this.initialData,
     required this.onGradesChanged,
     required this.onFilesChanged,
   });
@@ -514,6 +617,32 @@ class MemberForm extends StatefulWidget {
 }
 
 class _MemberFormState extends State<MemberForm> {
+  bool _didInit = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didInit && widget.initialData != null) {
+      _fillFromInitialData(widget.initialData!);
+      _didInit = true;
+    }
+  }
+
+  void _fillFromInitialData(Map<String, dynamic> data) {
+    final head = data['head_info'];
+    widget.data.firstNameController.text = head['first_name'] ?? '';
+    widget.data.lastNameController.text = head['last_name'] ?? '';
+    widget.data.studentIdController.text = head['code_student'] ?? '';
+    widget.data.year = head['year']?.toString();
+    widget.data.semester = head['term_name'];
+    // ใส่ GPA ถ้ามี
+    widget.data.gpaController.text = head['overall_grade']?.toString() ?? '';
+    // แจ้งเตือนว่าข้อมูลเปลี่ยน
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onGradesChanged();
+      widget.onFilesChanged();
+    });
+  }
+
   void _updateReady() {
     final d = widget.data;
     final valid =
@@ -538,7 +667,6 @@ class _MemberFormState extends State<MemberForm> {
     widget.data.firstNameController.addListener(_updateReady);
     widget.data.lastNameController.addListener(_updateReady);
     widget.data.studentIdController.addListener(_updateReady);
-    // onFileSelected();
   }
 
   void onFileSelected() {

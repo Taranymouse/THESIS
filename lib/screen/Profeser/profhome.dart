@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
@@ -7,8 +8,9 @@ import 'package:project/API/api_config.dart';
 import 'package:project/Nav/bottom_nav.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/modles/session_service.dart';
-import 'package:project/screen/Announcement/announcement_carousel.dart';
+import 'package:project/screen/Notification/Announcement/announcement_carousel.dart';
 import 'package:project/screen/Menu/Prof/profmenubar.dart';
+import 'package:project/screen/Notification/notification.dart';
 import 'package:project/screen/Settings/setting.dart';
 
 class ProfHomepage extends StatelessWidget {
@@ -17,9 +19,9 @@ class ProfHomepage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      Center(child: Text("🔔 แจ้งเตือน", style: TextStyle(fontSize: 24))),
+      const NotificationPage(),
       const ProfHomepageContent(),
-      SettingScreen(),
+      const SettingScreen(),
     ];
 
     return BlocBuilder<BottomNavBloc, BottomNavState>(
@@ -54,10 +56,12 @@ class _ProfHomepageContentState extends State<ProfHomepageContent> {
   String? displayName;
   String? email;
   int? id_user;
+  List<Map<String, dynamic>> pinnedAnnouncements = [];
 
   @override
   void initState() {
     super.initState();
+    _loadPinnedAnnouncements();
     initialize();
   }
 
@@ -65,6 +69,36 @@ class _ProfHomepageContentState extends State<ProfHomepageContent> {
     await _loadDisplayName();
     await _onCheckUser();
     await onCheckProfessor();
+  }
+
+  Future<void> _loadPinnedAnnouncements() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/posts/'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      final newPinned =
+          List<Map<String, dynamic>>.from(
+            data,
+          ).where((post) => post['is_pinned'] == true).toList();
+
+      // เปรียบเทียบก่อน setState
+      if (!_listEquals(pinnedAnnouncements, newPinned)) {
+        setState(() {
+          pinnedAnnouncements = newPinned;
+        });
+      }
+    } else {
+      print("❌ Failed to load announcements: ${response.body}");
+    }
+  }
+
+  // ฟังก์ชันเปรียบเทียบ List<Map>
+  bool _listEquals(List<Map<String, dynamic>> a, List<Map<String, dynamic>> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (!mapEquals(a[i], b[i])) return false;
+    }
+    return true;
   }
 
   Future<void> _loadDisplayName() async {
@@ -197,7 +231,12 @@ class _ProfHomepageContentState extends State<ProfHomepageContent> {
           ),
           const Text("ตำแหน่ง : อาจารย์", style: TextStyle(fontSize: 14)),
           const SizedBox(height: 10),
-          AnnouncementCarousel(),
+          const Text(
+            "📢 ประกาศสำคัญ",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          AnnouncementCarousel(pinnedAnnouncements: pinnedAnnouncements),
           SizedBox(height: 20),
           ProfMenu(),
           SizedBox(height: 20),
