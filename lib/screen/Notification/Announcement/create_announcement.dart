@@ -1,10 +1,15 @@
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
+import 'package:project/screen/Form/Form_Options/File/fileupload.dart';
 
 class CreateAnnouncementPage extends StatefulWidget {
-  const CreateAnnouncementPage({super.key});
+  final Map<String, dynamic>? editPost; // ถ้ามีคือโหมดแก้ไข
+
+  const CreateAnnouncementPage({super.key, this.editPost});
 
   @override
   State<CreateAnnouncementPage> createState() => _CreateAnnouncementPageState();
@@ -13,95 +18,142 @@ class CreateAnnouncementPage extends StatefulWidget {
 class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController contentController = TextEditingController();
-  final TextEditingController imageUrlController = TextEditingController();
   String selectedCategory = 'announcement';
   bool isPinned = false;
+  PlatformFile? selectedImage;
 
-  // ฟังก์ชันสำหรับส่งข้อมูลไปยัง API
-  Future<void> createAnnouncement() async {
-    final String apiUrl = '$baseUrl/api/posts/'; // URL ของ API
-    final Map<String, dynamic> newPost = {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.editPost != null) {
+      // โหมดแก้ไข
+      final post = widget.editPost!;
+      titleController.text = post['title'] ?? '';
+      contentController.text = post['content'] ?? '';
+      selectedCategory = post['category'] ?? 'announcement';
+      isPinned = post['is_pinned'] ?? false;
+      // ไม่ต้องเติม imageUrlController เพราะจะใช้ FileUploadWidget
+    }
+  }
+
+  Future<void> submitAnnouncement() async {
+    String? imageUrl;
+
+    // ถ้ามีการเลือกไฟล์ใหม่ ให้ใช้ชื่อไฟล์หรือ path
+    if (selectedImage != null) {
+      imageUrl = selectedImage!.name; // หรือ selectedImage!.path ตามที่ต้องการ
+    } else if (widget.editPost != null) {
+      // ถ้าแก้ไขแต่ไม่เลือกรูปใหม่ ใช้รูปเดิม
+      imageUrl = widget.editPost!['image_url'] ?? '';
+    }
+
+    final Map<String, dynamic> postMap = {
       'title': titleController.text,
       'content': contentController.text,
       'category': selectedCategory,
       'is_pinned': isPinned,
-      'image_url': imageUrlController.text,
-      'published_at': null, // กำหนดให้เป็น null
+      'image_url': imageUrl ?? '', // ใช้ชื่อไฟล์หรือ path ที่เลือก
+      'published_at': null,
     };
 
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(newPost),
-    );
+    final isEdit = widget.editPost != null;
+    final apiUrl =
+        isEdit
+            ? '$baseUrl/api/posts/${widget.editPost!['id']}'
+            : '$baseUrl/api/posts/';
 
-    if (response.statusCode == 201) {
-      // ประกาศถูกสร้างสำเร็จ
+    final response =
+        isEdit
+            ? await http.put(
+              Uri.parse(apiUrl),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode(postMap),
+            )
+            : await http.post(
+              Uri.parse(apiUrl),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode(postMap),
+            );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ประกาศถูกสร้างเรียบร้อยแล้ว')),
+        SnackBar(
+          content: Text(isEdit ? 'แก้ไขประกาศสำเร็จ' : 'สร้างประกาศสำเร็จ'),
+        ),
       );
-      Navigator.pop(context); // กลับไปยังหน้าหลักหลังจากโพสต์สำเร็จ
+
+      Navigator.pop(context, true);
     } else {
-      // หากมีข้อผิดพลาด
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('เกิดข้อผิดพลาดในการสร้างประกาศ')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('เกิดข้อผิดพลาด')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('สร้างประกาศใหม่'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(
+          widget.editPost != null ? 'แก้ไขประกาศ' : 'สร้างประกาศใหม่',
+        ),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            // Title TextField
             TextField(
               controller: titleController,
               decoration: const InputDecoration(labelText: 'หัวข้อประกาศ'),
             ),
             const SizedBox(height: 10),
-
-            // Content TextField
             TextField(
               controller: contentController,
               decoration: const InputDecoration(labelText: 'เนื้อหาประกาศ'),
               maxLines: 5,
             ),
-            const SizedBox(height: 10),
-
-            // Image URL TextField
-            TextField(
-              controller: imageUrlController,
-              decoration: const InputDecoration(labelText: 'URL รูปภาพ'),
-            ),
-            const SizedBox(height: 10),
-
-            // Category Dropdown
-            DropdownButton<String>(
-              value: selectedCategory,
-              onChanged: (String? newCategory) {
+            const SizedBox(height: 20),
+            const Text("อัพโหลดรูปภาพ"),
+            FileUploadWidget(
+              initialFiles: selectedImage != null ? [selectedImage!] : [],
+              onFilesPicked: (files) {
                 setState(() {
-                  selectedCategory = newCategory!;
+                  selectedImage = files.isNotEmpty ? files.first : null;
                 });
               },
-              items:
-                  ['announcement', 'news']
-                      .map(
-                        (category) => DropdownMenuItem<String>(
-                          value: category,
-                          child: Text(
-                            category == 'announcement' ? 'ประกาศ' : 'ข่าวสาร',
-                          ),
-                        ),
-                      )
-                      .toList(),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Text("ประเภท :"),
+                const SizedBox(width: 10),
+                DropdownButton<String>(
+                  value: selectedCategory,
+                  onChanged: (String? newCategory) {
+                    setState(() {
+                      selectedCategory = newCategory!;
+                    });
+                  },
+                  items:
+                      ['announcement', 'news']
+                          .map(
+                            (category) => DropdownMenuItem<String>(
+                              value: category,
+                              child: Text(
+                                category == 'announcement'
+                                    ? 'ประกาศ'
+                                    : 'ข่าวสาร',
+                                style: GoogleFonts.prompt(),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                ),
+              ],
+            ),
 
-            // Is Pinned Checkbox
+            const SizedBox(height: 10),
             Row(
               children: [
                 Checkbox(
@@ -116,11 +168,12 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
               ],
             ),
             const SizedBox(height: 20),
-
-            // Create Button
             ElevatedButton(
-              onPressed: createAnnouncement,
-              child: const Text('สร้างประกาศ'),
+              onPressed: submitAnnouncement,
+              child: Text(
+                widget.editPost != null ? 'บันทึกการแก้ไข' : 'สร้างประกาศ',
+                style: GoogleFonts.prompt(),
+              ),
             ),
           ],
         ),

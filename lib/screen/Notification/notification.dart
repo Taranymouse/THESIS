@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
@@ -95,26 +96,34 @@ class _NotificationPageState extends State<NotificationPage> {
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 10),
-                DropdownButton<String>(
-                  value: selectedCategory,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedCategory = value!;
-                    });
-                  },
-                  items:
-                      ['ทั้งหมด', 'announcement', 'news']
-                          .map(
-                            (category) => DropdownMenuItem(
-                              value: category,
-                              child: Text(
-                                category == 'ทั้งหมด'
-                                    ? 'ทุกประเภท'
-                                    : getCategoryDisplayName(category),
-                              ),
-                            ),
-                          )
-                          .toList(),
+                Row(
+                  children: [
+                    const Text("ประเภท :"),
+                    const SizedBox(width: 10),
+                    DropdownButton<String>(
+                      value: selectedCategory,
+                      style: GoogleFonts.prompt(color: Colors.black),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedCategory = value!;
+                        });
+                      },
+                      items:
+                          ['ทั้งหมด', 'announcement', 'news']
+                              .map(
+                                (category) => DropdownMenuItem(
+                                  value: category,
+                                  child: Text(
+                                    category == 'ทั้งหมด'
+                                        ? 'ทุกประเภท'
+                                        : getCategoryDisplayName(category),
+                                    style: GoogleFonts.prompt(),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -127,6 +136,7 @@ class _NotificationPageState extends State<NotificationPage> {
                       itemCount: filteredAnnouncements.length,
                       itemBuilder: (context, index) {
                         final post = filteredAnnouncements[index];
+                        print("POST : => $post");
                         final title = post['title'];
                         final content = post['content'];
                         final imageUrl = post['image_url'];
@@ -158,6 +168,127 @@ class _NotificationPageState extends State<NotificationPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // ปุ่ม 3 จุด มุมขวาบน
+                                  if (userRole != '1')
+                                    Align(
+                                      alignment: Alignment.topRight,
+                                      child: PopupMenuButton<String>(
+                                        icon: const Icon(Icons.more_horiz),
+                                        onSelected: (value) async {
+                                          if (value == 'edit') {
+                                            final result = await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        CreateAnnouncementPage(
+                                                          editPost: post,
+                                                        ),
+                                              ),
+                                            );
+                                            if (result == true)
+                                              await getAnnouncer();
+                                          } else if (value == 'delete') {
+                                            final confirm = await showDialog<
+                                              bool
+                                            >(
+                                              context: context,
+                                              builder:
+                                                  (ctx) => AlertDialog(
+                                                    title: Text(
+                                                      'ลบโพสต์',
+                                                      style:
+                                                          GoogleFonts.prompt(),
+                                                    ),
+                                                    content: Text(
+                                                      'คุณแน่ใจว่าต้องการลบโพสต์นี้?',
+                                                      style:
+                                                          GoogleFonts.prompt(),
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed:
+                                                            () => Navigator.pop(
+                                                              ctx,
+                                                              false,
+                                                            ),
+                                                        child: const Text(
+                                                          'ยกเลิก',
+                                                        ),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed:
+                                                            () => Navigator.pop(
+                                                              ctx,
+                                                              true,
+                                                            ),
+                                                        child: const Text('ลบ'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                            );
+                                            if (confirm == true) {
+                                              final res = await http.delete(
+                                                Uri.parse(
+                                                  '$baseUrl/api/posts/${post['id']}',
+                                                ),
+                                              );
+                                              if (res.statusCode == 200) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'ลบโพสต์สำเร็จ',
+                                                    ),
+                                                  ),
+                                                );
+                                                await getAnnouncer();
+                                              } else {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'เกิดข้อผิดพลาดในการลบ',
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          }
+                                        },
+                                        itemBuilder:
+                                            (context) => [
+                                              PopupMenuItem(
+                                                value: 'edit',
+                                                child: ListTile(
+                                                  leading: Icon(
+                                                    Icons.edit,
+                                                    color: Colors.orange,
+                                                  ),
+                                                  title: Text(
+                                                    'แก้ไขโพสต์',
+                                                    style: GoogleFonts.prompt(),
+                                                  ),
+                                                ),
+                                              ),
+                                              PopupMenuItem(
+                                                value: 'delete',
+                                                child: ListTile(
+                                                  leading: Icon(
+                                                    Icons.delete,
+                                                    color: Colors.red,
+                                                  ),
+                                                  title: Text(
+                                                    'ลบโพสต์',
+                                                    style: GoogleFonts.prompt(),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                      ),
+                                    ),
                                   if (imageUrl != null && imageUrl != '')
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
@@ -193,14 +324,17 @@ class _NotificationPageState extends State<NotificationPage> {
       floatingActionButton:
           userRole != '1'
               ? FloatingActionButton(
-                onPressed: () {
-                  // ไปหน้าโพสต์ประกาศใหม่
-                  Navigator.push(
+                onPressed: () async {
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const CreateAnnouncementPage(),
+                      builder: (context) => CreateAnnouncementPage(),
                     ),
                   );
+                  // ถ้าสร้าง/แก้ไขสำเร็จ (result == true)
+                  if (result == true) {
+                    await getAnnouncer(); // เรียกฟังก์ชันดึงข้อมูลใหม่
+                  }
                 },
                 child: const Icon(Icons.add),
                 tooltip: 'โพสต์ประกาศใหม่',

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
@@ -122,7 +123,7 @@ class _CreateStudentScreenState extends State<CreateStudentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('สร้างข้อมูลนักศึกษา')),
+      appBar: AppBar(title: const Text('สร้างบัญชี')),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child:
@@ -197,7 +198,7 @@ class _CreateStudentScreenState extends State<CreateStudentScreen> {
                       const SizedBox(height: 30),
                       ElevatedButton(
                         onPressed: _submitStudent,
-                        child: const Text('สร้างข้อมูลนักศึกษา'),
+                        child: Text('สร้างบัญชี', style: GoogleFonts.prompt()),
                       ),
                     ],
                   ),
