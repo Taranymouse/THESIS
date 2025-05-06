@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:project/ColorPlate/color.dart';
-import 'package:project/screen/Admin/admin_document_router.dart';
+import 'package:project/screen/Admin/AdminSettingApp/addminsettingapp.dart';
 import 'package:project/screen/Admin/RequestGroup/admin_student_allocate.dart';
-import 'package:project/screen/Admin/professor.dart';
+import 'package:project/screen/Admin/admin_professor.dart';
 
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/Admin/ManageSubject/fetchallsubject.dart';
@@ -52,7 +52,6 @@ class AdminMenu extends StatelessWidget {
                     }, AdminStudentAllocate());
                   },
                 ),
-
                 _buildButton(
                   context,
                   icon: FaIcon(
@@ -69,7 +68,6 @@ class AdminMenu extends StatelessWidget {
                     }, AllSubjectsPage());
                   },
                 ),
-
                 _buildButton(
                   context,
                   icon: FaIcon(
@@ -83,7 +81,23 @@ class AdminMenu extends StatelessWidget {
                     await LoadingScreen.showWithNavigation(context, () async {
                       // จำลองการโหลดข้อมูล
                       await Future.delayed(const Duration(seconds: 2));
-                    }, ProfessorScreen());
+                    }, AdminProfessorScreen());
+                  },
+                ),
+                _buildButton(
+                  context,
+                  icon: FaIcon(
+                    FontAwesomeIcons.sliders,
+                    color: Colors.black,
+                    size: 30,
+                  ),
+                  label: "ตั้งค่าระบบ",
+                  color: Colors.deepOrange,
+                  onPressed: () async {
+                    await LoadingScreen.showWithNavigation(context, () async {
+                      // จำลองการโหลดข้อมูล
+                      await Future.delayed(const Duration(seconds: 2));
+                    }, AdminSettingsPage());
                   },
                 ),
               ],

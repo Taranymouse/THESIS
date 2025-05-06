@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:project/ColorPlate/color.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/bloc/Login/login_bloc.dart';
 import 'package:project/modles/session_service.dart';
@@ -14,7 +15,7 @@ class Login extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Login"), centerTitle: true),
+      appBar: AppBar(title: const Text("เข้าสู่ระบบ"), centerTitle: true),
       body: BlocConsumer<LoginBloc, LoginState>(
         listener: (context, state) async {
           if (state is LoginSuccess) {
@@ -76,70 +77,71 @@ class Login extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         "IT/CS PROJECTS",
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
+                          color: ColorPlate.colors[6].color,
                         ),
                       ),
                       const SizedBox(height: 20),
-                      _buildTextField(_emailController, "Email", Icons.email),
-                      const SizedBox(height: 20),
-                      _buildTextField(
-                        _passwordController,
-                        "Password",
-                        Icons.lock,
-                        obscureText: true,
-                      ),
-                      const SizedBox(height: 20),
+                      // _buildTextField(_emailController, "Email", Icons.email),
+                      // const SizedBox(height: 20),
+                      // _buildTextField(
+                      //   _passwordController,
+                      //   "Password",
+                      //   Icons.lock,
+                      //   obscureText: true,
+                      // ),
+                      // const SizedBox(height: 20),
 
-                      // ปุ่ม Login
-                      Material(
-                        color: Colors.deepPurple,
-                        borderRadius: BorderRadius.circular(25),
-                        child: InkWell(
-                          onTap: () {
-                            if (_emailController.text.isEmpty ||
-                                _passwordController.text.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("กรุณากรอกข้อมูลให้ครบ"),
-                                ),
-                              );
-                              return;
-                            }
-                            context.read<LoginBloc>().add(
-                              LoginWithEmailPassword(
-                                _emailController.text,
-                                _passwordController.text,
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(25),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: const Center(
-                              child: Text(
-                                "Login",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
+                      // // ปุ่ม Login
+                      // Material(
+                      //   color: Colors.deepPurple,
+                      //   borderRadius: BorderRadius.circular(25),
+                      //   child: InkWell(
+                      //     onTap: () {
+                      //       if (_emailController.text.isEmpty ||
+                      //           _passwordController.text.isEmpty) {
+                      //         ScaffoldMessenger.of(context).showSnackBar(
+                      //           const SnackBar(
+                      //             content: Text("กรุณากรอกข้อมูลให้ครบ"),
+                      //           ),
+                      //         );
+                      //         return;
+                      //       }
+                      //       context.read<LoginBloc>().add(
+                      //         LoginWithEmailPassword(
+                      //           _emailController.text,
+                      //           _passwordController.text,
+                      //         ),
+                      //       );
+                      //     },
+                      //     borderRadius: BorderRadius.circular(25),
+                      //     child: Container(
+                      //       width: double.infinity,
+                      //       padding: const EdgeInsets.symmetric(vertical: 16),
+                      //       child: const Center(
+                      //         child: Text(
+                      //           "Login",
+                      //           style: TextStyle(
+                      //             color: Colors.white,
+                      //             fontSize: 14,
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ),
+                      Image.asset('assets/images/scsu.jpg'),
                       const SizedBox(height: 10),
 
                       // ปุ่ม Sign in with Google
                       Material(
-                        color: Colors.red,
+                        color: ColorPlate.colors[6].color,
                         borderRadius: BorderRadius.circular(25),
                         child: InkWell(
                           onTap: () {
@@ -151,10 +153,10 @@ class Login extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             child: const Center(
                               child: Text(
-                                "Sign in with Google",
+                                "Sign in",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 14,
+                                  fontSize: 16,
                                 ),
                               ),
                             ),
@@ -172,7 +174,7 @@ class Login extends StatelessWidget {
                   color: Colors.black.withOpacity(0.5), // พื้นหลังสีดำโปร่งแสง
                   child: Center(
                     child: LoadingAnimationWidget.flickr(
-                      leftDotColor: Colors.deepPurple,
+                      leftDotColor: ColorPlate.colors[6].color,
                       rightDotColor: Colors.orange,
                       size: 100,
                     ),

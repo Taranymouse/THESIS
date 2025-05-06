@@ -49,6 +49,17 @@ class _NotificationPageState extends State<NotificationPage> {
 
       setState(() {
         announcementList = List<Map<String, dynamic>>.from(data);
+
+        // เรียงโพสต์จาก updated_at หรือ published_at ล่าสุด ไปเก่า
+        announcementList.sort((a, b) {
+          final aDate =
+              DateTime.tryParse(a['updated_at'] ?? a['published_at'] ?? '') ??
+              DateTime(2000);
+          final bDate =
+              DateTime.tryParse(b['updated_at'] ?? b['published_at'] ?? '') ??
+              DateTime(2000);
+          return bDate.compareTo(aDate); // เรียงจากใหม่ -> เก่า
+        });
       });
     }
   }
@@ -129,194 +140,208 @@ class _NotificationPageState extends State<NotificationPage> {
             ),
           ),
           Expanded(
-            child:
-                filteredAnnouncements.isEmpty
-                    ? const Center(child: Text("ไม่พบประกาศที่ต้องการ"))
-                    : ListView.builder(
-                      itemCount: filteredAnnouncements.length,
-                      itemBuilder: (context, index) {
-                        final post = filteredAnnouncements[index];
-                        print("POST : => $post");
-                        final title = post['title'];
-                        final content = post['content'];
-                        final imageUrl = post['image_url'];
-                        final publishedAt = post['published_at'];
+            child: RefreshIndicator(
+              onRefresh: getAnnouncer,
+              child:
+                  filteredAnnouncements.isEmpty
+                      ? Center(
+                        child: Text(
+                          "ไม่พบประกาศที่ต้องการ",
+                          style: GoogleFonts.prompt(),
+                        ),
+                      )
+                      : ListView.builder(
+                        itemCount: filteredAnnouncements.length,
+                        itemBuilder: (context, index) {
+                          final post = filteredAnnouncements[index];
+                          print("POST : => $post");
+                          final title = post['title'];
+                          final content = post['content'];
+                          final imageUrl = post['image_url'];
+                          final publishedAt = post['published_at'];
 
-                        return InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) =>
-                                        AnnouncementDetailPage(post: post),
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          AnnouncementDetailPage(post: post),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              elevation: 3,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            );
-                          },
-                          child: Card(
-                            elevation: 3,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            margin: const EdgeInsets.only(
-                              left: 15,
-                              right: 15,
-                              bottom: 15,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // ปุ่ม 3 จุด มุมขวาบน
-                                  if (userRole != '1')
-                                    Align(
-                                      alignment: Alignment.topRight,
-                                      child: PopupMenuButton<String>(
-                                        icon: const Icon(Icons.more_horiz),
-                                        onSelected: (value) async {
-                                          if (value == 'edit') {
-                                            final result = await Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
+                              margin: const EdgeInsets.only(
+                                left: 15,
+                                right: 15,
+                                bottom: 15,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // ปุ่ม 3 จุด มุมขวาบน
+                                    if (userRole != '1')
+                                      Align(
+                                        alignment: Alignment.topRight,
+                                        child: PopupMenuButton<String>(
+                                          icon: const Icon(Icons.more_horiz),
+                                          onSelected: (value) async {
+                                            if (value == 'edit') {
+                                              final result = await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder:
+                                                      (context) =>
+                                                          CreateAnnouncementPage(
+                                                            editPost: post,
+                                                          ),
+                                                ),
+                                              );
+                                              if (result == true)
+                                                await getAnnouncer();
+                                            } else if (value == 'delete') {
+                                              final confirm = await showDialog<
+                                                bool
+                                              >(
+                                                context: context,
                                                 builder:
-                                                    (context) =>
-                                                        CreateAnnouncementPage(
-                                                          editPost: post,
+                                                    (ctx) => AlertDialog(
+                                                      title: Text(
+                                                        'ลบโพสต์',
+                                                        style:
+                                                            GoogleFonts.prompt(),
+                                                      ),
+                                                      content: Text(
+                                                        'คุณแน่ใจว่าต้องการลบโพสต์นี้?',
+                                                        style:
+                                                            GoogleFonts.prompt(),
+                                                      ),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed:
+                                                              () =>
+                                                                  Navigator.pop(
+                                                                    ctx,
+                                                                    false,
+                                                                  ),
+                                                          child: const Text(
+                                                            'ยกเลิก',
+                                                          ),
                                                         ),
-                                              ),
-                                            );
-                                            if (result == true)
-                                              await getAnnouncer();
-                                          } else if (value == 'delete') {
-                                            final confirm = await showDialog<
-                                              bool
-                                            >(
-                                              context: context,
-                                              builder:
-                                                  (ctx) => AlertDialog(
+                                                        TextButton(
+                                                          onPressed:
+                                                              () =>
+                                                                  Navigator.pop(
+                                                                    ctx,
+                                                                    true,
+                                                                  ),
+                                                          child: const Text(
+                                                            'ลบ',
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                              );
+                                              if (confirm == true) {
+                                                final res = await http.delete(
+                                                  Uri.parse(
+                                                    '$baseUrl/api/posts/${post['id']}',
+                                                  ),
+                                                );
+                                                if (res.statusCode == 200) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'ลบโพสต์สำเร็จ',
+                                                      ),
+                                                    ),
+                                                  );
+                                                  await getAnnouncer();
+                                                } else {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'เกิดข้อผิดพลาดในการลบ',
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            }
+                                          },
+                                          itemBuilder:
+                                              (context) => [
+                                                PopupMenuItem(
+                                                  value: 'edit',
+                                                  child: ListTile(
+                                                    leading: Icon(
+                                                      Icons.edit,
+                                                      color: Colors.orange,
+                                                    ),
+                                                    title: Text(
+                                                      'แก้ไขโพสต์',
+                                                      style:
+                                                          GoogleFonts.prompt(),
+                                                    ),
+                                                  ),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: 'delete',
+                                                  child: ListTile(
+                                                    leading: Icon(
+                                                      Icons.delete,
+                                                      color: Colors.red,
+                                                    ),
                                                     title: Text(
                                                       'ลบโพสต์',
                                                       style:
                                                           GoogleFonts.prompt(),
                                                     ),
-                                                    content: Text(
-                                                      'คุณแน่ใจว่าต้องการลบโพสต์นี้?',
-                                                      style:
-                                                          GoogleFonts.prompt(),
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed:
-                                                            () => Navigator.pop(
-                                                              ctx,
-                                                              false,
-                                                            ),
-                                                        child: const Text(
-                                                          'ยกเลิก',
-                                                        ),
-                                                      ),
-                                                      TextButton(
-                                                        onPressed:
-                                                            () => Navigator.pop(
-                                                              ctx,
-                                                              true,
-                                                            ),
-                                                        child: const Text('ลบ'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                            );
-                                            if (confirm == true) {
-                                              final res = await http.delete(
-                                                Uri.parse(
-                                                  '$baseUrl/api/posts/${post['id']}',
-                                                ),
-                                              );
-                                              if (res.statusCode == 200) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'ลบโพสต์สำเร็จ',
-                                                    ),
-                                                  ),
-                                                );
-                                                await getAnnouncer();
-                                              } else {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'เกิดข้อผิดพลาดในการลบ',
-                                                    ),
-                                                  ),
-                                                );
-                                              }
-                                            }
-                                          }
-                                        },
-                                        itemBuilder:
-                                            (context) => [
-                                              PopupMenuItem(
-                                                value: 'edit',
-                                                child: ListTile(
-                                                  leading: Icon(
-                                                    Icons.edit,
-                                                    color: Colors.orange,
-                                                  ),
-                                                  title: Text(
-                                                    'แก้ไขโพสต์',
-                                                    style: GoogleFonts.prompt(),
                                                   ),
                                                 ),
-                                              ),
-                                              PopupMenuItem(
-                                                value: 'delete',
-                                                child: ListTile(
-                                                  leading: Icon(
-                                                    Icons.delete,
-                                                    color: Colors.red,
-                                                  ),
-                                                  title: Text(
-                                                    'ลบโพสต์',
-                                                    style: GoogleFonts.prompt(),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                                              ],
+                                        ),
+                                      ),
+                                    if (imageUrl != null && imageUrl != '')
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(imageUrl),
+                                      ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      title ?? '',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  if (imageUrl != null && imageUrl != '')
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.network(imageUrl),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      "เผยแพร่เมื่อ: ${publishedAt.toString().substring(0, 10)}",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
                                     ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    title ?? '',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    "เผยแพร่เมื่อ: ${publishedAt.toString().substring(0, 10)}",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
+            ),
           ),
         ],
       ),

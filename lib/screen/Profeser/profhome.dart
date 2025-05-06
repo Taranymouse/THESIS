@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
+import 'package:project/ColorPlate/color.dart';
 import 'package:project/Nav/bottom_nav.dart';
 import 'package:project/bloc/BottomNav/bottom_nav_bloc.dart';
 import 'package:project/modles/session_service.dart';
@@ -30,9 +31,12 @@ class ProfHomepage extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text(
+            title: Text(
               'IT/CS THESIS',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: ColorPlate.colors[6].color,
+              ),
             ),
             centerTitle: true,
           ),
@@ -215,32 +219,40 @@ class _ProfHomepageContentState extends State<ProfHomepageContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          SizedBox(height: 20),
-          Text(
-            displayName != null
-                ? "ยินดีต้อนรับ: $displayName"
-                : "กำลังโหลดข้อมูลผู้ใช้...",
-            style: Theme.of(context).textTheme.bodyLarge,
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _loadPinnedAnnouncements();
+        await _onCheckUser();
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Text(
+                displayName != null
+                    ? "ยินดีต้อนรับ: $displayName"
+                    : "กำลังโหลดข้อมูลผู้ใช้...",
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const Text("ตำแหน่ง : อาจารย์"),
+              const SizedBox(height: 20),
+              const Text(
+                "📢 ประกาศสำคัญ",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              AnnouncementCarousel(pinnedAnnouncements: pinnedAnnouncements),
+              const SizedBox(height: 20),
+              const ProfMenu(),
+              const SizedBox(height: 20),
+            ],
           ),
-          const Text("ตำแหน่ง : อาจารย์", style: TextStyle(fontSize: 14)),
-          const SizedBox(height: 10),
-          const Text(
-            "📢 ประกาศสำคัญ",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          AnnouncementCarousel(pinnedAnnouncements: pinnedAnnouncements),
-          SizedBox(height: 20),
-          ProfMenu(),
-          SizedBox(height: 20),
-        ],
+        ),
       ),
     );
   }

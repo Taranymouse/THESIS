@@ -629,6 +629,8 @@ class _MemberFormState extends State<MemberForm> {
 
   void _fillFromInitialData(Map<String, dynamic> data) {
     final head = data['head_info'];
+    widget.data.course = head['id_branch'].toString() ?? null;
+    widget.data.courseYear = head['year_course'].toString() ?? null;
     widget.data.firstNameController.text = head['first_name'] ?? '';
     widget.data.lastNameController.text = head['last_name'] ?? '';
     widget.data.studentIdController.text = head['code_student'] ?? '';

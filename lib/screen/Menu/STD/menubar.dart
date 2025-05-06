@@ -4,6 +4,7 @@ import 'package:project/ColorPlate/color.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/Student/AcademicPerformance/academic_performance.dart';
 import 'package:project/screen/Student/document_router.dart';
+import 'package:project/screen/Student/professor.dart';
 
 class Menu extends StatelessWidget {
   const Menu({super.key});
@@ -53,21 +54,21 @@ class Menu extends StatelessWidget {
                     );
                   },
                 ),
-                _buildButton(
-                  context,
-                  icon: FaIcon(
-                    FontAwesomeIcons.listCheck,
-                    color: Colors.redAccent,
-                    size: 20,
-                  ),
-                  label: "รายการที่ต้องทำ",
-                  color: Colors.redAccent,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("CheckList Coming soon...")),
-                    );
-                  },
-                ),
+                // _buildButton(
+                //   context,
+                //   icon: FaIcon(
+                //     FontAwesomeIcons.listCheck,
+                //     color: Colors.redAccent,
+                //     size: 20,
+                //   ),
+                //   label: "รายการที่ต้องทำ",
+                //   color: Colors.redAccent,
+                //   onPressed: () {
+                //     ScaffoldMessenger.of(context).showSnackBar(
+                //       SnackBar(content: Text("CheckList Coming soon...")),
+                //     );
+                //   },
+                // ),
                 _buildButton(
                   context,
                   icon: FaIcon(
@@ -77,10 +78,10 @@ class Menu extends StatelessWidget {
                   ),
                   label: "ติดต่ออาจารย์",
                   color: Colors.redAccent,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Contact Coming soon...")),
-                    );
+                  onPressed: () async {
+                    await LoadingScreen.showWithNavigation(context, () async {
+                      await Future.delayed(Duration(seconds: 1));
+                    }, ProfessorScreen());
                   },
                 ),
               ],

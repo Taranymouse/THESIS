@@ -13,9 +13,9 @@ class BottomNav extends StatelessWidget {
       builder: (context, state) {
         int currentIndex = (state is CurrentPage) ? state.currentIndex : 1;
         return ConvexAppBar(
-          backgroundColor: ColorPlate.colors[0].color,
+          backgroundColor: ColorPlate.colors[6].color,
           color: Colors.black,
-          activeColor: ColorPlate.colors[6].color,
+          activeColor: ColorPlate.colors[5].color,
           style: TabStyle.react,
           items: const [
             TabItem(icon: Icons.notifications_rounded, title: 'แจ้งเตือน'),
