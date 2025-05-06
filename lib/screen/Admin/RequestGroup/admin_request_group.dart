@@ -7,7 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
-import 'package:project/screen/Admin/RequestGroup/admin_group_subject_table.dart';
+import 'package:project/screen/group_subject_table.dart';
+import 'package:project/screen/student_detailpage.dart';
 
 class AdminRequestGroup extends StatefulWidget {
   final List<int> studentIds;
@@ -21,15 +22,12 @@ class AdminRequestGroup extends StatefulWidget {
 class _AdminRequestGroupState extends State<AdminRequestGroup> {
   late List<int> studentIds;
   List<PlatformFile> selectedFiles = [];
-
   List<Map<String, dynamic>> groupProjects = []; // สำหรับ groups/members
-  int? selectedGroups; // สำหรับเลือกกลุ่ม
-
+  int? selectedGroups;
   List<Map<String, dynamic>> priorities = [];
   final SessionService sessionService = SessionService();
   List<Professor> professorList = [];
-
-  String? advisorName; // <-- เพิ่มตัวแปรตรงนี้
+  List<Map<String, dynamic>> studentData = [];
 
   @override
   void initState() {
@@ -39,14 +37,70 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
 
   Future<void> initialize() async {
     studentIds = widget.studentIds;
-
-    await getProfessorName();
+    await fetchStudentInfo();
     await fetchGroupProject();
     await fetchPriorities();
   }
 
-  Future<void> getProfessorName() async {
-    advisorName = await sessionService.getNameProfessor();
+  Future<void> fetchStudentInfo() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/check/group-all-subjects'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(studentIds),
+    );
+
+    List<Map<String, dynamic>> studentList = [];
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      studentList = List<Map<String, dynamic>>.from(data);
+    } else {
+      print('Failed to fetch student info: ${response.statusCode}');
+      return;
+    }
+
+    // ดึง transcript
+    final responseTranscript = await http.post(
+      Uri.parse('$baseUrl/api/check/get-transcript-group'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(studentIds),
+    );
+
+    if (responseTranscript.statusCode == 200) {
+      final transcriptData = jsonDecode(
+        utf8.decode(responseTranscript.bodyBytes),
+      );
+      final transcriptMap = {
+        for (var item in transcriptData)
+          item['id_student']: mapTranscriptUrl(
+            item['transcript_file'],
+            baseUrl,
+          ),
+      };
+
+      // รวม transcript เข้ากับ studentList
+      for (var student in studentList) {
+        final id = student['id_student'];
+        student['transcript_file'] = transcriptMap[id]; // ใส่ transcript เข้าไป
+      }
+
+      setState(() {
+        studentData = studentList;
+      });
+    } else {
+      print(
+        'Failed to fetch student transcript: ${responseTranscript.statusCode}',
+      );
+    }
+  }
+
+  // ✅ ฟังก์ชันแปลง localhost เป็น baseUrl
+  String mapTranscriptUrl(String? url, String baseUrl) {
+    if (url == null) return '';
+    if (url.contains('localhost')) {
+      return url.replaceFirst('http://localhost:8000', baseUrl);
+    }
+    return url;
   }
 
   Future<void> fetchGroupProject() async {
@@ -169,37 +223,52 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
           padding: const EdgeInsets.all(15),
           child: Column(
             children: [
-              AdminGroupSubjectTable(studentIds: studentIds),
-              const SizedBox(height: 10),
-              const Divider(
-                color: Colors.grey,
-                thickness: 1,
-                height: 20,
-                indent: 20,
-                endIndent: 20,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "* กรณีนักศึกษามีอาจารย์ที่ปรึกษาโครงงานแล้วเท่านั้น",
-                style: TextStyle(color: Colors.red, fontSize: 12),
-              ),
-              const SizedBox(height: 15),
+              // Card ที่กดไปดูรายละเอียดของนักศึกษาแต่ละคน
+              if (studentData.isNotEmpty)
+                Column(
+                  children:
+                      studentData.map((student) {
+                        final head = student['head_info'];
+                        final code = head['code_student'];
+                        final firstName = head['first_name'];
+                        final lastName = head['last_name'];
+                        final branchId = head['id_branch'];
+                        final prefix = branchId == 1 ? 'IT00G' : 'CS00G';
 
-              /// ========== ตรงนี้โชว์ชื่ออาจารย์ ==========
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "ชื่ออาจารย์ที่ปรึกษา :",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    advisorName ?? 'กำลังโหลด...',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
+                        return Card(
+                          child: ListTile(
+                            title: Text(
+                              '$prefix-$code-$firstName-$lastName',
+                              style: GoogleFonts.prompt(fontSize: 14),
+                            ),
+                            trailing: const Icon(Icons.arrow_forward_ios),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => StudentDetailpage(
+                                        student: student,
+                                      ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      }).toList(),
+                )
+              else
+                const Text("ไม่มีข้อมูลนักศึกษา"),
+              const SizedBox(height: 10),
+              const Divider(
+                color: Colors.grey,
+                thickness: 1,
+                height: 20,
+                indent: 20,
+                endIndent: 20,
               ),
+              const SizedBox(height: 10),
+              GroupSubjectTable(studentIds: studentIds),
               const SizedBox(height: 10),
               const Divider(
                 color: Colors.grey,
@@ -210,7 +279,7 @@ class _AdminRequestGroupState extends State<AdminRequestGroup> {
               ),
               const SizedBox(height: 10),
               const Text(
-                "* กรณีนักศึกษายัง ไม่มี อาจารย์ที่ปรึกษาโครงงานเท่านั้น",
+                "อันดับกลุ่มที่นักศึกษาทำการเลือกมา",
                 style: TextStyle(color: Colors.red, fontSize: 12),
               ),
               const SizedBox(height: 10),

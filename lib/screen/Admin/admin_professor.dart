@@ -6,7 +6,6 @@ import 'package:project/API/api_config.dart';
 import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AdminProfessorScreen extends StatefulWidget {
   const AdminProfessorScreen({super.key});

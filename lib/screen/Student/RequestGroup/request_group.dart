@@ -7,8 +7,9 @@ import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
-import 'package:project/screen/Student/RequestGroup/group_subject_table.dart';
 import 'package:project/screen/Student/document_router.dart';
+import 'package:project/screen/group_subject_table.dart';
+import 'package:project/screen/student_detailpage.dart';
 
 class RequestGroup extends StatefulWidget {
   final List<int> studentIds;
@@ -21,15 +22,13 @@ class RequestGroup extends StatefulWidget {
 
 class _RequestGroupState extends State<RequestGroup> {
   late List<int> studentIds;
-
   List<String> availableSemesters = [];
   List<String> availableYears = [];
-
-  List<GroupInfo> groupList = []; // กลุ่มที่จะ map
+  List<GroupInfo> groupList = [];
   List<String?> selectedGroups = [];
-
   List<Professor> professorList = [];
   int? selectedProfessorId;
+  List<Map<String, dynamic>> studentData = [];
 
   @override
   void initState() {
@@ -39,8 +38,70 @@ class _RequestGroupState extends State<RequestGroup> {
   }
 
   Future<void> initailize() async {
+    await fetchStudentInfo();
     await fetchGroups();
     await fetchProfessors();
+  }
+
+  Future<void> fetchStudentInfo() async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/check/group-all-subjects'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(studentIds),
+    );
+
+    List<Map<String, dynamic>> studentList = [];
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      studentList = List<Map<String, dynamic>>.from(data);
+    } else {
+      print('Failed to fetch student info: ${response.statusCode}');
+      return;
+    }
+
+    // ดึง transcript
+    final responseTranscript = await http.post(
+      Uri.parse('$baseUrl/api/check/get-transcript-group'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(studentIds),
+    );
+
+    if (responseTranscript.statusCode == 200) {
+      final transcriptData = jsonDecode(
+        utf8.decode(responseTranscript.bodyBytes),
+      );
+      final transcriptMap = {
+        for (var item in transcriptData)
+          item['id_student']: mapTranscriptUrl(
+            item['transcript_file'],
+            baseUrl,
+          ),
+      };
+
+      // รวม transcript เข้ากับ studentList
+      for (var student in studentList) {
+        final id = student['id_student'];
+        student['transcript_file'] = transcriptMap[id]; // ใส่ transcript เข้าไป
+      }
+
+      setState(() {
+        studentData = studentList;
+      });
+    } else {
+      print(
+        'Failed to fetch student transcript: ${responseTranscript.statusCode}',
+      );
+    }
+  }
+
+  // ✅ ฟังก์ชันแปลง localhost เป็น baseUrl
+  String mapTranscriptUrl(String? url, String baseUrl) {
+    if (url == null) return '';
+    if (url.contains('localhost')) {
+      return url.replaceFirst('http://localhost:8000', baseUrl);
+    }
+    return url;
   }
 
   Future<void> fetchGroups() async {
@@ -223,6 +284,50 @@ class _RequestGroupState extends State<RequestGroup> {
           padding: EdgeInsets.all(15),
           child: Column(
             children: [
+              // Card ที่กดไปดูรายละเอียดของนักศึกษาแต่ละคน
+              if (studentData.isNotEmpty)
+                Column(
+                  children:
+                      studentData.map((student) {
+                        final head = student['head_info'];
+                        final code = head['code_student'];
+                        final firstName = head['first_name'];
+                        final lastName = head['last_name'];
+                        final branchId = head['id_branch'];
+                        final prefix = branchId == 1 ? 'IT00G' : 'CS00G';
+
+                        return Card(
+                          child: ListTile(
+                            title: Text(
+                              '$prefix-$code-$firstName-$lastName',
+                              style: GoogleFonts.prompt(fontSize: 14),
+                            ),
+                            trailing: const Icon(Icons.arrow_forward_ios),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) =>
+                                          StudentDetailpage(student: student),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      }).toList(),
+                )
+              else
+                const Text("ไม่มีข้อมูลนักศึกษา"),
+              const SizedBox(height: 10),
+              const Divider(
+                color: Colors.grey,
+                thickness: 1,
+                height: 20,
+                indent: 20,
+                endIndent: 20,
+              ),
+              const SizedBox(height: 10),
               GroupSubjectTable(studentIds: studentIds),
               const SizedBox(height: 10),
               const SizedBox(height: 10),

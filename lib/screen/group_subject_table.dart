@@ -6,17 +6,17 @@ import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/student_performance.dart';
 
-class AdminGroupSubjectTable extends StatefulWidget {
+class GroupSubjectTable extends StatefulWidget {
   final List<int> studentIds;
 
-  const AdminGroupSubjectTable({super.key, required this.studentIds});
+  const GroupSubjectTable({super.key, required this.studentIds});
 
   @override
-  State<AdminGroupSubjectTable> createState() =>
-      _AdminGroupSubjectTableleState();
+  State<GroupSubjectTable> createState() =>
+      _GroupSubjectTableleState();
 }
 
-class _AdminGroupSubjectTableleState extends State<AdminGroupSubjectTable> {
+class _GroupSubjectTableleState extends State<GroupSubjectTable> {
   late Future<void> _loadingFuture;
   List<StudentGradeGroup> studentGrades = [];
 

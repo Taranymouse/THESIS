@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -61,6 +62,9 @@ class _AdminStudentAllocateState extends State<AdminStudentAllocate> {
                     child: ListTile(
                       title: Text(
                         student_group['members'] ?? "ไม่มีข้อมูลนักศึกษา",
+                        style: GoogleFonts.prompt(fontSize: 16),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       // subtitle: Text(
                       //   student_group['name_doc'] ?? "เอกสารไม่ทราบชื่อ",
