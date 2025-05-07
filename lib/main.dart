@@ -17,7 +17,6 @@ import 'package:project/screen/Admin/adminhome.dart';
 import 'package:project/screen/Admin/ManageSubject/createsubject.dart';
 import 'package:project/screen/Coordinator/coordinator_home.dart';
 import 'package:project/screen/Profeser/profhome.dart';
-import 'package:project/screen/SignIn/create_student.dart';
 import 'package:project/screen/SignIn/login.dart';
 import 'package:project/screen/SignIn/set_password_screen.dart';
 import 'package:project/screen/Student/home.dart';
@@ -110,7 +109,6 @@ class MyApp extends StatelessWidget {
         '/prof-home': (context) => ProfHomepage(),
         '/coordinator-home': (context) => CoordinatorHome(),
         '/set-password': (context) => SetPasswordScreen(),
-        '/create-student': (context) => CreateStudentScreen(),
         '/createsubject': (context) => Createsubject(),
       },
     );
