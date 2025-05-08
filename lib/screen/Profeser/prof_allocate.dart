@@ -84,7 +84,7 @@ class _ProfAllocateState extends State<ProfAllocate> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("จัดสรรนักศึกษาภายในกลุ่ม"),
+        title: const Text("แบบคำร้องขอจัดสรรกลุ่ม"),
         centerTitle: true,
         leading: BackButtonWidget(targetPage: ProfHomepage()),
       ),

@@ -154,7 +154,7 @@ class _NotificationPageState extends State<NotificationPage> {
                         itemCount: filteredAnnouncements.length,
                         itemBuilder: (context, index) {
                           final post = filteredAnnouncements[index];
-                          print("POST : => $post");
+                          // print("POST : => $post");
                           final title = post['title'];
                           final content = post['content'];
                           final imageUrl = post['image_url'];

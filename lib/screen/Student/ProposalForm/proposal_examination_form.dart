@@ -4,7 +4,6 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -15,22 +14,36 @@ import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Form/Form_Options/File/fileupload.dart';
 import 'package:project/screen/Student/document_router.dart';
 
-class ProposalForm extends StatefulWidget {
-  const ProposalForm({super.key});
+class ProposalExaminationForm extends StatefulWidget {
+  const ProposalExaminationForm({super.key});
 
   @override
-  State<ProposalForm> createState() => _ProposalFormState();
+  State<ProposalExaminationForm> createState() =>
+      _ProposalExaminationFormState();
 }
 
-class _ProposalFormState extends State<ProposalForm> {
+class _ProposalExaminationFormState extends State<ProposalExaminationForm> {
   final SessionService sessionService = SessionService();
   List<Map<String, dynamic>> studentList = [];
   String? termName;
   String? year;
-  String? professor;
   final TextEditingController thaiTitleController = TextEditingController();
   final TextEditingController engTitleController = TextEditingController();
   List<PlatformFile> uploadedFiles = [];
+  String? professor;
+  int? selectedAttempt;
+  String? selectedChairman;
+  String? selectedCommittee1;
+  String? selectedCommittee2;
+  // final List<String> professors = [];
+  // จำลองรายชื่ออาจารย์ (อาจต้องโหลดจาก API จริง)
+  final List<String> professors = [
+    'ผศ.ดร. ก',
+    'ดร. ข',
+    'อ. ค',
+    'อ. ง',
+    'ผศ. จ',
+  ];
   bool? isDoCP00R;
   bool isLoading = true;
 
@@ -82,7 +95,7 @@ class _ProposalFormState extends State<ProposalForm> {
         if (studentList.isNotEmpty) {
           final headInfo = studentList[0]['head_info'];
           termName = headInfo['term_name'];
-          year = headInfo['year'].toString();
+          year = headInfo['year'].toString(); // แปลงให้แน่ใจว่าเป็น String
         }
       });
     }
@@ -102,6 +115,8 @@ class _ProposalFormState extends State<ProposalForm> {
 
       if (data.isNotEmpty) {
         setState(() {
+          thaiTitleController.text = data['name_project_th'] ?? '';
+          engTitleController.text = data['name_project_en'] ?? '';
           professor = data['professor_name'] ?? '';
         });
       }
@@ -110,7 +125,13 @@ class _ProposalFormState extends State<ProposalForm> {
 
   // ฟังชันส่งข้อมูล
   Future<void> submitForm() async {
-    if (studentList.isEmpty || uploadedFiles.isEmpty) {
+    if (studentList.isEmpty || uploadedFiles.isEmpty
+    // ||
+    // selectedAttempt == null ||
+    // selectedChairman == null ||
+    // selectedCommittee1 == null ||
+    // selectedCommittee2 == null
+    ) {
       AwesomeDialog(
         context: context,
         dialogType: DialogType.warning,
@@ -147,7 +168,7 @@ class _ProposalFormState extends State<ProposalForm> {
       final fileBytes = File(file.path!).readAsBytesSync();
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/api/upload/student/upload-01d'),
+        Uri.parse('$baseUrl/api/upload/student/upload-02d'),
       );
 
       request.fields['id_group_project'] = groupId.toString();
@@ -187,7 +208,7 @@ class _ProposalFormState extends State<ProposalForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("แบบคำร้องขอเสนอหัวข้อโครงงานปริญญานิพนธ์"),
+        title: const Text("แบบคำร้องขอสอบข้อเสนอหัวข้อโครงงานปริญญานิพนธ์"),
         centerTitle: true,
         leading: BackButtonWidget(targetPage: DocumentRouter()),
       ),
@@ -256,7 +277,6 @@ class _ProposalFormState extends State<ProposalForm> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
                       Card(
                         elevation: 3,
                         shape: RoundedRectangleBorder(
@@ -273,7 +293,7 @@ class _ProposalFormState extends State<ProposalForm> {
                               children: [
                                 const TextSpan(
                                   text:
-                                      "มีความประสงค์ที่จะเสนอหัวข้อโครงงาน\nในภาคการศึกษา ",
+                                      "มีความประสงค์ที่จะสอบข้อเสนอหัวข้อโครงงาน\nในภาคการศึกษา ",
                                 ),
                                 TextSpan(
                                   text: termName ?? '',
@@ -295,20 +315,141 @@ class _ProposalFormState extends State<ProposalForm> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Text("โดยการสอบครั้งนี้เป็นการสอบ ครั้งที่ : "),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              decoration: InputDecoration(
+                                isDense: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                              ),
+                              value: selectedAttempt,
+                              isExpanded: true,
+                              items:
+                                  [1, 2, 3, 4, 5].map((int attempt) {
+                                    return DropdownMenuItem<int>(
+                                      value: attempt,
+                                      child: Text(
+                                        "$attempt",
+                                        style: labelStyle,
+                                      ),
+                                    );
+                                  }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedAttempt = value;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
                       Text("ชื่อโครงงานภาษาไทย", style: labelStyle),
                       const SizedBox(height: 5),
                       _buildTextInput(thaiTitleController, "กรอกชื่อภาษาไทย"),
-
                       const SizedBox(height: 15),
-
                       Text("ชื่อโครงงานภาษาอังกฤษ", style: labelStyle),
                       const SizedBox(height: 5),
                       _buildTextInput(engTitleController, "กรอกชื่อภาษาอังกฤษ"),
-
                       const SizedBox(height: 15),
+                      Text("ประธานกรรมการสอบ", style: labelStyle),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: selectedChairman,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                        ),
+                        items:
+                            professors.map((String name) {
+                              return DropdownMenuItem<String>(
+                                value: name,
+                                child: Text(name, style: labelStyle),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedChairman = value;
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 10),
+                      Text("กรรมการสอบ คนที่ 1", style: labelStyle),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: selectedCommittee1,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                        ),
+                        items:
+                            professors.map((String name) {
+                              return DropdownMenuItem<String>(
+                                value: name,
+                                child: Text(name, style: labelStyle),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedCommittee1 = value;
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 10),
+                      Text("กรรมการสอบ คนที่ 2", style: labelStyle),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: selectedCommittee2,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                        ),
+                        items:
+                            professors.map((String name) {
+                              return DropdownMenuItem<String>(
+                                value: name,
+                                child: Text(name, style: labelStyle),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedCommittee2 = value;
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
                       Card(
                         elevation: 2,
                         shape: RoundedRectangleBorder(
@@ -339,8 +480,7 @@ class _ProposalFormState extends State<ProposalForm> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      Text("อัพโหลดไฟล์ IT01D / CS01D", style: labelStyle),
+                      Text("อัพโหลดไฟล์ IT02D / CS02D", style: labelStyle),
                       const SizedBox(height: 10),
                       Center(
                         child: FileUploadWidget(
@@ -417,7 +557,7 @@ class _ProposalFormState extends State<ProposalForm> {
     );
   }
 
-  final labelStyle = TextStyle(
+  final labelStyle = GoogleFonts.prompt(
     fontSize: 16,
     fontWeight: FontWeight.w500,
     color: Colors.black87,

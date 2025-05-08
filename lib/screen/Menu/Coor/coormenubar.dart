@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:project/ColorPlate/color.dart';
+import 'package:project/screen/Coordinator/coor_prof_allocate.dart';
 import 'package:project/screen/Coordinator/coordinator_allocate.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
-
+import 'package:project/screen/Profeser/prof_allocate.dart';
 
 class CoorMenu extends StatelessWidget {
   const CoorMenu({super.key});
@@ -36,11 +37,11 @@ class CoorMenu extends StatelessWidget {
                 _buildButton(
                   context,
                   icon: FaIcon(
-                    FontAwesomeIcons.book,
+                    FontAwesomeIcons.userGroup,
                     color: Colors.blueAccent,
                     size: 30,
                   ),
-                  label: "จัดสรรนักศึกษา",
+                  label: "จัดสรรนักศึกษาภายในกลุ่ม",
                   color: Colors.blueAccent,
                   onPressed: () async {
                     await LoadingScreen.showWithNavigation(
@@ -54,38 +55,26 @@ class CoorMenu extends StatelessWidget {
                   },
                 ),
 
-                // _buildButton(
-                //   context,
-                //   icon: FaIcon(
-                //     FontAwesomeIcons.usersGear,
-                //     color: Colors.redAccent,
-                //     size: 20,
-                //   ),
-                //   label: "ติดต่อ",
-                //   color: Colors.redAccent,
-                //   onPressed: () {
-                //     ScaffoldMessenger.of(context).showSnackBar(
-                //       SnackBar(
-                //         content: Text("Group Managements Coming soon..."),
-                //       ),
-                //     );
-                //   },
-                // ),
-                // _buildButton(
-                //   context,
-                //   icon: FaIcon(
-                //     FontAwesomeIcons.userTie,
-                //     color: Colors.deepPurple,
-                //     size: 20,
-                //   ),
-                //   label: "ตาราง",
-                //   color: Colors.redAccent,
-                //   onPressed: () {
-                //     ScaffoldMessenger.of(context).showSnackBar(
-                //       SnackBar(content: Text("Contact Coming soon...")),
-                //     );
-                //   },
-                // ),
+                _buildButton(
+                  context,
+                  icon: FaIcon(
+                    FontAwesomeIcons.peopleGroup,
+                    color: Colors.deepPurple,
+                    size: 30,
+                  ),
+                  label: "แบบคำร้องขอจัดสรรกลุ่ม",
+                  color: Colors.blueAccent,
+                  onPressed: () async {
+                    await LoadingScreen.showWithNavigation(
+                      context,
+                      () async {
+                        // จำลองการโหลดข้อมูล
+                        await Future.delayed(const Duration(seconds: 2));
+                      },
+                      CoorProfAllocate(), // หน้าใหม่ที่จะไป
+                    );
+                  },
+                ),
               ],
             ),
           ),

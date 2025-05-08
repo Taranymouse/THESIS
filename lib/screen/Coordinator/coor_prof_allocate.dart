@@ -6,19 +6,21 @@ import 'package:http/http.dart' as http;
 import 'package:project/API/api_config.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Coordinator/coordinator_home.dart';
-import 'package:project/screen/Coordinator/coordinator_request_group.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
+import 'package:project/screen/Profeser/prof_request_group.dart';
+import 'package:project/screen/Profeser/profhome.dart';
 
-class CoordinatorAllocate extends StatefulWidget {
-  const CoordinatorAllocate({super.key});
+class CoorProfAllocate extends StatefulWidget {
+  const CoorProfAllocate({super.key});
 
   @override
-  State<CoordinatorAllocate> createState() => _CoordinatorAllocateState();
+  State<CoorProfAllocate> createState() => _CoorProfAllocateState();
 }
 
-class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
+class _CoorProfAllocateState extends State<CoorProfAllocate> {
   final SessionService sessionService = SessionService();
   late int idGroup;
+  late int idMember;
   List<dynamic> matchedProjects = [];
   bool isLoading = true;
 
@@ -35,27 +37,38 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
 
   Future<void> onCheckIdGroupProject() async {
     final idGroupProject = await sessionService.getProjectGroupId();
+    final idMemberProf = await sessionService.getIdmember();
     print(
-      '!!## FROM CoordinatorAllocate ##!! \n TEST => id_group_project : $idGroupProject',
+      '!!## FROM ProfAllocate ##!! \n TEST => id_group_project : $idGroupProject , id_member : $idMemberProf',
     );
     final int checkIdGroup = idGroupProject ?? 0;
+    final int checkIdmember = idMemberProf ?? 0;
     if (checkIdGroup != 0) {
       idGroup = checkIdGroup;
     } else {
       print("ไม่มี id_group_project");
+    }
+    if (checkIdmember != 0) {
+      idMember = checkIdmember;
+    } else {
+      print("ไม่มี id_member");
     }
   }
 
   Future<void> onFetchGroupProject() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/check/coordinator-group-project/$idGroup'),
+        Uri.parse('$baseUrl/api/check/professor-group-project/$idMember'),
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        matchedProjects = data;
-        print("Projects: ${data}");
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        print("DATA : ${data}");
+        if (data.isNotEmpty) {
+          matchedProjects = data;
+        } else {
+          print("ไม่มีข้อมูลตามฟิลเตอร์ด้วย => idGroup : $idMember");
+        }
       } else {
         print('Failed to fetch group projects: ${response.statusCode}');
       }
@@ -72,11 +85,9 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("จัดสรรนักศึกษาภายในกลุ่ม"),
+        title: const Text("แบบคำร้องขอจัดสรรกลุ่ม"),
         centerTitle: true,
-        leading: BackButtonWidget(
-          targetPage: CoordinatorHome(),
-        ), // เปลี่ยนตามหน้ากลับของคุณ
+        leading: BackButtonWidget(targetPage: CoordinatorHome()),
       ),
       body:
           isLoading
@@ -98,7 +109,7 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
                       title: Text(
                         studentGroup['members'] ?? 'ไม่มีข้อมูลนักศึกษา',
                       ),
-                      subtitle: Text(studentGroup['professor_name']),
+                      subtitle: Text("ประสงค์ให้คุณเป็นที่ปรึกษาโปรเจค"),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () async {
                         // แปลง student_ids เป็น List<int>
@@ -151,7 +162,7 @@ class _CoordinatorAllocateState extends State<CoordinatorAllocate> {
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (context) => CoordinatorRequestGroup(
+                                  (context) => ProfRequestGroup(
                                     studentIds: testIdStudent,
                                   ),
                             ),

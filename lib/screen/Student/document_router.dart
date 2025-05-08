@@ -7,6 +7,7 @@ import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Loading/loading_screen.dart';
 import 'package:project/screen/Student/AcademicPerformance/academic_performance.dart';
+import 'package:project/screen/Student/ProposalForm/proposal_examination_form.dart';
 import 'package:project/screen/Student/ProposalForm/proposal_form.dart';
 import 'package:project/screen/Student/RequestGroup/request_group.dart';
 import 'package:project/screen/Student/home.dart';
@@ -30,6 +31,7 @@ class _DocumentRouterState extends State<DocumentRouter> {
 
   Future<void> initializeSession() async {
     await _onCheckStudent();
+    await getinfo();
     _checkGroupProject();
   }
 
@@ -96,6 +98,27 @@ class _DocumentRouterState extends State<DocumentRouter> {
     print("ทำแบบฟอร์ม IT00G / CS00G แล้วใช่ไหม ? : $test_do_g");
   }
 
+  Future<void> getinfo() async {
+    final groupproject = await sessionService.getProjectGroupId();
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/student/get-group-project-info/$groupproject'),
+    );
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      final Map<String, dynamic> data = decoded['data'];
+
+      if (data.isNotEmpty) {
+        if (data['id_member'] != null) {
+          await sessionService.setDoneFromCP00R(true);
+        } else {
+          await sessionService.setDoneFromCP00R(false);
+        }
+      }
+      final rcheck = await sessionService.isDoneFromCP00R();
+      print("ทำแบบฟอร์ม CP00R แล้วหรือยัง : $rcheck");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,13 +175,10 @@ class _DocumentRouterState extends State<DocumentRouter> {
             DocumentCard(
               title: 'แบบคำร้องขอสอบข้อเสนอหัวข้อโครงงานปริญญานิพนธ์',
               subtitle: '(IT02S / CS02S)',
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("ยังไม่เปิดให้บริการ"),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
+              onTap: () async {
+                await LoadingScreen.showWithNavigation(context, () async {
+                  await Future.delayed(const Duration(seconds: 2));
+                }, ProposalExaminationForm());
               },
             ),
             const SizedBox(height: 20),

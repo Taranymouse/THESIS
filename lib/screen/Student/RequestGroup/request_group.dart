@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:project/API/api_config.dart';
+import 'package:project/ColorPlate/color.dart';
 import 'package:project/modles/session_service.dart';
 import 'package:project/screen/Form/Form_Options/BackButton/backbttn.dart';
 import 'package:project/screen/Student/document_router.dart';
@@ -29,18 +31,34 @@ class _RequestGroupState extends State<RequestGroup> {
   List<Professor> professorList = [];
   int? selectedProfessorId;
   List<Map<String, dynamic>> studentData = [];
+  bool? isDoG;
+  bool isLoading = true;
+  bool isStudentDataLoaded = false;
 
   @override
   void initState() {
     super.initState();
     studentIds = widget.studentIds;
-    initailize(); // เรียกใช้ฟังก์ชัน initailize
+    initializeAll(); // เรียกใช้ฟังก์ชัน initailize
   }
 
-  Future<void> initailize() async {
-    await fetchStudentInfo();
-    await fetchGroups();
-    await fetchProfessors();
+  Future<void> initializeAll() async {
+    await isDoneFromG();
+    if (isDoG == true) {
+      await fetchStudentInfo();
+      await fetchGroups();
+      await fetchProfessors();
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> isDoneFromG() async {
+    final SessionService sessionService = SessionService();
+    final bool dofromg = await sessionService.isDoneFromG();
+    isDoG = dofromg;
+    print(" isDone : $isDoG");
   }
 
   Future<void> fetchStudentInfo() async {
@@ -87,6 +105,7 @@ class _RequestGroupState extends State<RequestGroup> {
 
       setState(() {
         studentData = studentList;
+        isStudentDataLoaded = true;
       });
     } else {
       print(
@@ -279,214 +298,262 @@ class _RequestGroupState extends State<RequestGroup> {
         centerTitle: true,
         leading: BackButtonWidget(targetPage: DocumentRouter()),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(15),
-          child: Column(
-            children: [
-              // Card ที่กดไปดูรายละเอียดของนักศึกษาแต่ละคน
-              if (studentData.isNotEmpty)
-                Column(
-                  children:
-                      studentData.map((student) {
-                        final head = student['head_info'];
-                        final code = head['code_student'];
-                        final firstName = head['first_name'];
-                        final lastName = head['last_name'];
-                        final branchId = head['id_branch'];
-                        final prefix = branchId == 1 ? 'IT00G' : 'CS00G';
-
-                        return Card(
-                          child: ListTile(
-                            title: Text(
-                              '$prefix-$code-$firstName-$lastName',
-                              style: GoogleFonts.prompt(fontSize: 14),
-                            ),
-                            trailing: const Icon(Icons.arrow_forward_ios),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) =>
-                                          StudentDetailpage(student: student),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      }).toList(),
-                )
-              else
-                const Text("ไม่มีข้อมูลนักศึกษา"),
-              const SizedBox(height: 10),
-              const Divider(
-                color: Colors.grey,
-                thickness: 1,
-                height: 20,
-                indent: 20,
-                endIndent: 20,
-              ),
-              const SizedBox(height: 10),
-              GroupSubjectTable(studentIds: studentIds),
-              const SizedBox(height: 10),
-              const SizedBox(height: 10),
-              Divider(
-                color: Colors.grey,
-                thickness: 1,
-                height: 20,
-                indent: 20,
-                endIndent: 20,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "* กรณีนักศึกษามีอาจารย์ที่ปรึกษาโครงงานแล้วเท่านั้น",
-                style: TextStyle(color: Colors.red, fontSize: 12),
-              ),
-              const SizedBox(height: 15),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "ชื่ออาจารย์ที่ปรึกษา :",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: DropdownButton<int>(
-                      value: selectedProfessorId,
-                      hint: Text(
-                        'เลือกอาจารย์ที่ปรึกษา',
-                        style: GoogleFonts.prompt(fontSize: 14),
-                      ),
-                      isExpanded: true,
-                      items:
-                          professorList.map((professor) {
-                            return DropdownMenuItem<int>(
-                              value: professor.idMember,
-                              child: Text(
-                                professor.fullName,
-                                style: GoogleFonts.prompt(fontSize: 12),
-                              ),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedProfessorId = value;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              const SizedBox(height: 10),
-              Divider(
-                color: Colors.grey,
-                thickness: 1,
-                height: 20,
-                indent: 20,
-                endIndent: 20,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "* กรณีนักศึกษายัง ไม่มี อาจารย์ที่ปรึกษาโครงงานเท่านั้น",
-                style: TextStyle(color: Colors.red, fontSize: 12),
-              ),
-              const SizedBox(height: 10),
-              // ส่วนตารางเลือกกลุ่ม
-              const Text(
-                "ระบุอันดับกลุ่มที่ประสงค์จะเลือก :",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-
-              if (groupList.isEmpty)
-                const Center(child: CircularProgressIndicator())
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children:
-                      groupList.map((group) {
-                        return Text(
-                          group.groupName,
-                          style: GoogleFonts.prompt(fontSize: 14),
-                        );
-                      }).toList(),
+      body:
+          isLoading
+              ? Center(
+                child: LoadingAnimationWidget.hexagonDots(
+                  color: ColorPlate.colors[6].color,
+                  size: 30,
                 ),
-
-              const SizedBox(height: 20),
-              // ตาราง
-              if (groupList.isNotEmpty)
-                DataTable(
-                  columns: [
-                    DataColumn(
-                      label: Text('อันดับที่', style: GoogleFonts.prompt()),
-                    ),
-                    DataColumn(
-                      label: Text('กลุ่ม', style: GoogleFonts.prompt()),
-                    ),
-                  ],
-                  rows: List.generate(selectedGroups.length, (index) {
-                    return DataRow(
-                      cells: [
-                        DataCell(Center(child: Text('${index + 1}'))),
-                        DataCell(
-                          DropdownButton<String>(
-                            value: selectedGroups[index],
-                            hint: Text(
-                              'เลือกกลุ่ม',
-                              style: GoogleFonts.prompt(fontSize: 14),
+              )
+              : SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(15),
+                  child: Column(
+                    children: [
+                      if (isDoG == true) ...[
+                        // Card ที่กดไปดูรายละเอียดของนักศึกษาแต่ละคน
+                        if (!isStudentDataLoaded)
+                          Center(
+                            child: LoadingAnimationWidget.staggeredDotsWave(
+                              color: ColorPlate.colors[6].color,
+                              size: 30,
                             ),
-                            isExpanded: true,
-                            items:
-                                groupList.map((group) {
-                                  return DropdownMenuItem<String>(
-                                    value:
-                                        group.letter, // เก็บแค่ตัว A, B, C, D
-                                    child: Center(
-                                      child: Text('${group.letter}'),
+                          )
+                        else if (studentData.isNotEmpty)
+                          Column(
+                            children:
+                                studentData.map((student) {
+                                  final head = student['head_info'];
+                                  final code = head['code_student'];
+                                  final firstName = head['first_name'];
+                                  final lastName = head['last_name'];
+                                  final branchId = head['id_branch'];
+                                  final prefix =
+                                      branchId == 1 ? 'IT00G' : 'CS00G';
+
+                                  return Card(
+                                    child: ListTile(
+                                      title: Text(
+                                        '$prefix-$code-$firstName-$lastName',
+                                        style: GoogleFonts.prompt(fontSize: 14),
+                                      ),
+                                      trailing: const Icon(
+                                        Icons.arrow_forward_ios,
+                                      ),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) => StudentDetailpage(
+                                                  student: student,
+                                                ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   );
                                 }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedGroups[index] = value;
-                              });
-                            },
+                          )
+                        else
+                          const Text("ไม่มีข้อมูลนักศึกษา"),
+                        const SizedBox(height: 10),
+                        const Divider(
+                          color: Colors.grey,
+                          thickness: 1,
+                          height: 20,
+                          indent: 20,
+                          endIndent: 20,
+                        ),
+                        const SizedBox(height: 10),
+                        GroupSubjectTable(studentIds: studentIds),
+                        const SizedBox(height: 10),
+                        const SizedBox(height: 10),
+                        Divider(
+                          color: Colors.grey,
+                          thickness: 1,
+                          height: 20,
+                          indent: 20,
+                          endIndent: 20,
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "* กรณีนักศึกษามีอาจารย์ที่ปรึกษาโครงงานแล้วเท่านั้น",
+                          style: TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                        const SizedBox(height: 15),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "ชื่ออาจารย์ที่ปรึกษา :",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: DropdownButton<int>(
+                                value: selectedProfessorId,
+                                hint: Text(
+                                  'เลือกอาจารย์ที่ปรึกษา',
+                                  style: GoogleFonts.prompt(fontSize: 14),
+                                ),
+                                isExpanded: true,
+                                items:
+                                    professorList.map((professor) {
+                                      return DropdownMenuItem<int>(
+                                        value: professor.idMember,
+                                        child: Text(
+                                          professor.fullName,
+                                          style: GoogleFonts.prompt(
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedProfessorId = value;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+
+                        const SizedBox(height: 10),
+                        Divider(
+                          color: Colors.grey,
+                          thickness: 1,
+                          height: 20,
+                          indent: 20,
+                          endIndent: 20,
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "* กรณีนักศึกษายัง ไม่มี อาจารย์ที่ปรึกษาโครงงานเท่านั้น",
+                          style: TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                        const SizedBox(height: 10),
+                        // ส่วนตารางเลือกกลุ่ม
+                        const Text(
+                          "ระบุอันดับกลุ่มที่ประสงค์จะเลือก :",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        if (groupList.isEmpty)
+                          const Center(child: CircularProgressIndicator())
+                        else
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children:
+                                groupList.map((group) {
+                                  return Text(
+                                    group.groupName,
+                                    style: GoogleFonts.prompt(fontSize: 14),
+                                  );
+                                }).toList(),
+                          ),
+
+                        const SizedBox(height: 20),
+                        // ตาราง
+                        if (groupList.isNotEmpty)
+                          DataTable(
+                            columns: [
+                              DataColumn(
+                                label: Text(
+                                  'อันดับที่',
+                                  style: GoogleFonts.prompt(),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'กลุ่ม',
+                                  style: GoogleFonts.prompt(),
+                                ),
+                              ),
+                            ],
+                            rows: List.generate(selectedGroups.length, (index) {
+                              return DataRow(
+                                cells: [
+                                  DataCell(Center(child: Text('${index + 1}'))),
+                                  DataCell(
+                                    DropdownButton<String>(
+                                      value: selectedGroups[index],
+                                      hint: Text(
+                                        'เลือกกลุ่ม',
+                                        style: GoogleFonts.prompt(fontSize: 14),
+                                      ),
+                                      isExpanded: true,
+                                      items:
+                                          groupList.map((group) {
+                                            return DropdownMenuItem<String>(
+                                              value:
+                                                  group
+                                                      .letter, // เก็บแค่ตัว A, B, C, D
+                                              child: Center(
+                                                child: Text('${group.letter}'),
+                                              ),
+                                            );
+                                          }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedGroups[index] = value;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }),
+                          ),
+                        const SizedBox(height: 20),
+
+                        ElevatedButton(
+                          onPressed: () {
+                            // TODO: กดส่งแบบฟอร์ม
+
+                            AwesomeDialog(
+                              context: context,
+                              dialogType: DialogType.warning,
+                              animType: AnimType.topSlide,
+                              title: 'ยืนยัน',
+                              desc: 'ยืนยันที่จะส่งข้อมูลหรือไม่',
+                              btnOkOnPress: () {
+                                submitRequest();
+                              },
+                              btnCancelOnPress: () {
+                                print("ไม่ส่งข้อมูล");
+                              },
+                            ).show();
+                          },
+                          child: const Text("ส่งแบบฟอร์ม"),
+                        ),
+                      ] else ...[
+                        Center(
+                          child: Text(
+                            "* กรุณาทำส่งแบบฟอร์มขอตรวจสอบคุณสมบัติก่อน \n(IT00G/CS00G)",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
                           ),
                         ),
                       ],
-                    );
-                  }),
+                    ],
+                  ),
                 ),
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: () {
-                  // TODO: กดส่งแบบฟอร์ม
-
-                  AwesomeDialog(
-                    context: context,
-                    dialogType: DialogType.warning,
-                    animType: AnimType.topSlide,
-                    title: 'ยืนยัน',
-                    desc: 'ยืนยันที่จะส่งข้อมูลหรือไม่',
-                    btnOkOnPress: () {
-                      submitRequest();
-                    },
-                    btnCancelOnPress: () {
-                      print("ไม่ส่งข้อมูล");
-                    },
-                  ).show();
-                },
-                child: const Text("ส่งแบบฟอร์ม"),
               ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

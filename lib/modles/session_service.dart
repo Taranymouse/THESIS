@@ -223,6 +223,18 @@ class SessionService {
     await prefs.setBool(_isLoggedInKey, isDoneFromG);
   }
 
+  // ฟังก์ชันตรวจสอบว่าทำแบบฟอร์ม CP00R แล้วหรือไม่
+  Future<bool> isDoneFromCP00R() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_isLoggedInKey) ?? false;
+  }
+
+  // ฟังก์ชันตั้งค่า แบบฟอร์ม CP00R status
+  Future<void> setDoneFromCP00R(bool isDoneFromCP00R) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isLoggedInKey, isDoneFromCP00R);
+  }
+
   // ฟังก์ชันลบข้อมูล session
   Future<void> clearSession() async {
     // ลบใน Secure Storage
